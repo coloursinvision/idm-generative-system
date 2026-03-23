@@ -62,3 +62,6 @@ logs/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Obsidian vault settings
+.obsidian/
