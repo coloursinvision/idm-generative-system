@@ -64,26 +64,40 @@ def euclidean_rhythm(k: int, n: int) -> List[int]:
     if k >= n:
         return [1] * n
 
-    groups = [[1]] * k + [[0]] * (n - k)
+    pattern: List[int] = []
+    counts: List[int] = []
+    remainders: List[int] = []
 
-    while len(groups) > 1:
-        last_group_val = groups[-1]
-        count = 0
-        while count < len(groups) and groups[count] != last_group_val:
-            count += 1
+    divisor = n - k
+    remainders.append(k)
+    level = 0
 
-        if count == 0 or count == len(groups):
+    while True:
+        counts.append(divisor // remainders[level])
+        remainders.append(divisor % remainders[level])
+        divisor = remainders[level]
+        level += 1
+        if remainders[level] <= 1:
             break
 
-        remainder = groups[count:]
-        new_groups = [groups[i] + remainder[i] for i in range(len(remainder))]
+    counts.append(divisor)
 
-        if count > len(remainder):
-            new_groups.extend(groups[len(remainder):count])
+    def build(lvl: int) -> None:
+        if lvl == -1:
+            pattern.append(0)
+        elif lvl == -2:
+            pattern.append(1)
+        else:
+            for _ in range(counts[lvl]):
+                build(lvl - 1)
+            if remainders[lvl] != 0:
+                build(lvl - 2)
 
-        groups = new_groups
+    build(level)
 
-    return [item for sublist in groups for item in sublist]
+    # Rotate so pattern starts on a pulse
+    i = pattern.index(1)
+    return pattern[i:] + pattern[:i]
 
 
 # ---------------------------------------------------------------------------
