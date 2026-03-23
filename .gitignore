@@ -1,0 +1,64 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Conda / virtualenv
+.env
+.venv
+env/
+venv/
+
+# Environment variables & secrets
+.env
+.env.local
+*.env
+secrets.toml
+.secrets
+
+# Audio files (large binaries — store in DO Spaces)
+*.wav
+*.mp3
+*.flac
+*.aif
+*.aiff
+*.ogg
+
+# ML / MLflow
+mlruns/
+mlartifacts/
+*.pkl
+*.joblib
+*.h5
+*.pt
+*.pth
+
+# Qdrant local data
+qdrant_storage/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# VSCode / Cursor
+.vscode/
+.cursor/
+
+# Logs
+*.log
+logs/
+
+# Streamlit
+.streamlit/secrets.toml
