@@ -7,6 +7,13 @@ Modules:
     generator       — Euclidean rhythms, Markov evolution, pattern mutation
     sample_maker    — Algorithmic sample generators (glitch, noise, FM)
     effects         — DSP effects chain (10 blocks, hardware-sourced)
+
+Primary entry points:
+    build_chain()       — build the canonical 10-block signal chain
+    CANONICAL_ORDER     — ordered list of (key, class) tuples defining the chain
+
+Block classes are available via the effects subpackage:
+    from engine.effects import NoiseFloor, Bitcrusher, GlitchEngine, ...
 """
 
 from engine.generator import (
@@ -32,6 +39,10 @@ from engine.sample_maker import (
     SAMPLE_RATE,
 )
 
+from engine.effects import build_chain, CANONICAL_ORDER
+import engine.effects as effects  # noqa: F401  — re-exported subpackage
+
+
 __all__ = [
     # generator
     "euclidean_rhythm",
@@ -52,4 +63,8 @@ __all__ = [
     "save_sample",
     "batch_export",
     "SAMPLE_RATE",
+    # effects — primary entry points
+    "build_chain",
+    "CANONICAL_ORDER",
+    "effects",
 ]
