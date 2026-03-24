@@ -3,14 +3,17 @@ api/main.py
 
 FastAPI backend for the IDM Generative System.
 
-MVP scope — four endpoints:
+Endpoints:
     GET  /health    — liveness check
     GET  /effects   — list available effect blocks with parameter schemas
     POST /generate  — generate a sample and process through effects chain
     POST /process   — upload audio, process through effects chain, return WAV
+    POST /ask       — sound design advisor (RAG: Qdrant + GPT-4o)
+    POST /compose   — auto-composer (RAG: Qdrant + GPT-4o)
 
 The API is a thin transport layer. All DSP logic lives in engine/.
 All audio I/O uses 24-bit WAV at 44100 Hz (matching PO-33/EP-133 specs).
+Knowledge retrieval and LLM integration live in knowledge/.
 
 Run:
     uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
@@ -34,6 +37,7 @@ from engine.effects import (
     build_chain,
     BaseEffect,
 )
+from knowledge.rag import RAGPipeline
 
 
 # ---------------------------------------------------------------------------
@@ -42,16 +46,17 @@ from engine.effects import (
 
 app = FastAPI(
     title="IDM Generative System",
-    version="0.1.0",
+    version="0.2.0",
     description=(
-        "Generative IDM audio engine — algorithmic sample generation "
-        "and a 10-block hardware-sourced DSP effects chain."
+        "Generative IDM audio engine — algorithmic sample generation, "
+        "a 10-block hardware-sourced DSP effects chain, and RAG-powered "
+        "sound design advisor."
     ),
 )
 
 
 # ---------------------------------------------------------------------------
-# Request / response models
+# Singletons
 # ---------------------------------------------------------------------------
 
 GENERATORS: dict[str, Any] = {
@@ -60,6 +65,12 @@ GENERATORS: dict[str, Any] = {
     "fm_blip":      fm_blip,
 }
 
+rag = RAGPipeline()
+
+
+# ---------------------------------------------------------------------------
+# Request / response models
+# ---------------------------------------------------------------------------
 
 class GenerateRequest(BaseModel):
     """Request body for /generate."""
@@ -107,6 +118,42 @@ class ProcessRequest(BaseModel):
     bypass_chain: bool = Field(
         default=False,
         description="If true, return the uploaded audio unchanged.",
+    )
+
+
+class AskRequest(BaseModel):
+    """Request body for /ask."""
+
+    question: str = Field(
+        ...,
+        description="Natural language question about sound design, DSP, or hardware.",
+        min_length=3,
+    )
+    limit: int = Field(
+        default=5,
+        ge=1,
+        le=10,
+        description="Max number of knowledge base chunks to retrieve.",
+    )
+    part_filter: str | None = Field(
+        default=None,
+        description="Optional — restrict search to a specific PART number.",
+    )
+
+
+class ComposeRequest(BaseModel):
+    """Request body for /compose."""
+
+    description: str = Field(
+        ...,
+        description="Aesthetic description for auto-composition.",
+        min_length=3,
+    )
+    limit: int = Field(
+        default=5,
+        ge=1,
+        le=10,
+        description="Max number of knowledge base chunks for context.",
     )
 
 
@@ -177,7 +224,7 @@ def _extract_param_schema(cls: type) -> dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
-# Endpoints
+# Endpoints — DSP
 # ---------------------------------------------------------------------------
 
 @app.get("/health")
@@ -319,3 +366,59 @@ async def process_audio(
         signal = chain(signal)
 
     return _signal_to_wav_response(signal, sr=sr, filename="processed.wav")
+
+
+# ---------------------------------------------------------------------------
+# Endpoints — RAG (Knowledge Base + GPT-4o)
+# ---------------------------------------------------------------------------
+
+@app.post("/ask")
+async def ask(req: AskRequest) -> dict:
+    """
+    Sound design advisor (Manual mode).
+
+    Retrieves relevant context from the knowledge base (Qdrant),
+    then uses GPT-4o to answer the question with technical precision.
+
+    Returns:
+        answer:  GPT-4o response grounded in the master dataset.
+        sources: Retrieved knowledge base chunks with relevance scores.
+        model:   GPT model used.
+        usage:   Token usage breakdown.
+    """
+    try:
+        result = rag.ask(
+            question=req.question,
+            limit=req.limit,
+            part_filter=req.part_filter,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"RAG pipeline error: {e}")
+
+    return result
+
+
+@app.post("/compose")
+async def compose(req: ComposeRequest) -> dict:
+    """
+    Auto-composer (Auto mode).
+
+    Given an aesthetic description, retrieves relevant context and uses
+    GPT-4o to generate a JSON configuration for the effects chain and
+    sample generators.
+
+    Returns:
+        config:  JSON string with generator, params, chain overrides.
+        sources: Retrieved knowledge base chunks with relevance scores.
+        model:   GPT model used.
+        usage:   Token usage breakdown.
+    """
+    try:
+        result = rag.compose(
+            description=req.description,
+            limit=req.limit,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"RAG pipeline error: {e}")
+
+    return result
