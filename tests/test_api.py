@@ -74,7 +74,7 @@ class TestHealth:
     def test_health_response_body(self, client: TestClient) -> None:
         data = client.get("/health").json()
         assert data["status"] == "ok"
-        assert data["version"] == "0.1.0"
+        assert data["version"] == "0.2.0"
 
 
 # ---------------------------------------------------------------------------
