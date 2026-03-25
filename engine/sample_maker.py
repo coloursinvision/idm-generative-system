@@ -53,7 +53,8 @@ def normalize(x: np.ndarray) -> np.ndarray:
 # ---------------------------------------------------------------------------
 
 def glitch_click(
-    length_ms: float = 10.0,
+    length_ms: float = 200.0,
+    decay: float = 4.0,
     sr: int = SAMPLE_RATE,
 ) -> np.ndarray:
     """
@@ -63,7 +64,8 @@ def glitch_click(
     characteristic of Autechre's Braindance micro-percussion style.
 
     Args:
-        length_ms: Duration in milliseconds.
+        length_ms: Duration in milliseconds (default 200ms).
+        decay: Envelope decay rate. Lower = longer sustain. (default 4.0)
         sr: Sample rate in Hz.
 
     Returns:
@@ -71,13 +73,14 @@ def glitch_click(
     """
     length = int(sr * length_ms / 1000)
     noise = np.random.randn(length)
-    envelope = np.exp(-np.linspace(0, 6, length))
+    envelope = np.exp(-np.linspace(0, decay, length))
     return normalize(noise * envelope).astype(np.float32)
 
 
 def noise_burst(
-    length_ms: float = 80.0,
+    length_ms: float = 500.0,
     tone: float = 0.3,
+    decay: float = 3.0,
     sr: int = SAMPLE_RATE,
 ) -> np.ndarray:
     """
@@ -89,8 +92,9 @@ def noise_burst(
     Useful for snare, rim shot, and percussive texture generation.
 
     Args:
-        length_ms: Duration in milliseconds.
+        length_ms: Duration in milliseconds (default 500ms).
         tone: Blend ratio between white noise (0.0) and smoothed noise (1.0).
+        decay: Envelope decay rate. Lower = longer sustain. (default 3.0)
         sr: Sample rate in Hz.
 
     Returns:
@@ -100,7 +104,7 @@ def noise_burst(
     noise = np.random.randn(length)
 
     t = np.linspace(0, 1, length)
-    envelope = np.exp(-6 * t)
+    envelope = np.exp(-decay * t)
 
     # Simple boxcar smoothing as a low-pass proxy
     smooth_kernel = 10
@@ -114,7 +118,8 @@ def fm_blip(
     freq: float = 300.0,
     mod_freq: float = 80.0,
     mod_index: float = 2.0,
-    length_ms: float = 80.0,
+    length_ms: float = 500.0,
+    decay: float = 3.0,
     sr: int = SAMPLE_RATE,
 ) -> np.ndarray:
     """
@@ -127,7 +132,8 @@ def fm_blip(
         freq: Carrier frequency in Hz.
         mod_freq: Modulator frequency in Hz.
         mod_index: Modulation index (controls harmonic richness).
-        length_ms: Duration in milliseconds.
+        length_ms: Duration in milliseconds (default 500ms).
+        decay: Envelope decay rate. Lower = longer sustain. (default 3.0)
         sr: Sample rate in Hz.
 
     Returns:
@@ -139,7 +145,7 @@ def fm_blip(
     modulator = np.sin(2 * np.pi * mod_freq * t) * mod_index
     carrier = np.sin(2 * np.pi * freq * t + modulator)
 
-    envelope = np.exp(-6 * t)
+    envelope = np.exp(-decay * t / (length_ms / 1000))
     return normalize(carrier * envelope).astype(np.float32)
 
 
