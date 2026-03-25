@@ -65,3 +65,4 @@ logs/
 
 # Obsidian vault settings
 .obsidian/
+.env
