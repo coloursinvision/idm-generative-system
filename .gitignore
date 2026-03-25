@@ -66,3 +66,4 @@ logs/
 # Obsidian vault settings
 .obsidian/
 .env
+frontend/node_modules/
