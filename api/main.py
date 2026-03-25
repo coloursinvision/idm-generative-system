@@ -287,15 +287,36 @@ async def generate(req: GenerateRequest) -> StreamingResponse:
             ),
         )
 
-    # Generate raw sample
+    # Generate raw sample — randomise params if none provided
+    params = dict(req.generator_params)
+    if not params:
+        if req.generator == "glitch_click":
+            params = {
+                "length_ms": float(np.random.uniform(100, 400)),
+                "decay": float(np.random.uniform(2.0, 8.0)),
+            }
+        elif req.generator == "noise_burst":
+            params = {
+                "length_ms": float(np.random.uniform(200, 800)),
+                "tone": float(np.random.uniform(0.0, 1.0)),
+                "decay": float(np.random.uniform(1.5, 6.0)),
+            }
+        elif req.generator == "fm_blip":
+            params = {
+                "freq": float(np.random.uniform(80, 2000)),
+                "mod_freq": float(np.random.uniform(20, 500)),
+                "mod_index": float(np.random.uniform(0.5, 8.0)),
+                "length_ms": float(np.random.uniform(200, 800)),
+                "decay": float(np.random.uniform(1.5, 6.0)),
+            }
+
     try:
-        signal = gen_fn(**req.generator_params)
+        signal = gen_fn(**params)
     except TypeError as e:
         raise HTTPException(
             status_code=400,
             detail=f"Invalid generator params: {e}",
         )
-
     # Ensure float64 for effects chain
     signal = signal.astype(np.float64)
 
