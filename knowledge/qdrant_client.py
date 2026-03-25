@@ -219,7 +219,10 @@ class KnowledgeBase:
     ) -> None:
         load_dotenv()
 
-        self.qdrant = QdrantClient(url=qdrant_url or QDRANT_URL)
+        self.qdrant = QdrantClient(
+            url=qdrant_url or QDRANT_URL,
+            api_key=os.getenv("QDRANT_API_KEY"),
+        )
         self.openai = OpenAI()  # Uses OPENAI_API_KEY from env
         self.collection = collection
 
