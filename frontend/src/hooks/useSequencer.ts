@@ -31,11 +31,15 @@ export function useSequencer({ numSteps, defaultBpm = 120 }: UseSequencerOptions
   const stepRef = useRef(0);
   const nextNoteTimeRef = useRef(0);
   const tracksRef = useRef<SequencerTrack[]>([]);
+  const bpmRef = useRef(defaultBpm);
 
   // Keep ref in sync
   useEffect(() => {
     tracksRef.current = tracks;
   }, [tracks]);
+  useEffect(() => {
+    bpmRef.current = bpm;
+  }, [bpm]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -168,7 +172,7 @@ export function useSequencer({ numSteps, defaultBpm = 120 }: UseSequencerOptions
     const ctx = audioCtxRef.current;
     if (!ctx) return;
 
-    const secondsPerStep = 60.0 / bpm / 4; // 16th notes
+    const secondsPerStep = 60.0 / bpmRef.current / 4; // 16th notes
     const lookahead = 0.1; // seconds
 
     while (nextNoteTimeRef.current < ctx.currentTime + lookahead) {
@@ -180,7 +184,7 @@ export function useSequencer({ numSteps, defaultBpm = 120 }: UseSequencerOptions
     }
 
     timerRef.current = requestAnimationFrame(scheduler);
-  }, [bpm, numSteps, scheduleNote]);
+  }, [numSteps, scheduleNote]);
 
   /* ---- Play / Stop ---- */
   const play = useCallback(() => {
