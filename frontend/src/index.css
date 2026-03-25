@@ -1,0 +1,91 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    border-color: #27272a;
+  }
+
+  body {
+    @apply bg-surface-0 text-text-primary font-mono text-sm;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    @apply bg-accent-green text-surface-0;
+  }
+
+  /* Scrollbar — minimal, industrial */
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-surface-0;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-surface-3;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-text-muted;
+  }
+}
+
+@layer components {
+  .panel {
+    @apply bg-surface-1 border border-surface-3 p-4;
+  }
+
+  .panel-header {
+    @apply font-display text-xs font-bold uppercase tracking-[0.2em] text-text-secondary mb-4;
+  }
+
+  .btn-primary {
+    @apply bg-accent-green text-surface-0 font-mono text-xs font-bold uppercase
+           tracking-[0.15em] px-6 py-2.5 border-none cursor-pointer
+           transition-colors duration-100
+           hover:bg-[#00cc6a] active:bg-[#00aa55]
+           disabled:opacity-30 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply bg-transparent text-text-secondary border border-surface-3
+           font-mono text-xs uppercase tracking-[0.15em] px-4 py-2
+           cursor-pointer transition-colors duration-100
+           hover:text-text-primary hover:border-text-muted
+           active:bg-surface-2;
+  }
+
+  .input-field {
+    @apply w-full bg-surface-0 border border-surface-3 text-text-primary
+           font-mono text-sm px-3 py-2.5 outline-none
+           placeholder:text-text-muted
+           focus:border-accent-green transition-colors duration-100;
+    border-radius: 0;
+  }
+
+  .textarea-field {
+    @apply input-field resize-y min-h-[80px];
+  }
+
+  .tag {
+    @apply inline-block bg-surface-2 border border-surface-3
+           text-text-secondary font-mono text-[10px] uppercase
+           tracking-[0.1em] px-2 py-0.5 mr-1 mb-1;
+  }
+
+  .tag-accent {
+    @apply tag border-accent-green/30 text-accent-green;
+  }
+
+  .divider {
+    @apply border-t border-surface-3 my-4;
+  }
+
+  .label {
+    @apply block font-mono text-[10px] font-bold uppercase tracking-[0.2em]
+           text-text-muted mb-1.5;
+  }
+}

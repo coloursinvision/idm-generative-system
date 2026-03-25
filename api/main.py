@@ -28,6 +28,7 @@ from typing import Any
 import numpy as np
 import soundfile as sf
 from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -38,6 +39,8 @@ from engine.effects import (
     BaseEffect,
 )
 from knowledge.rag import RAGPipeline
+
+from fastapi.middleware.cors import CORSMiddleware
 
 
 # ---------------------------------------------------------------------------
@@ -54,6 +57,13 @@ app = FastAPI(
     ),
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # ---------------------------------------------------------------------------
 # Singletons
