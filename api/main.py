@@ -292,8 +292,8 @@ async def generate(req: GenerateRequest) -> StreamingResponse:
     if not params:
         if req.generator == "glitch_click":
             params = {
-                "length_ms": float(np.random.uniform(100, 400)),
-                "decay": float(np.random.uniform(2.0, 8.0)),
+                "length_ms": float(np.random.uniform(150, 500)),
+                "decay": float(np.random.uniform(2.0, 5.0)),
             }
         elif req.generator == "noise_burst":
             params = {
