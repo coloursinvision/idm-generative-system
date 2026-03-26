@@ -327,11 +327,24 @@ async def generate(req: GenerateRequest) -> StreamingResponse:
 
     # Process through effects chain
     if not req.bypass_chain:
+        # Pad with 2s silence so reverb/delay tails can decay naturally
+        tail_samples = int(2.0 * SAMPLE_RATE)
+        signal = np.concatenate([signal, np.zeros(tail_samples)])
+
         chain = build_chain(
             overrides=req.chain_overrides or None,
             skip=req.chain_skip or None,
         )
         signal = chain(signal)
+
+        # Trim trailing silence (below -60 dB)
+        threshold = 10 ** (-60 / 20)
+        abs_signal = np.abs(signal)
+        above = np.where(abs_signal > threshold)[0]
+        if len(above) > 0:
+            # Keep 0.1s after last audible sample
+            end = min(above[-1] + int(0.1 * SAMPLE_RATE), len(signal))
+            signal = signal[:end]
 
     return _signal_to_wav_response(signal, filename="generated.wav")
 
