@@ -9,6 +9,8 @@ dependencies:
   - matplotlib>=3.8.0
   - jupyter
   - ipykernel
+  - llvmlite
+  - numba
 
   - pip:
     # Audio / DSP
@@ -45,5 +47,3 @@ dependencies:
 
     # Auxiliary UI
     - streamlit>=1.32.0
-
-  
