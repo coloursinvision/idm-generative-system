@@ -37,7 +37,8 @@ from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
-from openai import OpenAI
+from openai import OpenAI, RateLimitError, APITimeoutError, APIConnectionError
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 from qdrant_client import QdrantClient
 from qdrant_client.models import (
     Distance,
@@ -261,9 +262,19 @@ class KnowledgeBase:
     # Embedding
     # ------------------------------------------------------------------
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+        retry=retry_if_exception_type(
+            (RateLimitError, APITimeoutError, APIConnectionError)
+        ),
+    )
     def embed(self, texts: list[str]) -> list[list[float]]:
         """
         Embed a batch of texts via OpenAI text-embedding-3-large.
+
+        Retries up to 3 times with exponential backoff on transient
+        OpenAI errors (rate limit, timeout, connection).
 
         Args:
             texts: List of strings to embed.

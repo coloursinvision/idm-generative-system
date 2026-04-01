@@ -53,6 +53,8 @@ class NoiseFloor(BaseEffect):
         >>> output = nf(signal)
     """
 
+    _VALID_NOISE_TYPES = {"pink", "white", "hum_uk", "hum_us"}
+
     def __init__(
         self,
         noise_floor_db: float = -78.0,
@@ -61,6 +63,12 @@ class NoiseFloor(BaseEffect):
         crosstalk_db: float = -65.0,
         sr: int = 44100,
     ) -> None:
+        if noise_type not in self._VALID_NOISE_TYPES:
+            raise ValueError(
+                f"Invalid noise_type '{noise_type}'. "
+                f"Options: {sorted(self._VALID_NOISE_TYPES)}"
+            )
+
         self.noise_floor_db = noise_floor_db
         self.noise_type = noise_type
         self.hum_freq = hum_freq

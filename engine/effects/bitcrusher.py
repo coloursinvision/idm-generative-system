@@ -94,6 +94,8 @@ class Bitcrusher(BaseEffect):
         >>> output = bc(signal)
     """
 
+    _VALID_MODES = {"round", "truncate", "floor"}
+
     def __init__(
         self,
         bit_depth: int = 12,
@@ -103,13 +105,24 @@ class Bitcrusher(BaseEffect):
         hardware_preset: str | None = None,
         sr: int = 44100,
     ) -> None:
+        if mode not in self._VALID_MODES:
+            raise ValueError(
+                f"Invalid mode '{mode}'. "
+                f"Options: {sorted(self._VALID_MODES)}"
+            )
+        if hardware_preset is not None and hardware_preset not in HARDWARE_PRESETS:
+            raise ValueError(
+                f"Invalid hardware_preset '{hardware_preset}'. "
+                f"Options: {sorted(HARDWARE_PRESETS.keys())}"
+            )
+
         self.sr = sr
         self.dither = dither
         self.mode = mode
         self.hardware_preset = hardware_preset
 
         # Apply hardware preset if specified
-        if hardware_preset is not None and hardware_preset in HARDWARE_PRESETS:
+        if hardware_preset is not None:
             preset = HARDWARE_PRESETS[hardware_preset]
             self.bit_depth = preset["bit_depth"]
             target_sr = preset["target_sr"]

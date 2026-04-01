@@ -23,11 +23,13 @@ Usage:
 
 from __future__ import annotations
 
+import json
 import os
 from typing import Any
 
 from dotenv import load_dotenv
-from openai import OpenAI
+from openai import OpenAI, RateLimitError, APITimeoutError, APIConnectionError
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from knowledge.qdrant_client import KnowledgeBase
 
@@ -110,6 +112,44 @@ class RAGPipeline:
         self.model = model
 
     # ------------------------------------------------------------------
+    # LLM call with retry
+    # ------------------------------------------------------------------
+
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+        retry=retry_if_exception_type(
+            (RateLimitError, APITimeoutError, APIConnectionError)
+        ),
+    )
+    def _complete(
+        self,
+        system_prompt: str,
+        user_message: str,
+        temperature: float = 0.3,
+        max_tokens: int = 1500,
+    ) -> Any:
+        """
+        Call OpenAI chat completion with automatic retry on transient errors.
+
+        Retries up to 3 times with exponential backoff (1s, 2s, 4s) on:
+            - 429 RateLimitError
+            - APITimeoutError
+            - APIConnectionError
+
+        All other errors propagate immediately.
+        """
+        return self.openai.chat.completions.create(
+            model=self.model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_message},
+            ],
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+
+    # ------------------------------------------------------------------
     # Context assembly
     # ------------------------------------------------------------------
 
@@ -118,12 +158,17 @@ class RAGPipeline:
         query: str,
         limit: int = MAX_CONTEXT_CHUNKS,
         part_filter: str | None = None,
-    ) -> str:
+    ) -> tuple[str, list[dict[str, Any]]]:
         """
         Retrieve relevant chunks and assemble into a context string.
 
         Applies a hard character cap to prevent context overflow.
         Each chunk is wrapped with metadata for traceability.
+
+        Returns:
+            Tuple of (context_string, raw_search_results).
+            Single search call — callers use both outputs without
+            repeating the embedding + Qdrant query.
         """
         results = self.kb.search(
             query=query,
@@ -132,7 +177,7 @@ class RAGPipeline:
         )
 
         if not results:
-            return "[No relevant context found in knowledge base.]"
+            return "[No relevant context found in knowledge base.]", []
 
         context_parts: list[str] = []
         total_chars = 0
@@ -152,7 +197,7 @@ class RAGPipeline:
             context_parts.append(f"{chunk_header}\n{chunk_text}")
             total_chars += len(chunk_text)
 
-        return "\n\n---\n\n".join(context_parts)
+        return "\n\n---\n\n".join(context_parts), results
 
     # ------------------------------------------------------------------
     # Advisor mode (Manual)
@@ -175,7 +220,7 @@ class RAGPipeline:
         Returns:
             Dict with: answer, sources, model, usage.
         """
-        context = self._retrieve_context(
+        context, results = self._retrieve_context(
             query=question,
             limit=limit,
             part_filter=part_filter,
@@ -186,23 +231,17 @@ class RAGPipeline:
             f"QUESTION:\n{question}"
         )
 
-        response = self.openai.chat.completions.create(
-            model=self.model,
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT_ADVISOR},
-                {"role": "user", "content": user_message},
-            ],
+        response = self._complete(
+            system_prompt=SYSTEM_PROMPT_ADVISOR,
+            user_message=user_message,
             temperature=0.3,
-            max_tokens=1500,
         )
 
         choice = response.choices[0]
 
-        # Extract source titles for attribution
-        sources = self.kb.search(query=question, limit=limit, part_filter=part_filter)
         source_titles = [
             {"title": s["title"], "part": s["part"], "score": s["score"]}
-            for s in sources
+            for s in results
         ]
 
         return {
@@ -233,35 +272,33 @@ class RAGPipeline:
             limit:       Max context chunks to retrieve.
 
         Returns:
-            Dict with: config (raw JSON string), sources, model, usage.
+            Dict with: config (parsed dict), sources, model, usage.
         """
-        context = self._retrieve_context(query=description, limit=limit)
+        context, results = self._retrieve_context(query=description, limit=limit)
 
         user_message = (
             f"CONTEXT:\n{context}\n\n"
             f"AESTHETIC DESCRIPTION:\n{description}"
         )
 
-        response = self.openai.chat.completions.create(
-            model=self.model,
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT_COMPOSER},
-                {"role": "user", "content": user_message},
-            ],
+        response = self._complete(
+            system_prompt=SYSTEM_PROMPT_COMPOSER,
+            user_message=user_message,
             temperature=0.7,
-            max_tokens=1500,
         )
 
         choice = response.choices[0]
 
-        sources = self.kb.search(query=description, limit=limit)
+        # Validate and parse GPT-4o JSON output
+        config = self._parse_compose_output(choice.message.content)
+
         source_titles = [
             {"title": s["title"], "part": s["part"], "score": s["score"]}
-            for s in sources
+            for s in results
         ]
 
         return {
-            "config": choice.message.content,
+            "config": config,
             "sources": source_titles,
             "model": self.model,
             "usage": {
@@ -270,3 +307,56 @@ class RAGPipeline:
                 "total_tokens": response.usage.total_tokens,
             },
         }
+
+    # ------------------------------------------------------------------
+    # Output validation
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _parse_compose_output(raw: str) -> dict[str, Any]:
+        """
+        Parse and validate the JSON config returned by GPT-4o.
+
+        Handles common LLM output issues: markdown code fences,
+        preamble text, truncated output. Validates required keys.
+
+        Args:
+            raw: Raw string from GPT-4o completion.
+
+        Returns:
+            Parsed config dict.
+
+        Raises:
+            ValueError: If output is not valid JSON or missing required keys.
+        """
+        text = raw.strip()
+
+        # Strip markdown code fences if present
+        if text.startswith("```"):
+            # Remove opening fence (with optional language tag)
+            text = text.split("\n", 1)[1] if "\n" in text else text[3:]
+        if text.endswith("```"):
+            text = text.rsplit("```", 1)[0]
+        text = text.strip()
+
+        try:
+            config = json.loads(text)
+        except json.JSONDecodeError as e:
+            raise ValueError(
+                f"GPT-4o returned invalid JSON: {e}. "
+                f"Raw output (first 500 chars): {raw[:500]}"
+            )
+
+        if not isinstance(config, dict):
+            raise ValueError(
+                f"GPT-4o returned {type(config).__name__}, expected dict."
+            )
+
+        required = {"generator", "generator_params", "chain_overrides"}
+        missing = required - config.keys()
+        if missing:
+            raise ValueError(
+                f"GPT-4o config missing required keys: {sorted(missing)}"
+            )
+
+        return config

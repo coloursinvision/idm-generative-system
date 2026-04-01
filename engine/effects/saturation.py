@@ -77,6 +77,8 @@ class Saturation(BaseEffect):
         >>> sat = Saturation(drive=6.0, mode='wavefold', mix=1.0)
     """
 
+    _VALID_MODES = {"asymmetric", "symmetric", "tanh", "wavefold"}
+
     def __init__(
         self,
         drive: float = 1.5,
@@ -84,6 +86,12 @@ class Saturation(BaseEffect):
         mix: float = 0.8,
         output_gain: float = 1.0,
     ) -> None:
+        if mode not in self._VALID_MODES:
+            raise ValueError(
+                f"Invalid mode '{mode}'. "
+                f"Options: {sorted(self._VALID_MODES)}"
+            )
+
         self.drive = drive
         self.mode = mode
         self.mix = mix

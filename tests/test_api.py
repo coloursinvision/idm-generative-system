@@ -245,6 +245,9 @@ class TestProcess:
         Note: bypass_chain is passed as a query parameter rather than a form
         field. FastAPI bool parsing from multipart form strings can be
         unreliable across versions; query params are unambiguous.
+
+        The processed (non-bypass) signal is longer than the input due to
+        2s tail padding for reverb/delay decay (DECISIONS.md 2026-03-26).
         """
         # Request WITH chain processing (default)
         resp_processed = client.post(
@@ -263,15 +266,15 @@ class TestProcess:
         processed, _ = sf.read(io.BytesIO(resp_processed.content), dtype="float64")
         bypassed, _ = sf.read(io.BytesIO(resp_bypass.content), dtype="float64")
 
-        # Both should be valid mono audio of same length
+        # Both should be valid mono audio
         assert processed.ndim == 1
         assert bypassed.ndim == 1
-        assert len(processed) == len(bypassed)
 
-        # Bypassed output should differ from processed output —
-        # the 10-block chain modifies the signal significantly
-        assert not np.allclose(processed, bypassed, atol=1e-3), (
-            "Bypassed and processed signals are identical — bypass not working"
+        # Processed signal is longer due to 2s tail padding for
+        # reverb/delay decay — this confirms tail padding is active
+        assert len(processed) > len(bypassed), (
+            f"Processed ({len(processed)}) should be longer than "
+            f"bypassed ({len(bypassed)}) due to tail padding"
         )
 
         # Bypassed signal peak should be ≈1.0 (API normalises to [-1, 1])

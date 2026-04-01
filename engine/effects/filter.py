@@ -80,6 +80,8 @@ class ResonantFilter(BaseEffect):
         >>> output = f(signal)
     """
 
+    _VALID_FILTER_TYPES = {"lp", "hp", "bp"}
+
     def __init__(
         self,
         cutoff_hz: float = 1200.0,
@@ -90,6 +92,12 @@ class ResonantFilter(BaseEffect):
         envelope_mod: float = 0.5,
         sr: int = 44100,
     ) -> None:
+        if filter_type not in self._VALID_FILTER_TYPES:
+            raise ValueError(
+                f"Invalid filter_type '{filter_type}'. "
+                f"Options: {sorted(self._VALID_FILTER_TYPES)}"
+            )
+
         self.cutoff_hz = cutoff_hz
         self.resonance = resonance
         self.filter_type = filter_type
