@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import io
 import inspect
+import json
 from typing import Any
 
 import numpy as np
@@ -39,8 +40,6 @@ from engine.effects import (
     BaseEffect,
 )
 from knowledge.rag import RAGPipeline
-
-from fastapi.middleware.cors import CORSMiddleware
 
 
 # ---------------------------------------------------------------------------
@@ -193,6 +192,50 @@ def _signal_to_wav_response(
     )
 
 
+def _process_through_chain(
+    signal: np.ndarray,
+    chain: "EffectChain",
+    sr: int = SAMPLE_RATE,
+    tail_seconds: float = 2.0,
+    silence_threshold_db: float = -60.0,
+    safety_margin_s: float = 0.1,
+) -> np.ndarray:
+    """
+    Process signal through effects chain with tail padding and trim.
+
+    Pads the input with silence so reverb/delay tails decay naturally,
+    then trims trailing silence from the output. This is the canonical
+    processing path — both /generate and /process must use it.
+
+    Decision ref: DECISIONS.md 2026-03-26 (2-second tail padding).
+
+    Args:
+        signal:               Input audio array.
+        chain:                Configured EffectChain instance.
+        sr:                   Sample rate in Hz.
+        tail_seconds:         Silence to append before processing.
+        silence_threshold_db: Trim threshold in dB (below = silence).
+        safety_margin_s:      Extra time kept after last audible sample.
+
+    Returns:
+        Processed and trimmed audio array.
+    """
+    # Pad with silence so reverb/delay tails can decay naturally
+    tail_samples = int(tail_seconds * sr)
+    padded = np.concatenate([signal, np.zeros(tail_samples)])
+
+    processed = chain(padded)
+
+    # Trim trailing silence
+    threshold = 10.0 ** (silence_threshold_db / 20.0)
+    above = np.where(np.abs(processed) > threshold)[0]
+    if len(above) > 0:
+        end = min(above[-1] + int(safety_margin_s * sr), len(processed))
+        processed = processed[:end]
+
+    return processed
+
+
 def _extract_param_schema(cls: type) -> dict[str, Any]:
     """
     Extract constructor parameters and their defaults from an effect class.
@@ -231,6 +274,41 @@ def _extract_param_schema(cls: type) -> dict[str, Any]:
         }
 
     return params
+
+
+# Valid block keys derived from canonical chain order — single source of truth
+_VALID_CHAIN_KEYS: set[str] = {key for key, _ in CANONICAL_ORDER}
+
+
+def _validate_chain_keys(
+    overrides: dict[str, Any] | None,
+    skip: list[str] | None,
+) -> None:
+    """
+    Validate that chain_overrides keys and chain_skip entries are
+    recognised block names. Raises HTTPException 400 on invalid keys.
+    """
+    if overrides:
+        invalid = set(overrides.keys()) - _VALID_CHAIN_KEYS
+        if invalid:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"Unknown chain block keys in overrides: {sorted(invalid)}. "
+                    f"Valid: {sorted(_VALID_CHAIN_KEYS)}"
+                ),
+            )
+
+    if skip:
+        invalid = set(skip) - _VALID_CHAIN_KEYS
+        if invalid:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"Unknown chain block keys in skip: {sorted(invalid)}. "
+                    f"Valid: {sorted(_VALID_CHAIN_KEYS)}"
+                ),
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -327,24 +405,12 @@ async def generate(req: GenerateRequest) -> StreamingResponse:
 
     # Process through effects chain
     if not req.bypass_chain:
-        # Pad with 2s silence so reverb/delay tails can decay naturally
-        tail_samples = int(2.0 * SAMPLE_RATE)
-        signal = np.concatenate([signal, np.zeros(tail_samples)])
-
+        _validate_chain_keys(req.chain_overrides, req.chain_skip)
         chain = build_chain(
             overrides=req.chain_overrides or None,
             skip=req.chain_skip or None,
         )
-        signal = chain(signal)
-
-        # Trim trailing silence (below -60 dB)
-        threshold = 10 ** (-60 / 20)
-        abs_signal = np.abs(signal)
-        above = np.where(abs_signal > threshold)[0]
-        if len(above) > 0:
-            # Keep 0.1s after last audible sample
-            end = min(above[-1] + int(0.1 * SAMPLE_RATE), len(signal))
-            signal = signal[:end]
+        signal = _process_through_chain(signal, chain)
 
     return _signal_to_wav_response(signal, filename="generated.wav")
 
@@ -368,8 +434,6 @@ async def process_audio(
         chain_skip:      JSON string of block keys to skip.
         bypass_chain:    If true, return uploaded audio unchanged.
     """
-    import json
-
     # Parse JSON config from form fields
     try:
         overrides = json.loads(chain_overrides)
@@ -403,11 +467,12 @@ async def process_audio(
 
     # Process
     if not bypass_chain:
+        _validate_chain_keys(overrides, skip)
         chain = build_chain(
             overrides=overrides or None,
             skip=skip or None,
         )
-        signal = chain(signal)
+        signal = _process_through_chain(signal, chain, sr=sr)
 
     return _signal_to_wav_response(signal, sr=sr, filename="processed.wav")
 

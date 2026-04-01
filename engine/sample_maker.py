@@ -18,7 +18,6 @@ from __future__ import annotations
 import numpy as np
 import soundfile as sf
 from pathlib import Path
-from typing import Optional
 
 
 # ---------------------------------------------------------------------------
@@ -56,6 +55,7 @@ def glitch_click(
     length_ms: float = 200.0,
     decay: float = 4.0,
     sr: int = SAMPLE_RATE,
+    rng: np.random.Generator | None = None,
 ) -> np.ndarray:
     """
     Percussive glitch click: band-limited noise with exponential decay.
@@ -67,12 +67,15 @@ def glitch_click(
         length_ms: Duration in milliseconds (default 200ms).
         decay: Envelope decay rate. Lower = longer sustain. (default 4.0)
         sr: Sample rate in Hz.
+        rng: NumPy random Generator instance. None = default_rng().
 
     Returns:
         Normalised float32 array of shape (n_samples,).
     """
+    if rng is None:
+        rng = np.random.default_rng()
     length = int(sr * length_ms / 1000)
-    noise = np.random.randn(length)
+    noise = rng.standard_normal(length)
     envelope = np.exp(-np.linspace(0, decay, length))
     return normalize(noise * envelope).astype(np.float32)
 
@@ -82,6 +85,7 @@ def noise_burst(
     tone: float = 0.3,
     decay: float = 3.0,
     sr: int = SAMPLE_RATE,
+    rng: np.random.Generator | None = None,
 ) -> np.ndarray:
     """
     Noise burst with adjustable tone character.
@@ -96,12 +100,15 @@ def noise_burst(
         tone: Blend ratio between white noise (0.0) and smoothed noise (1.0).
         decay: Envelope decay rate. Lower = longer sustain. (default 3.0)
         sr: Sample rate in Hz.
+        rng: NumPy random Generator instance. None = default_rng().
 
     Returns:
         Normalised float32 array of shape (n_samples,).
     """
+    if rng is None:
+        rng = np.random.default_rng()
     length = int(sr * length_ms / 1000)
-    noise = np.random.randn(length)
+    noise = rng.standard_normal(length)
 
     t = np.linspace(0, 1, length)
     envelope = np.exp(-decay * t)
@@ -173,7 +180,7 @@ def batch_export(
     output_dir: str | Path,
     n: int = 8,
     sr: int = SAMPLE_RATE,
-    seed: Optional[int] = None,
+    seed: int | None = None,
 ) -> None:
     """
     Generate and export a batch of randomised samples.
@@ -189,28 +196,35 @@ def batch_export(
         sr: Sample rate in Hz.
         seed: Optional random seed for reproducibility.
     """
-    if seed is not None:
-        np.random.seed(seed)
+    rng = np.random.default_rng(seed)
 
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
 
     for i in range(1, n + 1):
         save_sample(
-            glitch_click(length_ms=float(np.random.randint(5, 25)), sr=sr),
+            glitch_click(
+                length_ms=float(rng.integers(5, 25)),
+                sr=sr,
+                rng=rng,
+            ),
             out / f"A{i}_glitch.wav",
             sr=sr,
         )
         save_sample(
-            noise_burst(length_ms=float(np.random.randint(40, 120)), sr=sr),
+            noise_burst(
+                length_ms=float(rng.integers(40, 120)),
+                sr=sr,
+                rng=rng,
+            ),
             out / f"B{i}_noise.wav",
             sr=sr,
         )
         save_sample(
             fm_blip(
-                freq=float(np.random.randint(150, 1200)),
-                mod_freq=float(np.random.randint(40, 300)),
-                mod_index=float(np.random.uniform(0.5, 6.0)),
+                freq=float(rng.integers(150, 1200)),
+                mod_freq=float(rng.integers(40, 300)),
+                mod_index=float(rng.uniform(0.5, 6.0)),
                 sr=sr,
             ),
             out / f"C{i}_fm.wav",

@@ -173,6 +173,12 @@ class GlitchEngine(BaseEffect):
         seed: int | None = None,
         sr: int = 44100,
     ) -> None:
+        if xor_mode not in XOR_MASKS:
+            raise ValueError(
+                f"Invalid xor_mode '{xor_mode}'. "
+                f"Options: {sorted(XOR_MASKS.keys())}"
+            )
+
         self.stutter_density = np.clip(stutter_density, 0.0, 1.0)
         self.stutter_min_ms = max(stutter_min_ms, 1.0)
         self.stutter_max_ms = max(stutter_max_ms, self.stutter_min_ms + 1.0)

@@ -117,6 +117,12 @@ class TapeDelay(BaseEffect):
         mix: float = 0.35,
         sr: int = 44100,
     ) -> None:
+        if tape_age not in TAPE_AGE_CUTOFF:
+            raise ValueError(
+                f"Invalid tape_age '{tape_age}'. "
+                f"Options: {sorted(TAPE_AGE_CUTOFF.keys())}"
+            )
+
         self.delay_ms = delay_ms
         self.feedback = np.clip(feedback, 0.0, 0.98)
         self.tape_saturation = tape_saturation

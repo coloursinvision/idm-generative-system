@@ -193,6 +193,17 @@ class VinylMastering(BaseEffect):
         seed: int | None = None,
         sr: int = 44100,
     ) -> None:
+        if dat_mode not in DAT_BANDWIDTH:
+            raise ValueError(
+                f"Invalid dat_mode '{dat_mode}'. "
+                f"Options: {sorted(DAT_BANDWIDTH.keys())}"
+            )
+        if vinyl_condition not in VINYL_CONDITION:
+            raise ValueError(
+                f"Invalid vinyl_condition '{vinyl_condition}'. "
+                f"Options: {sorted(VINYL_CONDITION.keys())}"
+            )
+
         self.riaa_intensity = np.clip(riaa_intensity, 0.0, 1.0)
         self.dat_mode = dat_mode
         self.dat_filter_order = np.clip(int(dat_filter_order), 2, 12)

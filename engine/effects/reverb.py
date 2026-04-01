@@ -115,6 +115,12 @@ class Reverb(BaseEffect):
         colour: float = 0.0,
         sr: int = 44100,
     ) -> None:
+        if reverb_type not in REVERB_TYPE_DECAY:
+            raise ValueError(
+                f"Invalid reverb_type '{reverb_type}'. "
+                f"Options: {sorted(REVERB_TYPE_DECAY.keys())}"
+            )
+
         self.reverb_type = reverb_type
         self.decay_s = decay_s
         self.pre_delay_ms = pre_delay_ms
@@ -254,15 +260,17 @@ class Reverb(BaseEffect):
         Apply colour filter to the reverb tail.
 
         Replicates the Quadraverb's HF/LF decay colour control:
-            colour > 0 → low-pass (darker tail)
-            colour < 0 → high-pass (brighter tail)
+            colour > 0 → high-pass (brighter tail, removes low-end mud)
+            colour < 0 → low-pass (darker tail, removes high-frequency content)
         """
         if self.colour > 0:
-            cutoff = min(0.99, 4000.0 * (1.0 + self.colour) / (self.sr / 2.0))
-            btype = "low"
-        else:
-            cutoff = max(0.001, 200.0 * (1.0 + abs(self.colour)) / (self.sr / 2.0))
+            # Positive = bright: high-pass removes low-end
+            cutoff = max(0.001, 200.0 * (1.0 + self.colour) / (self.sr / 2.0))
             btype = "high"
+        else:
+            # Negative = dark: low-pass removes treble
+            cutoff = min(0.99, 4000.0 * (1.0 + abs(self.colour)) / (self.sr / 2.0))
+            btype = "low"
 
         cutoff = np.clip(cutoff, 0.001, 0.999)
         sos = scipy_signal.butter(1, cutoff, btype=btype, output="sos")
