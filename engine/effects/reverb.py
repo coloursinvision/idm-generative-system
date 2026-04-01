@@ -37,6 +37,7 @@ Signal position: Saturation → [Block 5] → TapeDelay → ...
 from __future__ import annotations
 
 import numpy as np
+from numba import njit
 from scipy import signal as scipy_signal
 from engine.effects.base import BaseEffect
 
@@ -57,6 +58,68 @@ REVERB_TYPE_DECAY: dict[str, float] = {
 # Comb filter delay times in ms — tuned to Quadraverb plate character
 # (prime-number ratios to avoid resonant beating)
 COMB_DELAYS_MS: list[float] = [29.7, 37.1, 41.1, 43.7, 47.3, 53.1]
+
+
+# ---------------------------------------------------------------------------
+# Numba-compiled DSP kernels (CR-04)
+#
+# Per-sample loops extracted to module-level @njit functions.
+# LLVM-compiled on first call, cached to __pycache__ for subsequent loads.
+# No Python object overhead — operates directly on NumPy memory buffers.
+# ---------------------------------------------------------------------------
+
+@njit(cache=True)
+def _comb_filter_kernel(
+    signal: np.ndarray,
+    delay_samp: int,
+    g_eff: float,
+    density: float,
+    n: int,
+) -> np.ndarray:
+    """
+    Single comb filter inner loop — LLVM-compiled via Numba.
+
+    Feedback comb filter: each output sample feeds back into the buffer
+    at (position + delay) with gain g_eff * density. This is the core
+    Schroeder reverberator primitive.
+
+    Extracted from _comb_filter_bank to eliminate per-sample Python
+    overhead (~88k iterations per comb × 6 combs = ~530k total).
+    """
+    buf = np.zeros(delay_samp + n)
+    for i in range(n):
+        buf[i] += signal[i]
+    for i in range(n):
+        buf[i + delay_samp] += buf[i] * g_eff * density
+    return buf[:n]
+
+
+@njit(cache=True)
+def _allpass_kernel(
+    wet: np.ndarray,
+    delay_samp: int,
+    g_ap: float,
+    n: int,
+) -> np.ndarray:
+    """
+    Single allpass diffusor inner loop — LLVM-compiled via Numba.
+
+    Circular-buffer allpass filter: smooths early reflections by
+    decorrelating the phase of the comb filter output. The gain
+    coefficient g_ap controls diffusion density.
+
+    Extracted from _allpass_chain to eliminate per-sample Python
+    overhead (~88k iterations per allpass × 3 stages).
+    """
+    out = np.zeros(n)
+    buf = np.zeros(delay_samp)
+    ptr = 0
+    for i in range(n):
+        xh = wet[i] - g_ap * buf[ptr]
+        out[i] = g_ap * xh + buf[ptr]
+        buf[ptr] = xh
+        ptr = (ptr + 1) % delay_samp
+    return out
 
 
 class Reverb(BaseEffect):
@@ -198,6 +261,8 @@ class Reverb(BaseEffect):
         Each comb filter contributes a decaying echo stream.
         The combination of 6 prime-spaced delays produces the characteristic
         Quadraverb "thick" tail without obvious flutter echo.
+
+        Inner loop delegated to _comb_filter_kernel (Numba JIT-compiled).
         """
         wet = np.zeros(n)
 
@@ -214,14 +279,10 @@ class Reverb(BaseEffect):
                 g_base * self.lf_decay * (1.0 - self.density)
                 + g_base * self.hf_decay * self.density
             )
-            g_eff = np.clip(g_eff, 0.0, 0.999)
+            g_eff = float(np.clip(g_eff, 0.0, 0.999))
 
-            # Feedback comb filter
-            buf = np.zeros(delay_samp + n)
-            buf[:n] += signal
-            for i in range(n):
-                buf[i + delay_samp] += buf[i] * g_eff * self.density
-            wet += buf[:n]
+            # Feedback comb filter (Numba-compiled kernel)
+            wet += _comb_filter_kernel(signal, delay_samp, g_eff, self.density, n)
 
         return wet
 
@@ -232,6 +293,8 @@ class Reverb(BaseEffect):
         Three allpass filters with delay times derived from diffusion
         parameter. Higher diffusion = smoother, less grainy attack.
         Emulates the Quadraverb's EQ → Pitch → Delay signal path.
+
+        Inner loop delegated to _allpass_kernel (Numba JIT-compiled).
         """
         allpass_delays_ms = [5.0, 1.7, 3.5 * self.diffusion]
 
@@ -241,17 +304,7 @@ class Reverb(BaseEffect):
                 continue
 
             g_ap = 0.7 * self.diffusion
-            out = np.zeros(n)
-            buf = np.zeros(d)
-            ptr = 0
-
-            for i in range(n):
-                xh = wet[i] - g_ap * buf[ptr]
-                out[i] = g_ap * xh + buf[ptr]
-                buf[ptr] = xh
-                ptr = (ptr + 1) % d
-
-            wet = out
+            wet = _allpass_kernel(wet, d, g_ap, n)
 
         return wet
 
