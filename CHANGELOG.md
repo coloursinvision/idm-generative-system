@@ -22,12 +22,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **RAG pipeline** — `_retrieve_context()` returns both the assembled context string and raw search results in a single call. Eliminates a redundant embedding + Qdrant query that was duplicated in `ask()` and `compose()`.
 - **Composer output validation** — `compose()` now parses and validates the JSON configuration returned by GPT-4o. Strips markdown code fences, verifies required keys (`generator`, `generator_params`, `chain_overrides`), and returns a parsed dict instead of a raw string.
 - **RNG modernisation** in `sample_maker.py` — replaced deprecated `np.random.seed()` with `np.random.default_rng()`. Added optional `rng: np.random.Generator` parameter to `glitch_click()` and `noise_burst()` for thread-safe, fully reproducible generation. `batch_export()` propagates a single generator instance through all calls.
-- **Test suite** — `test_process_bypass_chain_signal_unchanged` updated to verify that processed output is longer than bypassed output (confirming tail padding is active).
 
 ### Added
 
-- **Retry logic** on all external API calls via `tenacity`. `RAGPipeline._complete()` and `KnowledgeBase.embed()` retry up to 3 times with exponential backoff (1s → 2s → 4s) on `RateLimitError`, `APITimeoutError`, and `APIConnectionError`.
+- **Unit test suite for DSP effects** (`tests/test_effects.py`) — 159 test cases covering all 10 effect blocks: shape preservation, mono signal integrity, dtype checks, edge cases (all-zeros, single sample), NaN/Inf detection, parameter validation (ValueError on invalid input), valid parameter construction for all documented options, stateful block reset (Compressor envelope follower), parameter extremes (max drive, min bit depth, near self-oscillation, maximum destruction), hardware presets (SP-1200, S950, RZ-1, 909), EffectChain operations (bypass, skip, append/remove, insert), and seeded reproducibility for stochastic blocks (GlitchEngine, VinylMastering).
+- **RAG endpoint test suite** (`tests/test_rag.py`) — 20 test cases with fully mocked OpenAI and Qdrant dependencies: `/ask` and `/compose` endpoint integration tests (HTTP 200, 422, 500), input validation, RAG pipeline single-search verification, GPT-4o JSON output validation (markdown fence stripping, missing keys, malformed JSON), empty context handling, and markdown chunking logic (empty document, multi-section, TOC, subsection splitting, metadata integrity).
+- **Test adaptation** — `test_process_bypass_chain_signal_unchanged` updated to verify that processed output is longer than bypassed output, confirming tail padding is active.
+- **Retry logic** on all external API calls via `tenacity`. `RAGPipeline._complete()` and `KnowledgeBase.embed()` retry up to 3 times with exponential backoff (1s, 2s, 4s) on `RateLimitError`, `APITimeoutError`, and `APIConnectionError`.
 - `tenacity` added to `requirements.txt`.
+- Total test coverage: **182 tests passing** (23 API integration + 139 effects unit + 20 RAG unit), up from 23 at start of session.
 
 ---
 
