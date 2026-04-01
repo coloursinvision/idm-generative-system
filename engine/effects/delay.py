@@ -49,6 +49,7 @@ Signal position: Reverb → [Block 6] → SpatialProcessor → ...
 from __future__ import annotations
 
 import numpy as np
+from numba import njit
 from scipy import signal as scipy_signal
 from engine.effects.base import BaseEffect
 
@@ -62,6 +63,67 @@ TAPE_AGE_CUTOFF: dict[str, int] = {
     "used": 8000,
     "worn": 4500,
 }
+
+
+# ---------------------------------------------------------------------------
+# Numba-compiled DSP kernel (CR-04)
+#
+# Delay line with per-sample modulation offset, tanh tape saturation in
+# feedback path, and write-back. LLVM-compiled — eliminates ~88k Python
+# iterations for a typical 2s signal at 44.1 kHz.
+# ---------------------------------------------------------------------------
+
+@njit(cache=True)
+def _delay_line_kernel(
+    signal: np.ndarray,
+    modulation: np.ndarray,
+    buf: np.ndarray,
+    delay_samples: int,
+    feedback: float,
+    tape_saturation: float,
+    sr: int,
+    n: int,
+    buf_len: int,
+) -> np.ndarray:
+    """
+    Tape delay line inner loop — LLVM-compiled via Numba.
+
+    Per-sample processing:
+      1. Read from buffer at (i + delay + modulation_offset) — wow/flutter
+      2. Apply tanh saturation to read sample — tape head distortion
+      3. Write saturated sample × feedback back into buffer — recirculation
+      4. Store wet output sample
+
+    The modulation offset (from wow/flutter LFO) is converted to integer
+    sample index and clamped to buffer bounds.
+
+    Extracted from TapeDelay.__call__ to eliminate per-sample Python
+    overhead. np.tanh is replaced with scalar math.tanh equivalent
+    via Numba's native tanh intrinsic.
+    """
+    wet = np.zeros(n)
+    sat_gain = 1.0 + tape_saturation * 3.0
+
+    for i in range(n):
+        mod_offset = int(modulation[i] * sr)
+        read_idx = i + delay_samples + mod_offset
+        # Clamp to buffer bounds
+        if read_idx < 0:
+            read_idx = 0
+        elif read_idx >= buf_len:
+            read_idx = buf_len - 1
+
+        delayed_sample = buf[read_idx]
+
+        # Tape head saturation in feedback path (scalar tanh)
+        saturated = np.tanh(delayed_sample * sat_gain)
+        wet[i] = saturated
+
+        write_idx = i + delay_samples
+        if write_idx < buf_len:
+            buf[write_idx] += saturated * feedback
+
+    return wet
 
 
 class TapeDelay(BaseEffect):
@@ -157,24 +219,13 @@ class TapeDelay(BaseEffect):
         buf_len = delay_samples + max_mod_offset + n + 1
         buf = np.zeros(buf_len)
         buf[:n] = signal
-        wet = np.zeros(n)
 
-        for i in range(n):
-            mod_offset = int(modulation[i] * self.sr)
-            read_idx = int(
-                np.clip(i + delay_samples + mod_offset, 0, buf_len - 1)
-            )
-            delayed_sample = buf[read_idx]
-
-            # Tape head saturation in feedback path
-            saturated = np.tanh(
-                delayed_sample * (1.0 + self.tape_saturation * 3.0)
-            )
-            wet[i] = saturated
-
-            write_idx = i + delay_samples
-            if write_idx < buf_len:
-                buf[write_idx] += saturated * self.feedback
+        # Delay line processing (Numba-compiled kernel)
+        wet = _delay_line_kernel(
+            signal, modulation, buf,
+            delay_samples, float(self.feedback), self.tape_saturation,
+            self.sr, n, buf_len,
+        )
 
         # Apply tape frequency response (HF rolloff)
         wet = scipy_signal.sosfilt(sos_tape, wet)

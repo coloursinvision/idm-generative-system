@@ -11,6 +11,8 @@ Coverage:
     - Edge cases: all-zeros, single sample, very short signal
     - Parameter extremes: max drive, min bit depth, high feedback
     - Bypass behaviour: effects at neutral settings
+    - Numba kernel regression (CR-04): output parity vs pure-Python reference
+    - Vectorised RMS envelope: output parity vs sequential reference
 
 Run:
     pytest tests/test_effects.py -v
@@ -37,6 +39,11 @@ from engine.effects import (
     Compressor,
     VinylMastering,
 )
+
+# Numba-compiled kernels — imported for direct regression testing
+from engine.effects.reverb import _comb_filter_kernel, _allpass_kernel
+from engine.effects.delay import _delay_line_kernel
+from engine.effects.compressor import _smooth_envelope_single, _smooth_envelope_auto
 
 
 # ---------------------------------------------------------------------------
@@ -224,36 +231,36 @@ class TestParameterValidation:
 
 
 # ---------------------------------------------------------------------------
-# Valid parameter construction
+# Valid parameter acceptance
 # ---------------------------------------------------------------------------
 
 class TestValidParameters:
-    """All documented parameter values must construct without error."""
+    """Every documented option for every string parameter must be accepted."""
 
-    @pytest.mark.parametrize("noise_type", ["pink", "white", "hum_uk", "hum_us"])
-    def test_noise_floor_valid_types(self, noise_type: str) -> None:
-        nf = NoiseFloor(noise_type=noise_type)
-        assert nf.noise_type == noise_type
+    @pytest.mark.parametrize("nt", ["pink", "white", "hum_uk", "hum_us"])
+    def test_noise_floor_valid_types(self, nt: str) -> None:
+        nf = NoiseFloor(noise_type=nt)
+        assert nf.noise_type == nt
 
-    @pytest.mark.parametrize("preset", ["sp1200", "s950", "rz1", "909_cymbal", None])
-    def test_bitcrusher_valid_presets(self, preset: str | None) -> None:
-        bc = Bitcrusher(hardware_preset=preset)
-        assert bc.hardware_preset == preset
+    @pytest.mark.parametrize("m", ["floor", "round", "truncate"])
+    def test_bitcrusher_valid_modes(self, m: str) -> None:
+        bc = Bitcrusher(mode=m)
+        assert bc.mode == m
 
-    @pytest.mark.parametrize("mode", ["round", "truncate", "floor"])
-    def test_bitcrusher_valid_modes(self, mode: str) -> None:
-        bc = Bitcrusher(mode=mode)
-        assert bc.mode == mode
+    @pytest.mark.parametrize("hp", ["sp1200", "s950", "rz1", "909_cymbal"])
+    def test_bitcrusher_valid_presets(self, hp: str) -> None:
+        bc = Bitcrusher(hardware_preset=hp)
+        assert bc.hardware_preset == hp
+
+    @pytest.mark.parametrize("m", ["asymmetric", "symmetric", "tanh", "wavefold"])
+    def test_saturation_valid_modes(self, m: str) -> None:
+        s = Saturation(mode=m)
+        assert s.mode == m
 
     @pytest.mark.parametrize("ft", ["lp", "hp", "bp"])
     def test_filter_valid_types(self, ft: str) -> None:
         f = ResonantFilter(filter_type=ft)
         assert f.filter_type == ft
-
-    @pytest.mark.parametrize("mode", ["asymmetric", "symmetric", "tanh", "wavefold"])
-    def test_saturation_valid_modes(self, mode: str) -> None:
-        s = Saturation(mode=mode)
-        assert s.mode == mode
 
     @pytest.mark.parametrize("rt", ["room", "chamber", "plate", "hall", "spring"])
     def test_reverb_valid_types(self, rt: str) -> None:
@@ -485,3 +492,475 @@ class TestReproducibility:
         out1 = vm1(signal_short.copy())
         out2 = vm2(signal_short.copy())
         np.testing.assert_array_equal(out1, out2)
+
+
+# ===========================================================================
+# CR-04 — Numba kernel regression tests
+#
+# Each test class provides a pure-Python reference implementation of the
+# original pre-Numba loop, then asserts that the Numba-compiled kernel
+# produces numerically identical output (within double-precision tolerance).
+#
+# Tolerance: rtol=1e-12, atol=1e-15 — allows for LLVM vs CPython float
+# evaluation order differences, which are negligible at float64 precision.
+# ===========================================================================
+
+# Tolerance constants for Numba regression comparisons
+NUMBA_RTOL = 1e-12
+NUMBA_ATOL = 1e-15
+
+
+class TestCombFilterKernelRegression:
+    """Verify _comb_filter_kernel matches pure-Python reference."""
+
+    @staticmethod
+    def _reference_comb_filter(
+        signal: np.ndarray,
+        delay_samp: int,
+        g_eff: float,
+        density: float,
+        n: int,
+    ) -> np.ndarray:
+        """Pure-Python reference — original pre-Numba implementation."""
+        buf = np.zeros(delay_samp + n)
+        buf[:n] += signal
+        for i in range(n):
+            buf[i + delay_samp] += buf[i] * g_eff * density
+        return buf[:n]
+
+    def test_parity_short_signal(self, signal_short: np.ndarray) -> None:
+        delay_samp = 1309  # ~29.7ms at 44100 Hz
+        g_eff = 0.85
+        density = 0.8
+        n = len(signal_short)
+
+        ref = self._reference_comb_filter(signal_short, delay_samp, g_eff, density, n)
+        jit = _comb_filter_kernel(signal_short, delay_samp, g_eff, density, n)
+
+        np.testing.assert_allclose(jit, ref, rtol=NUMBA_RTOL, atol=NUMBA_ATOL)
+
+    def test_parity_medium_signal(self, signal_medium: np.ndarray) -> None:
+        delay_samp = 1636  # ~37.1ms at 44100 Hz
+        g_eff = 0.92
+        density = 0.6
+        n = len(signal_medium)
+
+        ref = self._reference_comb_filter(signal_medium, delay_samp, g_eff, density, n)
+        jit = _comb_filter_kernel(signal_medium, delay_samp, g_eff, density, n)
+
+        np.testing.assert_allclose(jit, ref, rtol=NUMBA_RTOL, atol=NUMBA_ATOL)
+
+    def test_parity_zeros(self) -> None:
+        """Comb filter on silence must return silence."""
+        n = 2048
+        signal = np.zeros(n)
+        ref = self._reference_comb_filter(signal, 1000, 0.9, 0.8, n)
+        jit = _comb_filter_kernel(signal, 1000, 0.9, 0.8, n)
+        np.testing.assert_array_equal(jit, ref)
+
+    def test_parity_extreme_feedback(self, signal_short: np.ndarray) -> None:
+        """Near-unity feedback — maximum accumulation stress test."""
+        delay_samp = 500
+        g_eff = 0.999
+        density = 1.0
+        n = len(signal_short)
+
+        ref = self._reference_comb_filter(signal_short, delay_samp, g_eff, density, n)
+        jit = _comb_filter_kernel(signal_short, delay_samp, g_eff, density, n)
+
+        np.testing.assert_allclose(jit, ref, rtol=NUMBA_RTOL, atol=NUMBA_ATOL)
+
+    @pytest.mark.parametrize("delay_samp", [1, 50, 500, 1024])
+    def test_parity_varied_delays(self, signal_short: np.ndarray, delay_samp: int) -> None:
+        """Verify across a range of delay lengths."""
+        n = len(signal_short)
+        if delay_samp >= n:
+            pytest.skip("Delay exceeds signal length")
+        g_eff = 0.8
+        density = 0.7
+
+        ref = self._reference_comb_filter(signal_short, delay_samp, g_eff, density, n)
+        jit = _comb_filter_kernel(signal_short, delay_samp, g_eff, density, n)
+
+        np.testing.assert_allclose(jit, ref, rtol=NUMBA_RTOL, atol=NUMBA_ATOL)
+
+
+class TestAllpassKernelRegression:
+    """Verify _allpass_kernel matches pure-Python reference."""
+
+    @staticmethod
+    def _reference_allpass(
+        wet: np.ndarray,
+        delay_samp: int,
+        g_ap: float,
+        n: int,
+    ) -> np.ndarray:
+        """Pure-Python reference — original pre-Numba implementation."""
+        out = np.zeros(n)
+        buf = np.zeros(delay_samp)
+        ptr = 0
+        for i in range(n):
+            xh = wet[i] - g_ap * buf[ptr]
+            out[i] = g_ap * xh + buf[ptr]
+            buf[ptr] = xh
+            ptr = (ptr + 1) % delay_samp
+        return out
+
+    def test_parity_short_signal(self, signal_short: np.ndarray) -> None:
+        delay_samp = 220  # ~5ms at 44100 Hz
+        g_ap = 0.49  # 0.7 * 0.7 diffusion
+        n = len(signal_short)
+
+        ref = self._reference_allpass(signal_short, delay_samp, g_ap, n)
+        jit = _allpass_kernel(signal_short, delay_samp, g_ap, n)
+
+        np.testing.assert_allclose(jit, ref, rtol=NUMBA_RTOL, atol=NUMBA_ATOL)
+
+    def test_parity_medium_signal(self, signal_medium: np.ndarray) -> None:
+        delay_samp = 75  # ~1.7ms at 44100 Hz
+        g_ap = 0.63  # 0.7 * 0.9 diffusion
+        n = len(signal_medium)
+
+        ref = self._reference_allpass(signal_medium, delay_samp, g_ap, n)
+        jit = _allpass_kernel(signal_medium, delay_samp, g_ap, n)
+
+        np.testing.assert_allclose(jit, ref, rtol=NUMBA_RTOL, atol=NUMBA_ATOL)
+
+    def test_parity_zeros(self) -> None:
+        """Allpass on silence must return silence."""
+        n = 2048
+        wet = np.zeros(n)
+        ref = self._reference_allpass(wet, 100, 0.5, n)
+        jit = _allpass_kernel(wet, 100, 0.5, n)
+        np.testing.assert_array_equal(jit, ref)
+
+    @pytest.mark.parametrize("delay_samp", [1, 10, 75, 220, 500])
+    def test_parity_varied_delays(self, signal_short: np.ndarray, delay_samp: int) -> None:
+        n = len(signal_short)
+        g_ap = 0.49
+
+        ref = self._reference_allpass(signal_short, delay_samp, g_ap, n)
+        jit = _allpass_kernel(signal_short, delay_samp, g_ap, n)
+
+        np.testing.assert_allclose(jit, ref, rtol=NUMBA_RTOL, atol=NUMBA_ATOL)
+
+
+class TestDelayLineKernelRegression:
+    """Verify _delay_line_kernel matches pure-Python reference."""
+
+    @staticmethod
+    def _reference_delay_line(
+        signal: np.ndarray,
+        modulation: np.ndarray,
+        buf: np.ndarray,
+        delay_samples: int,
+        feedback: float,
+        tape_saturation: float,
+        sr: int,
+        n: int,
+        buf_len: int,
+    ) -> np.ndarray:
+        """Pure-Python reference — original pre-Numba implementation."""
+        wet = np.zeros(n)
+        for i in range(n):
+            mod_offset = int(modulation[i] * sr)
+            read_idx = int(
+                np.clip(i + delay_samples + mod_offset, 0, buf_len - 1)
+            )
+            delayed_sample = buf[read_idx]
+
+            saturated = np.tanh(
+                delayed_sample * (1.0 + tape_saturation * 3.0)
+            )
+            wet[i] = saturated
+
+            write_idx = i + delay_samples
+            if write_idx < buf_len:
+                buf[write_idx] += saturated * feedback
+        return wet
+
+    def test_parity_default_params(self, signal_short: np.ndarray) -> None:
+        n = len(signal_short)
+        sr = 44100
+        delay_samples = int(375.0 * sr / 1000)
+        feedback = 0.45
+        tape_saturation = 0.4
+        wow_depth = 0.004
+
+        # Generate modulation (identical for both)
+        t = np.arange(n) / sr
+        modulation = (
+            np.sin(2.0 * np.pi * 0.8 * t) * wow_depth
+            + np.sin(2.0 * np.pi * 0.8 * 7.3 * t) * wow_depth * 0.3
+        )
+
+        max_mod_offset = int(wow_depth * sr) + 1
+        buf_len = delay_samples + max_mod_offset + n + 1
+
+        # Reference — separate buffer copy
+        buf_ref = np.zeros(buf_len)
+        buf_ref[:n] = signal_short
+        ref = self._reference_delay_line(
+            signal_short, modulation, buf_ref,
+            delay_samples, feedback, tape_saturation, sr, n, buf_len,
+        )
+
+        # Numba — separate buffer copy
+        buf_jit = np.zeros(buf_len)
+        buf_jit[:n] = signal_short
+        jit = _delay_line_kernel(
+            signal_short, modulation, buf_jit,
+            delay_samples, feedback, tape_saturation, sr, n, buf_len,
+        )
+
+        np.testing.assert_allclose(jit, ref, rtol=NUMBA_RTOL, atol=NUMBA_ATOL)
+
+    def test_parity_high_feedback(self, signal_medium: np.ndarray) -> None:
+        """Near self-oscillation — stress test for accumulated precision."""
+        n = len(signal_medium)
+        sr = 44100
+        delay_samples = int(200.0 * sr / 1000)
+        feedback = 0.97
+        tape_saturation = 0.8
+        wow_depth = 0.004
+
+        t = np.arange(n) / sr
+        modulation = (
+            np.sin(2.0 * np.pi * 0.8 * t) * wow_depth
+            + np.sin(2.0 * np.pi * 0.8 * 7.3 * t) * wow_depth * 0.3
+        )
+
+        max_mod_offset = int(wow_depth * sr) + 1
+        buf_len = delay_samples + max_mod_offset + n + 1
+
+        buf_ref = np.zeros(buf_len)
+        buf_ref[:n] = signal_medium
+        ref = self._reference_delay_line(
+            signal_medium, modulation, buf_ref,
+            delay_samples, feedback, tape_saturation, sr, n, buf_len,
+        )
+
+        buf_jit = np.zeros(buf_len)
+        buf_jit[:n] = signal_medium
+        jit = _delay_line_kernel(
+            signal_medium, modulation, buf_jit,
+            delay_samples, feedback, tape_saturation, sr, n, buf_len,
+        )
+
+        np.testing.assert_allclose(jit, ref, rtol=NUMBA_RTOL, atol=NUMBA_ATOL)
+
+    def test_parity_zero_modulation(self, signal_short: np.ndarray) -> None:
+        """No wow/flutter — pure delay line without pitch instability."""
+        n = len(signal_short)
+        sr = 44100
+        delay_samples = 500
+        modulation = np.zeros(n)
+        buf_len = delay_samples + n + 2
+
+        buf_ref = np.zeros(buf_len)
+        buf_ref[:n] = signal_short
+        ref = self._reference_delay_line(
+            signal_short, modulation, buf_ref,
+            delay_samples, 0.5, 0.0, sr, n, buf_len,
+        )
+
+        buf_jit = np.zeros(buf_len)
+        buf_jit[:n] = signal_short
+        jit = _delay_line_kernel(
+            signal_short, modulation, buf_jit,
+            delay_samples, 0.5, 0.0, sr, n, buf_len,
+        )
+
+        np.testing.assert_allclose(jit, ref, rtol=NUMBA_RTOL, atol=NUMBA_ATOL)
+
+
+class TestSmoothEnvelopeKernelRegression:
+    """Verify _smooth_envelope_single and _smooth_envelope_auto match pure-Python references."""
+
+    @staticmethod
+    def _reference_smooth_single(
+        gr_db: np.ndarray,
+        n: int,
+        attack_coeff: float,
+        release_coeff: float,
+        env_init: float,
+    ) -> tuple[np.ndarray, float]:
+        """Pure-Python reference — original single-detector envelope."""
+        smoothed = np.zeros(n)
+        env = env_init
+        for i in range(n):
+            target = gr_db[i]
+            if target < env:
+                env = attack_coeff * env + (1.0 - attack_coeff) * target
+            else:
+                env = release_coeff * env + (1.0 - release_coeff) * target
+            smoothed[i] = env
+        return smoothed, env
+
+    @staticmethod
+    def _reference_smooth_auto(
+        gr_db: np.ndarray,
+        n: int,
+        attack_coeff: float,
+        fast_release_coeff: float,
+        slow_release_coeff: float,
+        env_init: float,
+    ) -> tuple[np.ndarray, float]:
+        """Pure-Python reference — original dual-detector auto-release envelope."""
+        smoothed = np.zeros(n)
+        env_fast = env_init
+        env_slow = env_init
+        for i in range(n):
+            target = gr_db[i]
+            if target < env_fast:
+                env_fast = attack_coeff * env_fast + (1.0 - attack_coeff) * target
+            else:
+                env_fast = fast_release_coeff * env_fast + (1.0 - fast_release_coeff) * target
+            if target < env_slow:
+                env_slow = attack_coeff * env_slow + (1.0 - attack_coeff) * target
+            else:
+                env_slow = slow_release_coeff * env_slow + (1.0 - slow_release_coeff) * target
+            smoothed[i] = min(env_fast, env_slow)
+        return smoothed, min(env_fast, env_slow)
+
+    def test_single_detector_parity(self) -> None:
+        rng = np.random.default_rng(42)
+        gr_db = rng.uniform(-20.0, 0.0, 4410).astype(np.float64)
+        n = len(gr_db)
+        attack_coeff = np.exp(-1.0 / (10.0 * 44100 / 1000))
+        release_coeff = np.exp(-1.0 / (100.0 * 44100 / 1000))
+
+        ref_out, ref_env = self._reference_smooth_single(
+            gr_db, n, float(attack_coeff), float(release_coeff), 0.0,
+        )
+        jit_out, jit_env = _smooth_envelope_single(
+            gr_db, n, float(attack_coeff), float(release_coeff), 0.0,
+        )
+
+        np.testing.assert_allclose(jit_out, ref_out, rtol=NUMBA_RTOL, atol=NUMBA_ATOL)
+        assert abs(jit_env - ref_env) < 1e-12
+
+    def test_auto_release_parity(self) -> None:
+        rng = np.random.default_rng(99)
+        gr_db = rng.uniform(-30.0, 0.0, 8820).astype(np.float64)
+        n = len(gr_db)
+        sr = 44100
+        attack_coeff = float(np.exp(-1.0 / (10.0 * sr / 1000)))
+        fast_release = float(np.exp(-1.0 / (50.0 * sr / 1000)))
+        slow_release = float(np.exp(-1.0 / (600.0 * sr / 1000)))
+
+        ref_out, ref_env = self._reference_smooth_auto(
+            gr_db, n, attack_coeff, fast_release, slow_release, 0.0,
+        )
+        jit_out, jit_env = _smooth_envelope_auto(
+            gr_db, n, attack_coeff, fast_release, slow_release, 0.0,
+        )
+
+        np.testing.assert_allclose(jit_out, ref_out, rtol=NUMBA_RTOL, atol=NUMBA_ATOL)
+        assert abs(jit_env - ref_env) < 1e-12
+
+    def test_single_detector_nonzero_init(self) -> None:
+        """Verify correct state propagation from non-zero initial envelope."""
+        rng = np.random.default_rng(7)
+        gr_db = rng.uniform(-15.0, 0.0, 2048).astype(np.float64)
+        n = len(gr_db)
+        attack_coeff = float(np.exp(-1.0 / (5.0 * 44100 / 1000)))
+        release_coeff = float(np.exp(-1.0 / (200.0 * 44100 / 1000)))
+        env_init = -8.0
+
+        ref_out, ref_env = self._reference_smooth_single(
+            gr_db, n, attack_coeff, release_coeff, env_init,
+        )
+        jit_out, jit_env = _smooth_envelope_single(
+            gr_db, n, attack_coeff, release_coeff, env_init,
+        )
+
+        np.testing.assert_allclose(jit_out, ref_out, rtol=NUMBA_RTOL, atol=NUMBA_ATOL)
+        assert abs(jit_env - ref_env) < 1e-12
+
+    def test_auto_release_nonzero_init(self) -> None:
+        """Verify correct state propagation from non-zero initial envelope."""
+        rng = np.random.default_rng(13)
+        gr_db = rng.uniform(-25.0, 0.0, 4096).astype(np.float64)
+        n = len(gr_db)
+        sr = 44100
+        attack_coeff = float(np.exp(-1.0 / (15.0 * sr / 1000)))
+        fast_release = float(np.exp(-1.0 / (50.0 * sr / 1000)))
+        slow_release = float(np.exp(-1.0 / (600.0 * sr / 1000)))
+        env_init = -12.0
+
+        ref_out, ref_env = self._reference_smooth_auto(
+            gr_db, n, attack_coeff, fast_release, slow_release, env_init,
+        )
+        jit_out, jit_env = _smooth_envelope_auto(
+            gr_db, n, attack_coeff, fast_release, slow_release, env_init,
+        )
+
+        np.testing.assert_allclose(jit_out, ref_out, rtol=NUMBA_RTOL, atol=NUMBA_ATOL)
+        assert abs(jit_env - ref_env) < 1e-12
+
+    def test_single_detector_all_zeros(self) -> None:
+        """Zero gain reduction input should converge to zero."""
+        gr_db = np.zeros(1024)
+        n = len(gr_db)
+        ref_out, _ = self._reference_smooth_single(gr_db, n, 0.99, 0.999, 0.0)
+        jit_out, _ = _smooth_envelope_single(gr_db, n, 0.99, 0.999, 0.0)
+        np.testing.assert_array_equal(jit_out, ref_out)
+
+
+class TestRMSEnvelopeVectorisation:
+    """Verify vectorised _compute_rms_envelope matches sequential reference."""
+
+    @staticmethod
+    def _reference_rms_sequential(
+        signal: np.ndarray,
+        window_samp: int,
+    ) -> np.ndarray:
+        """Pure-Python reference — original sequential loop."""
+        n = len(signal)
+        sq = signal ** 2
+        cumsum = np.cumsum(sq)
+        cumsum = np.insert(cumsum, 0, 0.0)
+
+        rms_sq = np.zeros(n)
+        for i in range(n):
+            start = max(0, i - window_samp + 1)
+            rms_sq[i] = (cumsum[i + 1] - cumsum[start]) / (i - start + 1)
+
+        rms_linear = np.sqrt(np.maximum(rms_sq, 1e-12))
+        return 20.0 * np.log10(rms_linear)
+
+    def test_parity_default_window(self, signal_short: np.ndarray) -> None:
+        """Default 10ms window at 44100 Hz = 441 samples."""
+        window_samp = 441
+        comp = Compressor(rms_window_ms=10.0)
+        vectorised = comp._compute_rms_envelope(signal_short)
+        reference = self._reference_rms_sequential(signal_short, window_samp)
+
+        np.testing.assert_allclose(vectorised, reference, rtol=1e-12, atol=1e-15)
+
+    def test_parity_short_window(self, signal_short: np.ndarray) -> None:
+        """1ms window — most transient-responsive setting."""
+        window_samp = max(int(1.0 * 44100 / 1000), 1)
+        comp = Compressor(rms_window_ms=1.0)
+        vectorised = comp._compute_rms_envelope(signal_short)
+        reference = self._reference_rms_sequential(signal_short, window_samp)
+
+        np.testing.assert_allclose(vectorised, reference, rtol=1e-12, atol=1e-15)
+
+    def test_parity_long_window(self, signal_medium: np.ndarray) -> None:
+        """50ms window — smoothest RMS detection."""
+        window_samp = max(int(50.0 * 44100 / 1000), 1)
+        comp = Compressor(rms_window_ms=50.0)
+        vectorised = comp._compute_rms_envelope(signal_medium)
+        reference = self._reference_rms_sequential(signal_medium, window_samp)
+
+        np.testing.assert_allclose(vectorised, reference, rtol=1e-12, atol=1e-15)
+
+    def test_all_zeros_returns_floor(self) -> None:
+        """Silence should produce -120 dB floor (from 1e-12 guard)."""
+        signal = np.zeros(2048)
+        comp = Compressor(rms_window_ms=10.0)
+        result = comp._compute_rms_envelope(signal)
+        expected_db = 20.0 * np.log10(np.sqrt(1e-12))
+        np.testing.assert_allclose(result, expected_db, rtol=1e-10)

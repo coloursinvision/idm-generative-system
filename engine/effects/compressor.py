@@ -56,6 +56,7 @@ Signal position: GlitchEngine → [Block 9] → VinylMastering → OUTPUT
 from __future__ import annotations
 
 import numpy as np
+from numba import njit
 from scipy import signal as scipy_signal
 from engine.effects.base import BaseEffect
 
@@ -90,6 +91,97 @@ COMPRESSOR_PRESETS: dict[str, dict] = {
         "auto_release":  False,
     },
 }
+
+
+# ---------------------------------------------------------------------------
+# Numba-compiled DSP kernels (CR-04)
+#
+# Envelope smoothing loops extracted to module-level @njit functions.
+# These are the compressor's tightest inner loops — per-sample attack/release
+# ballistics that cannot be vectorised (each sample depends on the previous).
+# ---------------------------------------------------------------------------
+
+@njit(cache=True)
+def _smooth_envelope_single(
+    gr_db: np.ndarray,
+    n: int,
+    attack_coeff: float,
+    release_coeff: float,
+    env_init: float,
+) -> tuple[np.ndarray, float]:
+    """
+    Standard single-detector attack/release envelope — Numba-compiled.
+
+    One-pole IIR smoother: attack coefficient when gain reduction
+    increases (signal getting louder), release coefficient when it
+    decreases (signal getting quieter). The asymmetric time constants
+    produce the musical "grab and release" character of analog compressors.
+
+    Returns:
+        Tuple of (smoothed gain reduction array, final envelope state).
+    """
+    smoothed = np.zeros(n)
+    env = env_init
+    for i in range(n):
+        target = gr_db[i]
+        if target < env:
+            env = attack_coeff * env + (1.0 - attack_coeff) * target
+        else:
+            env = release_coeff * env + (1.0 - release_coeff) * target
+        smoothed[i] = env
+    return smoothed, env
+
+
+@njit(cache=True)
+def _smooth_envelope_auto(
+    gr_db: np.ndarray,
+    n: int,
+    attack_coeff: float,
+    fast_release_coeff: float,
+    slow_release_coeff: float,
+    env_init: float,
+) -> tuple[np.ndarray, float]:
+    """
+    SSL 4000 G dual-detector auto-release envelope — Numba-compiled.
+
+    Two parallel envelope followers with different release time constants:
+      - Fast detector (50 ms release): tracks transient peaks
+      - Slow detector (600 ms release): tracks programme level
+
+    Output is the deeper (more negative) gain reduction of the two.
+    This produces natural, breathing compression that doesn't pump
+    on transients but recovers quickly during sustained passages.
+
+    Returns:
+        Tuple of (smoothed gain reduction array, final envelope state).
+    """
+    smoothed = np.zeros(n)
+    env_fast = env_init
+    env_slow = env_init
+
+    for i in range(n):
+        target = gr_db[i]
+
+        # Fast detector
+        if target < env_fast:
+            env_fast = attack_coeff * env_fast + (1.0 - attack_coeff) * target
+        else:
+            env_fast = fast_release_coeff * env_fast + (1.0 - fast_release_coeff) * target
+
+        # Slow detector
+        if target < env_slow:
+            env_slow = attack_coeff * env_slow + (1.0 - attack_coeff) * target
+        else:
+            env_slow = slow_release_coeff * env_slow + (1.0 - slow_release_coeff) * target
+
+        # Take the deeper gain reduction of the two
+        if env_fast < env_slow:
+            smoothed[i] = env_fast
+        else:
+            smoothed[i] = env_slow
+
+    final_env = env_fast if env_fast < env_slow else env_slow
+    return smoothed, final_env
 
 
 class Compressor(BaseEffect):
@@ -276,6 +368,9 @@ class Compressor(BaseEffect):
         RMS detection is more musical than peak detection for bus
         compression — it responds to average energy rather than
         individual transient spikes, producing smoother gain reduction.
+
+        Vectorised implementation using cumulative sum — no per-sample
+        Python loop. Window boundaries computed via NumPy broadcasting.
         """
         n = len(signal)
         window_samp = max(int(self.rms_window_ms * self.sr / 1000), 1)
@@ -285,11 +380,13 @@ class Compressor(BaseEffect):
         cumsum = np.cumsum(sq)
         cumsum = np.insert(cumsum, 0, 0.0)
 
-        # Windowed mean of squared signal
-        rms_sq = np.zeros(n)
-        for i in range(n):
-            start = max(0, i - window_samp + 1)
-            rms_sq[i] = (cumsum[i + 1] - cumsum[start]) / (i - start + 1)
+        # Vectorised windowed mean: start indices clamp to 0
+        indices = np.arange(n)
+        starts = np.maximum(indices - window_samp + 1, 0)
+        window_sizes = indices - starts + 1
+
+        # Windowed mean of squared signal (no per-sample loop)
+        rms_sq = (cumsum[indices + 1] - cumsum[starts]) / window_sizes
 
         # RMS → dB (floor at -120 dB to avoid log(0))
         rms_linear = np.sqrt(np.maximum(rms_sq, 1e-12))
@@ -361,52 +458,35 @@ class Compressor(BaseEffect):
 
         This produces natural, breathing compression that doesn't pump
         on transients but recovers quickly during sustained passages.
+
+        Inner loops delegated to Numba-compiled kernels (CR-04).
         """
         n = len(gr_db)
         attack_coeff = np.exp(-1.0 / (self.attack_ms * self.sr / 1000))
         release_coeff = np.exp(-1.0 / (self.release_ms * self.sr / 1000))
-
-        smoothed = np.zeros(n)
-        env = self._env_state
 
         if self.auto_release:
             # SSL dual-detector auto-release
             fast_release_coeff = np.exp(-1.0 / (50.0 * self.sr / 1000))
             slow_release_coeff = np.exp(-1.0 / (600.0 * self.sr / 1000))
 
-            env_fast = env
-            env_slow = env
-
-            for i in range(n):
-                target = gr_db[i]
-
-                # Fast detector
-                if target < env_fast:
-                    env_fast = attack_coeff * env_fast + (1.0 - attack_coeff) * target
-                else:
-                    env_fast = fast_release_coeff * env_fast + (1.0 - fast_release_coeff) * target
-
-                # Slow detector
-                if target < env_slow:
-                    env_slow = attack_coeff * env_slow + (1.0 - attack_coeff) * target
-                else:
-                    env_slow = slow_release_coeff * env_slow + (1.0 - slow_release_coeff) * target
-
-                # Take the deeper gain reduction of the two
-                smoothed[i] = min(env_fast, env_slow)
-
-            self._env_state = min(env_fast, env_slow)
+            smoothed, final_env = _smooth_envelope_auto(
+                gr_db, n,
+                float(attack_coeff),
+                float(fast_release_coeff),
+                float(slow_release_coeff),
+                float(self._env_state),
+            )
+            self._env_state = float(final_env)
         else:
             # Standard single-detector attack/release
-            for i in range(n):
-                target = gr_db[i]
-                if target < env:
-                    env = attack_coeff * env + (1.0 - attack_coeff) * target
-                else:
-                    env = release_coeff * env + (1.0 - release_coeff) * target
-                smoothed[i] = env
-
-            self._env_state = env
+            smoothed, final_env = _smooth_envelope_single(
+                gr_db, n,
+                float(attack_coeff),
+                float(release_coeff),
+                float(self._env_state),
+            )
+            self._env_state = float(final_env)
 
         return smoothed
 
