@@ -23,6 +23,7 @@ Signal position: INPUT → [Block 1] → Bitcrusher → ...
 from __future__ import annotations
 
 import numpy as np
+
 from engine.effects.base import BaseEffect
 
 
@@ -101,7 +102,6 @@ class NoiseFloor(BaseEffect):
 
     def reset(self) -> None:
         """Stateless effect — nothing to reset."""
-        pass
 
     # ------------------------------------------------------------------
     # Private helpers
@@ -113,18 +113,17 @@ class NoiseFloor(BaseEffect):
         if self.noise_type == "pink":
             return self._pink_noise(n, rms_linear)
 
-        elif self.noise_type == "white":
+        if self.noise_type == "white":
             return np.random.randn(n) * rms_linear
 
-        elif self.noise_type in ("hum_uk", "hum_us"):
+        if self.noise_type in ("hum_uk", "hum_us"):
             t = np.arange(n) / self.sr
             hum = np.sin(2.0 * np.pi * self.hum_freq * t) * rms_linear * 0.3
             white = np.random.randn(n) * rms_linear * 0.7
             return hum + white
 
-        else:
-            # Fallback: white noise
-            return np.random.randn(n) * rms_linear
+        # Fallback: white noise
+        return np.random.randn(n) * rms_linear
 
     def _pink_noise(self, n: int, rms_linear: float) -> np.ndarray:
         """

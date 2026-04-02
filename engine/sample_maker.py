@@ -15,10 +15,10 @@ Use save_sample() to export to WAV, or pass directly into the effects chain.
 
 from __future__ import annotations
 
-import numpy as np
-import soundfile as sf
 from pathlib import Path
 
+import numpy as np
+import soundfile as sf
 
 # ---------------------------------------------------------------------------
 # Constants

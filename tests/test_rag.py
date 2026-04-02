@@ -19,15 +19,14 @@ Run:
 from __future__ import annotations
 
 import json
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
 
 from api.main import app
-from knowledge.rag import RAGPipeline
 from knowledge.qdrant_client import chunk_markdown
-
+from knowledge.rag import RAGPipeline
 
 # ---------------------------------------------------------------------------
 # Fixtures

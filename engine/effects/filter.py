@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import numpy as np
 from scipy import signal as scipy_signal
+
 from engine.effects.base import BaseEffect
 
 
@@ -146,7 +147,6 @@ class ResonantFilter(BaseEffect):
 
     def reset(self) -> None:
         """Stateless effect — nothing to reset."""
-        pass
 
     # ------------------------------------------------------------------
     # Private helpers
@@ -160,22 +160,21 @@ class ResonantFilter(BaseEffect):
             return scipy_signal.butter(
                 order, cutoff_norm, btype="low", output="sos"
             )
-        elif self.filter_type == "hp":
+        if self.filter_type == "hp":
             return scipy_signal.butter(
                 order, cutoff_norm, btype="high", output="sos"
             )
-        elif self.filter_type == "bp":
+        if self.filter_type == "bp":
             bw = cutoff_norm * 0.3
             low = max(cutoff_norm - bw, 0.001)
             high = min(cutoff_norm + bw, 0.999)
             return scipy_signal.butter(
                 max(order // 2, 1), [low, high], btype="band", output="sos"
             )
-        else:
-            # Fallback: low-pass
-            return scipy_signal.butter(
-                order, cutoff_norm, btype="low", output="sos"
-            )
+        # Fallback: low-pass
+        return scipy_signal.butter(
+            order, cutoff_norm, btype="low", output="sos"
+        )
 
     def _apply_resonance_feedback(
         self,

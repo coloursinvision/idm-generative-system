@@ -58,8 +58,8 @@ from __future__ import annotations
 import numpy as np
 from numba import njit
 from scipy import signal as scipy_signal
-from engine.effects.base import BaseEffect
 
+from engine.effects.base import BaseEffect
 
 # ---------------------------------------------------------------------------
 # Preset configurations — calibrated against hardware behaviour
@@ -509,5 +509,4 @@ class Compressor(BaseEffect):
                 * 0.5
             )
             return float(np.power(10.0, estimated_gr / 20.0))
-        else:
-            return float(np.power(10.0, self.makeup_db / 20.0))
+        return float(np.power(10.0, self.makeup_db / 20.0))

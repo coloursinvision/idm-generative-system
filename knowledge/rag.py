@@ -25,15 +25,13 @@ from __future__ import annotations
 
 import json
 import re
-import os
 from typing import Any
 
 from dotenv import load_dotenv
-from openai import OpenAI, RateLimitError, APITimeoutError, APIConnectionError
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from openai import APIConnectionError, APITimeoutError, OpenAI, RateLimitError
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from knowledge.qdrant_client import KnowledgeBase
-
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -318,7 +316,6 @@ class RAGPipeline:
         text = raw.strip()
 
         # Extract JSON from markdown code fence (handles preamble before fence)
-        import re
         fence_match = re.search(r"```(?:json)?\s*\n(.*?)```", text, re.DOTALL)
         if fence_match:
             text = fence_match.group(1).strip()
@@ -335,7 +332,7 @@ class RAGPipeline:
             raise ValueError(
                 f"GPT-4o returned invalid JSON: {e}. "
                 f"Raw output (first 500 chars): {raw[:500]}"
-            )
+            ) from e
 
         if not isinstance(config, dict):
             raise ValueError(

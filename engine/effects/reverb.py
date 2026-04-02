@@ -39,8 +39,8 @@ from __future__ import annotations
 import numpy as np
 from numba import njit
 from scipy import signal as scipy_signal
-from engine.effects.base import BaseEffect
 
+from engine.effects.base import BaseEffect
 
 # ---------------------------------------------------------------------------
 # Decay multipliers per reverb type (relative to base decay_s)
@@ -234,7 +234,6 @@ class Reverb(BaseEffect):
 
     def reset(self) -> None:
         """Stateless effect — nothing to reset."""
-        pass
 
     # ------------------------------------------------------------------
     # Private helpers

@@ -36,6 +36,7 @@ Signal position: ResonantFilter → [Block 4] → Reverb → ...
 from __future__ import annotations
 
 import numpy as np
+
 from engine.effects.base import BaseEffect
 
 
@@ -117,7 +118,6 @@ class Saturation(BaseEffect):
 
     def reset(self) -> None:
         """Stateless effect — nothing to reset."""
-        pass
 
     # ------------------------------------------------------------------
     # Private helpers
@@ -128,14 +128,13 @@ class Saturation(BaseEffect):
 
         if self.mode == "asymmetric":
             return self._asymmetric(x)
-        elif self.mode == "symmetric":
+        if self.mode == "symmetric":
             return self._symmetric(x)
-        elif self.mode == "tanh":
+        if self.mode == "tanh":
             return self._tanh_normalised(x)
-        elif self.mode == "wavefold":
+        if self.mode == "wavefold":
             return self._wavefold(x)
-        else:
-            return x
+        return x
 
     def _asymmetric(self, x: np.ndarray) -> np.ndarray:
         """

@@ -14,20 +14,18 @@ Algorithms:
 
 from __future__ import annotations
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-from typing import Dict, List, Optional
-
 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 
-DEFAULT_TRACKS: List[str] = ["kick", "snare", "hat", "glitch"]
+DEFAULT_TRACKS: list[str] = ["kick", "snare", "hat", "glitch"]
 DEFAULT_STEPS: int = 16
 
-DEFAULT_PROBABILITIES: Dict[str, float] = {
+DEFAULT_PROBABILITIES: dict[str, float] = {
     "kick": 0.25,
     "snare": 0.15,
     "hat": 0.60,
@@ -39,7 +37,7 @@ DEFAULT_PROBABILITIES: Dict[str, float] = {
 # Euclidean rhythm
 # ---------------------------------------------------------------------------
 
-def euclidean_rhythm(k: int, n: int) -> List[int]:
+def euclidean_rhythm(k: int, n: int) -> list[int]:
     """
     Generate a Euclidean rhythm (Bjorklund algorithm).
 
@@ -64,9 +62,9 @@ def euclidean_rhythm(k: int, n: int) -> List[int]:
     if k >= n:
         return [1] * n
 
-    pattern: List[int] = []
-    counts: List[int] = []
-    remainders: List[int] = []
+    pattern: list[int] = []
+    counts: list[int] = []
+    remainders: list[int] = []
 
     divisor = n - k
     remainders.append(k)
@@ -106,7 +104,7 @@ def euclidean_rhythm(k: int, n: int) -> List[int]:
 
 def generate_pattern(
     steps: int,
-    probabilities: Dict[str, float],
+    probabilities: dict[str, float],
 ) -> pd.DataFrame:
     """
     Generate a rhythmic pattern using per-track trigger probabilities.
@@ -128,7 +126,7 @@ def generate_pattern(
 
 def generate_pattern_density(
     steps: int,
-    tracks: Optional[List[str]] = None,
+    tracks: list[str] | None = None,
     density: float = 0.3,
 ) -> pd.DataFrame:
     """
@@ -150,7 +148,7 @@ def generate_pattern_density(
 
 
 def generate_euclidean_pattern(
-    pulses: Optional[Dict[str, int]] = None,
+    pulses: dict[str, int] | None = None,
     steps: int = DEFAULT_STEPS,
 ) -> pd.DataFrame:
     """

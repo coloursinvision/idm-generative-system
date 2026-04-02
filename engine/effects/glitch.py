@@ -63,8 +63,8 @@ Signal position: SpatialProcessor → [Block 8] → Compressor → ...
 from __future__ import annotations
 
 import numpy as np
-from engine.effects.base import BaseEffect
 
+from engine.effects.base import BaseEffect
 
 # ---------------------------------------------------------------------------
 # XOR mask patterns — each produces a distinct corruption character
@@ -229,7 +229,6 @@ class GlitchEngine(BaseEffect):
 
     def reset(self) -> None:
         """Stateless effect — nothing to reset."""
-        pass
 
     # ------------------------------------------------------------------
     # Stage 1 — Braindance stutter

@@ -24,53 +24,52 @@ import numpy as np
 import pytest
 
 from engine.effects import (
-    BaseEffect,
-    EffectChain,
-    build_chain,
     CANONICAL_ORDER,
-    NoiseFloor,
+    BaseEffect,
     Bitcrusher,
-    ResonantFilter,
-    Saturation,
-    Reverb,
-    TapeDelay,
-    SpatialProcessor,
-    GlitchEngine,
     Compressor,
+    EffectChain,
+    GlitchEngine,
+    NoiseFloor,
+    ResonantFilter,
+    Reverb,
+    Saturation,
+    SpatialProcessor,
+    TapeDelay,
     VinylMastering,
+    build_chain,
 )
+from engine.effects.compressor import _smooth_envelope_auto, _smooth_envelope_single
+from engine.effects.delay import _delay_line_kernel
 
 # Numba-compiled kernels — imported for direct regression testing
-from engine.effects.reverb import _comb_filter_kernel, _allpass_kernel
-from engine.effects.delay import _delay_line_kernel
-from engine.effects.compressor import _smooth_envelope_single, _smooth_envelope_auto
-
+from engine.effects.reverb import _allpass_kernel, _comb_filter_kernel
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
 
-@pytest.fixture()
+@pytest.fixture
 def signal_short() -> np.ndarray:
     """Short deterministic signal (1024 samples, ~23ms at 44100 Hz)."""
     rng = np.random.default_rng(42)
     return rng.uniform(-0.8, 0.8, 1024).astype(np.float64)
 
 
-@pytest.fixture()
+@pytest.fixture
 def signal_medium() -> np.ndarray:
     """Medium deterministic signal (8820 samples, 200ms at 44100 Hz)."""
     rng = np.random.default_rng(99)
     return rng.uniform(-0.8, 0.8, 8820).astype(np.float64)
 
 
-@pytest.fixture()
+@pytest.fixture
 def signal_zeros() -> np.ndarray:
     """All-zeros signal (2048 samples)."""
     return np.zeros(2048, dtype=np.float64)
 
 
-@pytest.fixture()
+@pytest.fixture
 def signal_single() -> np.ndarray:
     """Single-sample signal."""
     return np.array([0.5], dtype=np.float64)

@@ -22,11 +22,11 @@ Run:
 from __future__ import annotations
 
 from dotenv import load_dotenv
+
 load_dotenv()
 
-import io
-import io
 import inspect
+import io
 import json
 from typing import Any
 
@@ -37,14 +37,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from engine.sample_maker import glitch_click, noise_burst, fm_blip, SAMPLE_RATE
 from engine.effects import (
     CANONICAL_ORDER,
+    EffectChain,
     build_chain,
-    BaseEffect,
 )
+from engine.sample_maker import SAMPLE_RATE, fm_blip, glitch_click, noise_burst
 from knowledge.rag import RAGPipeline
-
 
 # ---------------------------------------------------------------------------
 # App
@@ -198,7 +197,7 @@ def _signal_to_wav_response(
 
 def _process_through_chain(
     signal: np.ndarray,
-    chain: "EffectChain",
+    chain: EffectChain,
     sr: int = SAMPLE_RATE,
     tail_seconds: float = 2.0,
     silence_threshold_db: float = -60.0,
@@ -398,7 +397,7 @@ async def generate(req: GenerateRequest) -> StreamingResponse:
         raise HTTPException(
             status_code=400,
             detail=f"Invalid generator params: {e}",
-        )
+        ) from e
     # Ensure float64 for effects chain
     signal = signal.astype(np.float64)
 
@@ -442,12 +441,12 @@ async def process_audio(
     try:
         overrides = json.loads(chain_overrides)
     except json.JSONDecodeError:
-        raise HTTPException(status_code=400, detail="Invalid chain_overrides JSON.")
+        raise HTTPException(status_code=400, detail="Invalid chain_overrides JSON.") from None
 
     try:
         skip = json.loads(chain_skip)
     except json.JSONDecodeError:
-        raise HTTPException(status_code=400, detail="Invalid chain_skip JSON.")
+        raise HTTPException(status_code=400, detail="Invalid chain_skip JSON.") from None
 
     # Read uploaded audio
     try:
@@ -458,7 +457,7 @@ async def process_audio(
         raise HTTPException(
             status_code=400,
             detail=f"Could not read audio file: {e}",
-        )
+        ) from e
 
     # Handle stereo → mono (effects chain is mono)
     if signal.ndim == 2:
@@ -506,7 +505,7 @@ async def ask(req: AskRequest) -> dict:
             part_filter=req.part_filter,
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"RAG pipeline error: {e}")
+        raise HTTPException(status_code=500, detail=f"RAG pipeline error: {e}") from e
 
     return result
 
@@ -532,6 +531,6 @@ async def compose(req: ComposeRequest) -> dict:
             limit=req.limit,
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"RAG pipeline error: {e}")
+        raise HTTPException(status_code=500, detail=f"RAG pipeline error: {e}") from e
 
     return result

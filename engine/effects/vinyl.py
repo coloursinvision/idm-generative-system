@@ -73,8 +73,8 @@ from __future__ import annotations
 
 import numpy as np
 from scipy import signal as scipy_signal
-from engine.effects.base import BaseEffect
 
+from engine.effects.base import BaseEffect
 
 # ---------------------------------------------------------------------------
 # RIAA time constants (seconds) — 1954 standard
@@ -254,7 +254,6 @@ class VinylMastering(BaseEffect):
 
     def reset(self) -> None:
         """Stateless effect — nothing to reset."""
-        pass
 
     # ------------------------------------------------------------------
     # Stage 1 — RIAA pre-emphasis

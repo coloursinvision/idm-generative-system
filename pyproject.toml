@@ -99,6 +99,13 @@ packages = ["engine", "api", "knowledge"]
 target-version = "py311"
 line-length = 100
 src = ["engine", "api", "knowledge", "tests"]
+extend-exclude = [
+    "notebooks/",
+    "engine/acid_dsp_model.py",
+    "engine/acid_engine_v2.py",
+    "engine/acid_granular_experiment.py",
+    "engine/AcidSynthEngine.cpp",
+]
 
 [tool.ruff.lint]
 select = [
@@ -110,34 +117,43 @@ select = [
     "UP",     # pyupgrade
     "B",      # flake8-bugbear
     "SIM",    # flake8-simplify
-    "TCH",    # flake8-type-checking
     "RUF",    # ruff-specific rules
     "S",      # flake8-bandit (security)
     "C4",     # flake8-comprehensions
-    "DTZ",    # flake8-datetimez
-    "T20",    # flake8-print (catches stray print())
     "PT",     # flake8-pytest-style
     "PIE",    # flake8-pie
     "RSE",    # flake8-raise
     "RET",    # flake8-return
-    "TID",    # flake8-tidy-imports
 ]
 ignore = [
-    "S101",   # assert used in tests — intentional
-    "B008",   # function call in default arg — FastAPI Depends() pattern
-    "RET504", # unnecessary assignment before return — readability preference
-    "E501",   # line too long — handled by formatter
+    "S101",    # assert used in tests — intentional
+    "B008",    # function call in default arg — FastAPI Depends() pattern
+    "RET504",  # unnecessary assignment before return — readability preference
+    "E501",    # line too long — handled by formatter
+    "E402",    # module-level import not at top — load_dotenv() must run before imports
+    "RUF001",  # ambiguous unicode in strings — en-dashes in domain text intentional
+    "RUF002",  # ambiguous unicode in docstrings — parameter ranges use en-dash
+    "RUF003",  # ambiguous unicode in comments — intentional
+    "RUF012",  # mutable class var — frozen sets on effect classes are intentional constants
+    "RUF022",  # unsorted __all__ — grouped by logical category, not alphabetical
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = [
     "S101",   # assert in tests
     "S311",   # pseudo-random in tests
-    "T20",    # print in tests
+    "N803",   # EffectClass, MockKB etc. — test parametrize convention
 ]
 "engine/effects/*.py" = [
-    "N803",   # argument name should be lowercase — DSP convention (Q, N, etc.)
-    "N806",   # variable name should be lowercase — DSP convention
+    "N803",   # DSP convention (Q, N, etc.)
+    "N806",   # DSP convention
+]
+"knowledge/qdrant_client.py" = [
+    "T201",   # print() in CLI __main__ block — intentional
+    "S324",   # MD5 for content hashing — not security (CR-15 pending)
+]
+"streamlit_app/**/*.py" = [
+    "E402",   # import order — _bridge_secrets() must run before imports
 ]
 
 [tool.ruff.lint.isort]
