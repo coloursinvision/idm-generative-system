@@ -37,6 +37,7 @@ DEFAULT_PROBABILITIES: dict[str, float] = {
 # Euclidean rhythm
 # ---------------------------------------------------------------------------
 
+
 def euclidean_rhythm(k: int, n: int) -> list[int]:
     """
     Generate a Euclidean rhythm (Bjorklund algorithm).
@@ -54,7 +55,7 @@ def euclidean_rhythm(k: int, n: int) -> list[int]:
     Examples:
         >>> euclidean_rhythm(5, 16)  # classic IDM kick pattern
         [1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0]
-        >>> euclidean_rhythm(3, 8)   # standard clave
+        >>> euclidean_rhythm(3, 8)  # standard clave
         [1, 0, 0, 1, 0, 0, 1, 0]
     """
     if k <= 0:
@@ -102,6 +103,7 @@ def euclidean_rhythm(k: int, n: int) -> list[int]:
 # Pattern generators
 # ---------------------------------------------------------------------------
 
+
 def generate_pattern(
     steps: int,
     probabilities: dict[str, float],
@@ -117,10 +119,7 @@ def generate_pattern(
         pd.DataFrame with tracks as rows and steps as columns (int 0/1).
     """
     tracks = list(probabilities.keys())
-    data = [
-        (np.random.rand(steps) < probabilities[track]).astype(int)
-        for track in tracks
-    ]
+    data = [(np.random.rand(steps) < probabilities[track]).astype(int) for track in tracks]
     return pd.DataFrame(data, index=tracks, columns=range(steps))
 
 
@@ -170,18 +169,14 @@ def generate_euclidean_pattern(
             "glitch": 2,
         }
 
-    data = {
-        track: euclidean_rhythm(k, steps)
-        for track, k in pulses.items()
-    }
-    return pd.DataFrame(data).T.rename(
-        columns={i: i for i in range(steps)}
-    )
+    data = {track: euclidean_rhythm(k, steps) for track, k in pulses.items()}
+    return pd.DataFrame(data).T.rename(columns={i: i for i in range(steps)})
 
 
 # ---------------------------------------------------------------------------
 # Pattern evolution
 # ---------------------------------------------------------------------------
+
 
 def mutate_pattern(
     pattern: pd.DataFrame,
@@ -239,6 +234,7 @@ def markov_evolve(
 # ---------------------------------------------------------------------------
 # Visualisation
 # ---------------------------------------------------------------------------
+
 
 def plot_pattern(
     df: pd.DataFrame,

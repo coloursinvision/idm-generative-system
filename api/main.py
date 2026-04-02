@@ -73,8 +73,8 @@ app.add_middleware(
 
 GENERATORS: dict[str, Any] = {
     "glitch_click": glitch_click,
-    "noise_burst":  noise_burst,
-    "fm_blip":      fm_blip,
+    "noise_burst": noise_burst,
+    "fm_blip": fm_blip,
 }
 
 rag = RAGPipeline()
@@ -84,14 +84,14 @@ rag = RAGPipeline()
 # Request / response models
 # ---------------------------------------------------------------------------
 
+
 class GenerateRequest(BaseModel):
     """Request body for /generate."""
 
     generator: str = Field(
         default="glitch_click",
         description=(
-            "Sample generator function. "
-            "Options: 'glitch_click', 'noise_burst', 'fm_blip'."
+            "Sample generator function. Options: 'glitch_click', 'noise_burst', 'fm_blip'."
         ),
     )
     generator_params: dict[str, Any] = Field(
@@ -173,6 +173,7 @@ class ComposeRequest(BaseModel):
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _signal_to_wav_response(
     signal: np.ndarray,
     sr: int = SAMPLE_RATE,
@@ -252,11 +253,7 @@ def _extract_param_schema(cls: type) -> dict[str, Any]:
         if name == "self":
             continue
 
-        default = (
-            param.default
-            if param.default is not inspect.Parameter.empty
-            else None
-        )
+        default = param.default if param.default is not inspect.Parameter.empty else None
 
         # Convert numpy types to native Python for JSON serialisation
         if isinstance(default, (np.integer,)):
@@ -318,6 +315,7 @@ def _validate_chain_keys(
 # Endpoints — DSP
 # ---------------------------------------------------------------------------
 
+
 @app.get("/health")
 async def health() -> dict[str, str]:
     """Liveness check."""
@@ -338,13 +336,15 @@ async def list_effects() -> list[dict[str, Any]]:
     """
     result = []
     for idx, (key, cls) in enumerate(CANONICAL_ORDER):
-        result.append({
-            "position": idx,
-            "key": key,
-            "class_name": cls.__name__,
-            "params": _extract_param_schema(cls),
-            "docstring": (cls.__doc__ or "").strip()[:500],
-        })
+        result.append(
+            {
+                "position": idx,
+                "key": key,
+                "class_name": cls.__name__,
+                "params": _extract_param_schema(cls),
+                "docstring": (cls.__doc__ or "").strip()[:500],
+            }
+        )
     return result
 
 
@@ -362,10 +362,7 @@ async def generate(req: GenerateRequest) -> StreamingResponse:
     if gen_fn is None:
         raise HTTPException(
             status_code=400,
-            detail=(
-                f"Unknown generator '{req.generator}'. "
-                f"Options: {list(GENERATORS.keys())}"
-            ),
+            detail=(f"Unknown generator '{req.generator}'. Options: {list(GENERATORS.keys())}"),
         )
 
     # Generate raw sample — randomise params if none provided
@@ -483,6 +480,7 @@ async def process_audio(
 # ---------------------------------------------------------------------------
 # Endpoints — RAG (Knowledge Base + GPT-4o)
 # ---------------------------------------------------------------------------
+
 
 @app.post("/ask")
 async def ask(req: AskRequest) -> dict:

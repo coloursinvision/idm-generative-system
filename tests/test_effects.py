@@ -49,6 +49,7 @@ from engine.effects.reverb import _allpass_kernel, _comb_filter_kernel
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def signal_short() -> np.ndarray:
     """Short deterministic signal (1024 samples, ~23ms at 44100 Hz)."""
@@ -94,6 +95,7 @@ ALL_EFFECT_CLASSES: list[type[BaseEffect]] = [
 # Shape preservation
 # ---------------------------------------------------------------------------
 
+
 class TestShapePreservation:
     """Every effect block must preserve input signal length."""
 
@@ -109,19 +111,13 @@ class TestShapePreservation:
         )
 
     @pytest.mark.parametrize("EffectClass", ALL_EFFECT_CLASSES)
-    def test_output_is_mono(
-        self, EffectClass: type[BaseEffect], signal_short: np.ndarray
-    ) -> None:
+    def test_output_is_mono(self, EffectClass: type[BaseEffect], signal_short: np.ndarray) -> None:
         effect = EffectClass()
         output = effect(signal_short)
-        assert output.ndim == 1, (
-            f"{EffectClass.__name__}: output ndim={output.ndim}, expected 1"
-        )
+        assert output.ndim == 1, f"{EffectClass.__name__}: output ndim={output.ndim}, expected 1"
 
     @pytest.mark.parametrize("EffectClass", ALL_EFFECT_CLASSES)
-    def test_output_is_float(
-        self, EffectClass: type[BaseEffect], signal_short: np.ndarray
-    ) -> None:
+    def test_output_is_float(self, EffectClass: type[BaseEffect], signal_short: np.ndarray) -> None:
         effect = EffectClass()
         output = effect(signal_short)
         assert np.issubdtype(output.dtype, np.floating), (
@@ -133,13 +129,12 @@ class TestShapePreservation:
 # Edge cases
 # ---------------------------------------------------------------------------
 
+
 class TestEdgeCases:
     """Effect blocks must handle degenerate inputs without crashing."""
 
     @pytest.mark.parametrize("EffectClass", ALL_EFFECT_CLASSES)
-    def test_all_zeros_input(
-        self, EffectClass: type[BaseEffect], signal_zeros: np.ndarray
-    ) -> None:
+    def test_all_zeros_input(self, EffectClass: type[BaseEffect], signal_zeros: np.ndarray) -> None:
         effect = EffectClass()
         output = effect(signal_zeros)
         assert len(output) == len(signal_zeros)
@@ -147,10 +142,16 @@ class TestEdgeCases:
             f"{EffectClass.__name__}: non-finite values in output from zeros input"
         )
 
-    @pytest.mark.parametrize("EffectClass", [
-        NoiseFloor, Bitcrusher, ResonantFilter, Saturation,
-        SpatialProcessor,
-    ])
+    @pytest.mark.parametrize(
+        "EffectClass",
+        [
+            NoiseFloor,
+            Bitcrusher,
+            ResonantFilter,
+            Saturation,
+            SpatialProcessor,
+        ],
+    )
     def test_single_sample_input(
         self, EffectClass: type[BaseEffect], signal_single: np.ndarray
     ) -> None:
@@ -166,9 +167,7 @@ class TestEdgeCases:
     ) -> None:
         effect = EffectClass()
         output = effect(signal_short)
-        assert not np.any(np.isnan(output)), (
-            f"{EffectClass.__name__}: NaN detected in output"
-        )
+        assert not np.any(np.isnan(output)), f"{EffectClass.__name__}: NaN detected in output"
 
     @pytest.mark.parametrize("EffectClass", ALL_EFFECT_CLASSES)
     def test_no_inf_in_output(
@@ -176,14 +175,13 @@ class TestEdgeCases:
     ) -> None:
         effect = EffectClass()
         output = effect(signal_short)
-        assert not np.any(np.isinf(output)), (
-            f"{EffectClass.__name__}: Inf detected in output"
-        )
+        assert not np.any(np.isinf(output)), f"{EffectClass.__name__}: Inf detected in output"
 
 
 # ---------------------------------------------------------------------------
 # Parameter validation (CR-05)
 # ---------------------------------------------------------------------------
+
 
 class TestParameterValidation:
     """Invalid string parameters must raise ValueError."""
@@ -232,6 +230,7 @@ class TestParameterValidation:
 # ---------------------------------------------------------------------------
 # Valid parameter acceptance
 # ---------------------------------------------------------------------------
+
 
 class TestValidParameters:
     """Every documented option for every string parameter must be accepted."""
@@ -291,6 +290,7 @@ class TestValidParameters:
 # Stateful block behaviour
 # ---------------------------------------------------------------------------
 
+
 class TestStatefulBlocks:
     """Blocks with internal state must reset correctly."""
 
@@ -306,9 +306,7 @@ class TestStatefulBlocks:
         comp.reset()
         assert comp._env_state == 0.0, "Envelope state should be zero after reset"
 
-    def test_compressor_reset_between_renders_via_chain(
-        self, signal_short: np.ndarray
-    ) -> None:
+    def test_compressor_reset_between_renders_via_chain(self, signal_short: np.ndarray) -> None:
         """EffectChain.reset() is called before each render."""
         chain = EffectChain([Compressor()])
 
@@ -323,6 +321,7 @@ class TestStatefulBlocks:
 # ---------------------------------------------------------------------------
 # Parameter extremes
 # ---------------------------------------------------------------------------
+
 
 class TestParameterExtremes:
     """Extreme but valid parameter values must not produce NaN/Inf."""
@@ -388,6 +387,7 @@ class TestParameterExtremes:
 # Hardware presets
 # ---------------------------------------------------------------------------
 
+
 class TestHardwarePresets:
     """Hardware presets must apply correct parameters."""
 
@@ -413,6 +413,7 @@ class TestHardwarePresets:
 # ---------------------------------------------------------------------------
 # EffectChain
 # ---------------------------------------------------------------------------
+
 
 class TestEffectChain:
     """EffectChain pipeline behaviour."""
@@ -467,6 +468,7 @@ class TestEffectChain:
 # ---------------------------------------------------------------------------
 # Reproducibility
 # ---------------------------------------------------------------------------
+
 
 class TestReproducibility:
     """Seeded effects must produce identical output across runs."""
@@ -663,14 +665,10 @@ class TestDelayLineKernelRegression:
         wet = np.zeros(n)
         for i in range(n):
             mod_offset = int(modulation[i] * sr)
-            read_idx = int(
-                np.clip(i + delay_samples + mod_offset, 0, buf_len - 1)
-            )
+            read_idx = int(np.clip(i + delay_samples + mod_offset, 0, buf_len - 1))
             delayed_sample = buf[read_idx]
 
-            saturated = np.tanh(
-                delayed_sample * (1.0 + tape_saturation * 3.0)
-            )
+            saturated = np.tanh(delayed_sample * (1.0 + tape_saturation * 3.0))
             wet[i] = saturated
 
             write_idx = i + delay_samples
@@ -700,16 +698,30 @@ class TestDelayLineKernelRegression:
         buf_ref = np.zeros(buf_len)
         buf_ref[:n] = signal_short
         ref = self._reference_delay_line(
-            signal_short, modulation, buf_ref,
-            delay_samples, feedback, tape_saturation, sr, n, buf_len,
+            signal_short,
+            modulation,
+            buf_ref,
+            delay_samples,
+            feedback,
+            tape_saturation,
+            sr,
+            n,
+            buf_len,
         )
 
         # Numba — separate buffer copy
         buf_jit = np.zeros(buf_len)
         buf_jit[:n] = signal_short
         jit = _delay_line_kernel(
-            signal_short, modulation, buf_jit,
-            delay_samples, feedback, tape_saturation, sr, n, buf_len,
+            signal_short,
+            modulation,
+            buf_jit,
+            delay_samples,
+            feedback,
+            tape_saturation,
+            sr,
+            n,
+            buf_len,
         )
 
         np.testing.assert_allclose(jit, ref, rtol=NUMBA_RTOL, atol=NUMBA_ATOL)
@@ -735,15 +747,29 @@ class TestDelayLineKernelRegression:
         buf_ref = np.zeros(buf_len)
         buf_ref[:n] = signal_medium
         ref = self._reference_delay_line(
-            signal_medium, modulation, buf_ref,
-            delay_samples, feedback, tape_saturation, sr, n, buf_len,
+            signal_medium,
+            modulation,
+            buf_ref,
+            delay_samples,
+            feedback,
+            tape_saturation,
+            sr,
+            n,
+            buf_len,
         )
 
         buf_jit = np.zeros(buf_len)
         buf_jit[:n] = signal_medium
         jit = _delay_line_kernel(
-            signal_medium, modulation, buf_jit,
-            delay_samples, feedback, tape_saturation, sr, n, buf_len,
+            signal_medium,
+            modulation,
+            buf_jit,
+            delay_samples,
+            feedback,
+            tape_saturation,
+            sr,
+            n,
+            buf_len,
         )
 
         np.testing.assert_allclose(jit, ref, rtol=NUMBA_RTOL, atol=NUMBA_ATOL)
@@ -759,15 +785,29 @@ class TestDelayLineKernelRegression:
         buf_ref = np.zeros(buf_len)
         buf_ref[:n] = signal_short
         ref = self._reference_delay_line(
-            signal_short, modulation, buf_ref,
-            delay_samples, 0.5, 0.0, sr, n, buf_len,
+            signal_short,
+            modulation,
+            buf_ref,
+            delay_samples,
+            0.5,
+            0.0,
+            sr,
+            n,
+            buf_len,
         )
 
         buf_jit = np.zeros(buf_len)
         buf_jit[:n] = signal_short
         jit = _delay_line_kernel(
-            signal_short, modulation, buf_jit,
-            delay_samples, 0.5, 0.0, sr, n, buf_len,
+            signal_short,
+            modulation,
+            buf_jit,
+            delay_samples,
+            0.5,
+            0.0,
+            sr,
+            n,
+            buf_len,
         )
 
         np.testing.assert_allclose(jit, ref, rtol=NUMBA_RTOL, atol=NUMBA_ATOL)
@@ -830,10 +870,18 @@ class TestSmoothEnvelopeKernelRegression:
         release_coeff = np.exp(-1.0 / (100.0 * 44100 / 1000))
 
         ref_out, ref_env = self._reference_smooth_single(
-            gr_db, n, float(attack_coeff), float(release_coeff), 0.0,
+            gr_db,
+            n,
+            float(attack_coeff),
+            float(release_coeff),
+            0.0,
         )
         jit_out, jit_env = _smooth_envelope_single(
-            gr_db, n, float(attack_coeff), float(release_coeff), 0.0,
+            gr_db,
+            n,
+            float(attack_coeff),
+            float(release_coeff),
+            0.0,
         )
 
         np.testing.assert_allclose(jit_out, ref_out, rtol=NUMBA_RTOL, atol=NUMBA_ATOL)
@@ -849,10 +897,20 @@ class TestSmoothEnvelopeKernelRegression:
         slow_release = float(np.exp(-1.0 / (600.0 * sr / 1000)))
 
         ref_out, ref_env = self._reference_smooth_auto(
-            gr_db, n, attack_coeff, fast_release, slow_release, 0.0,
+            gr_db,
+            n,
+            attack_coeff,
+            fast_release,
+            slow_release,
+            0.0,
         )
         jit_out, jit_env = _smooth_envelope_auto(
-            gr_db, n, attack_coeff, fast_release, slow_release, 0.0,
+            gr_db,
+            n,
+            attack_coeff,
+            fast_release,
+            slow_release,
+            0.0,
         )
 
         np.testing.assert_allclose(jit_out, ref_out, rtol=NUMBA_RTOL, atol=NUMBA_ATOL)
@@ -868,10 +926,18 @@ class TestSmoothEnvelopeKernelRegression:
         env_init = -8.0
 
         ref_out, ref_env = self._reference_smooth_single(
-            gr_db, n, attack_coeff, release_coeff, env_init,
+            gr_db,
+            n,
+            attack_coeff,
+            release_coeff,
+            env_init,
         )
         jit_out, jit_env = _smooth_envelope_single(
-            gr_db, n, attack_coeff, release_coeff, env_init,
+            gr_db,
+            n,
+            attack_coeff,
+            release_coeff,
+            env_init,
         )
 
         np.testing.assert_allclose(jit_out, ref_out, rtol=NUMBA_RTOL, atol=NUMBA_ATOL)
@@ -889,10 +955,20 @@ class TestSmoothEnvelopeKernelRegression:
         env_init = -12.0
 
         ref_out, ref_env = self._reference_smooth_auto(
-            gr_db, n, attack_coeff, fast_release, slow_release, env_init,
+            gr_db,
+            n,
+            attack_coeff,
+            fast_release,
+            slow_release,
+            env_init,
         )
         jit_out, jit_env = _smooth_envelope_auto(
-            gr_db, n, attack_coeff, fast_release, slow_release, env_init,
+            gr_db,
+            n,
+            attack_coeff,
+            fast_release,
+            slow_release,
+            env_init,
         )
 
         np.testing.assert_allclose(jit_out, ref_out, rtol=NUMBA_RTOL, atol=NUMBA_ATOL)
@@ -917,7 +993,7 @@ class TestRMSEnvelopeVectorisation:
     ) -> np.ndarray:
         """Pure-Python reference — original sequential loop."""
         n = len(signal)
-        sq = signal ** 2
+        sq = signal**2
         cumsum = np.cumsum(sq)
         cumsum = np.insert(cumsum, 0, 0.0)
 

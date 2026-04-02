@@ -32,6 +32,7 @@ from knowledge.rag import RAGPipeline
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture(scope="module")
 def client() -> TestClient:
     return TestClient(app)
@@ -66,13 +67,12 @@ def _mock_openai_response(content: str) -> MagicMock:
 # /ask endpoint
 # ---------------------------------------------------------------------------
 
+
 class TestAskEndpoint:
     """POST /ask — sound design advisor."""
 
     @patch("api.main.rag")
-    def test_ask_returns_200_with_answer(
-        self, mock_rag: MagicMock, client: TestClient
-    ) -> None:
+    def test_ask_returns_200_with_answer(self, mock_rag: MagicMock, client: TestClient) -> None:
         mock_rag.ask.return_value = {
             "answer": "The TB-303 uses a 3-pole 18dB/oct low-pass filter.",
             "sources": [{"title": "Part 1.2", "part": "1.2", "score": 0.92}],
@@ -91,9 +91,7 @@ class TestAskEndpoint:
         assert data["model"] == "gpt-4o"
 
     @patch("api.main.rag")
-    def test_ask_with_part_filter(
-        self, mock_rag: MagicMock, client: TestClient
-    ) -> None:
+    def test_ask_with_part_filter(self, mock_rag: MagicMock, client: TestClient) -> None:
         mock_rag.ask.return_value = {
             "answer": "Filtered answer.",
             "sources": [],
@@ -101,11 +99,14 @@ class TestAskEndpoint:
             "usage": {"prompt_tokens": 80, "completion_tokens": 20, "total_tokens": 100},
         }
 
-        resp = client.post("/ask", json={
-            "question": "What is the SP-1200 sample rate?",
-            "part_filter": "1.1",
-            "limit": 3,
-        })
+        resp = client.post(
+            "/ask",
+            json={
+                "question": "What is the SP-1200 sample rate?",
+                "part_filter": "1.1",
+                "limit": 3,
+            },
+        )
         assert resp.status_code == 200
         mock_rag.ask.assert_called_once_with(
             question="What is the SP-1200 sample rate?",
@@ -122,9 +123,7 @@ class TestAskEndpoint:
         assert resp.status_code == 422
 
     @patch("api.main.rag")
-    def test_ask_500_on_pipeline_error(
-        self, mock_rag: MagicMock, client: TestClient
-    ) -> None:
+    def test_ask_500_on_pipeline_error(self, mock_rag: MagicMock, client: TestClient) -> None:
         mock_rag.ask.side_effect = Exception("Qdrant connection refused")
 
         resp = client.post("/ask", json={"question": "Test question here"})
@@ -136,13 +135,12 @@ class TestAskEndpoint:
 # /compose endpoint
 # ---------------------------------------------------------------------------
 
+
 class TestComposeEndpoint:
     """POST /compose — auto-composer."""
 
     @patch("api.main.rag")
-    def test_compose_returns_200_with_config(
-        self, mock_rag: MagicMock, client: TestClient
-    ) -> None:
+    def test_compose_returns_200_with_config(self, mock_rag: MagicMock, client: TestClient) -> None:
         mock_rag.compose.return_value = {
             "config": {
                 "generator": "glitch_click",
@@ -156,9 +154,12 @@ class TestComposeEndpoint:
             "usage": {"prompt_tokens": 120, "completion_tokens": 80, "total_tokens": 200},
         }
 
-        resp = client.post("/compose", json={
-            "description": "dark Detroit techno with heavy 909 swing",
-        })
+        resp = client.post(
+            "/compose",
+            json={
+                "description": "dark Detroit techno with heavy 909 swing",
+            },
+        )
         assert resp.status_code == 200
 
         data = resp.json()
@@ -171,9 +172,7 @@ class TestComposeEndpoint:
         assert resp.status_code == 422
 
     @patch("api.main.rag")
-    def test_compose_500_on_pipeline_error(
-        self, mock_rag: MagicMock, client: TestClient
-    ) -> None:
+    def test_compose_500_on_pipeline_error(self, mock_rag: MagicMock, client: TestClient) -> None:
         mock_rag.compose.side_effect = Exception("OpenAI rate limit")
 
         resp = client.post("/compose", json={"description": "acid techno style"})
@@ -185,14 +184,13 @@ class TestComposeEndpoint:
 # RAGPipeline internal logic (unit tests, fully mocked)
 # ---------------------------------------------------------------------------
 
+
 class TestRAGPipelineInternal:
     """Direct unit tests for RAGPipeline methods."""
 
     @patch("knowledge.rag.OpenAI")
     @patch("knowledge.rag.KnowledgeBase")
-    def test_ask_calls_search_once(
-        self, MockKB: MagicMock, MockOpenAI: MagicMock
-    ) -> None:
+    def test_ask_calls_search_once(self, MockKB: MagicMock, MockOpenAI: MagicMock) -> None:
         """CR-02: verify single search call, not double."""
         mock_kb = MockKB.return_value
         mock_kb.search.return_value = _mock_search_results(2)
@@ -215,25 +213,23 @@ class TestRAGPipelineInternal:
 
     @patch("knowledge.rag.OpenAI")
     @patch("knowledge.rag.KnowledgeBase")
-    def test_compose_calls_search_once(
-        self, MockKB: MagicMock, MockOpenAI: MagicMock
-    ) -> None:
+    def test_compose_calls_search_once(self, MockKB: MagicMock, MockOpenAI: MagicMock) -> None:
         """CR-02: verify single search call in compose."""
         mock_kb = MockKB.return_value
         mock_kb.search.return_value = _mock_search_results(2)
 
-        valid_config = json.dumps({
-            "generator": "fm_blip",
-            "generator_params": {"freq": 440},
-            "chain_overrides": {},
-            "chain_skip": [],
-            "reasoning": "test",
-        })
+        valid_config = json.dumps(
+            {
+                "generator": "fm_blip",
+                "generator_params": {"freq": 440},
+                "chain_overrides": {},
+                "chain_skip": [],
+                "reasoning": "test",
+            }
+        )
 
         mock_client = MockOpenAI.return_value
-        mock_client.chat.completions.create.return_value = _mock_openai_response(
-            valid_config
-        )
+        mock_client.chat.completions.create.return_value = _mock_openai_response(valid_config)
 
         pipeline = RAGPipeline()
         pipeline.kb = mock_kb
@@ -257,9 +253,7 @@ class TestRAGPipelineInternal:
         fenced_json = '```json\n{"generator": "noise_burst", "generator_params": {}, "chain_overrides": {}}\n```'
 
         mock_client = MockOpenAI.return_value
-        mock_client.chat.completions.create.return_value = _mock_openai_response(
-            fenced_json
-        )
+        mock_client.chat.completions.create.return_value = _mock_openai_response(fenced_json)
 
         pipeline = RAGPipeline()
         pipeline.kb = mock_kb
@@ -270,9 +264,7 @@ class TestRAGPipelineInternal:
 
     @patch("knowledge.rag.OpenAI")
     @patch("knowledge.rag.KnowledgeBase")
-    def test_compose_rejects_invalid_json(
-        self, MockKB: MagicMock, MockOpenAI: MagicMock
-    ) -> None:
+    def test_compose_rejects_invalid_json(self, MockKB: MagicMock, MockOpenAI: MagicMock) -> None:
         """CR-14: malformed JSON raises ValueError."""
         mock_kb = MockKB.return_value
         mock_kb.search.return_value = _mock_search_results(1)
@@ -291,9 +283,7 @@ class TestRAGPipelineInternal:
 
     @patch("knowledge.rag.OpenAI")
     @patch("knowledge.rag.KnowledgeBase")
-    def test_compose_rejects_missing_keys(
-        self, MockKB: MagicMock, MockOpenAI: MagicMock
-    ) -> None:
+    def test_compose_rejects_missing_keys(self, MockKB: MagicMock, MockOpenAI: MagicMock) -> None:
         """CR-14: valid JSON but missing required keys."""
         mock_kb = MockKB.return_value
         mock_kb.search.return_value = _mock_search_results(1)
@@ -302,9 +292,7 @@ class TestRAGPipelineInternal:
         incomplete_json = json.dumps({"generator_params": {"freq": 440}})
 
         mock_client = MockOpenAI.return_value
-        mock_client.chat.completions.create.return_value = _mock_openai_response(
-            incomplete_json
-        )
+        mock_client.chat.completions.create.return_value = _mock_openai_response(incomplete_json)
 
         pipeline = RAGPipeline()
         pipeline.kb = mock_kb
@@ -315,9 +303,7 @@ class TestRAGPipelineInternal:
 
     @patch("knowledge.rag.OpenAI")
     @patch("knowledge.rag.KnowledgeBase")
-    def test_ask_empty_context(
-        self, MockKB: MagicMock, MockOpenAI: MagicMock
-    ) -> None:
+    def test_ask_empty_context(self, MockKB: MagicMock, MockOpenAI: MagicMock) -> None:
         """No search results should still produce an answer."""
         mock_kb = MockKB.return_value
         mock_kb.search.return_value = []
@@ -339,6 +325,7 @@ class TestRAGPipelineInternal:
 # ---------------------------------------------------------------------------
 # Markdown chunking
 # ---------------------------------------------------------------------------
+
 
 class TestChunking:
     """Knowledge base chunking logic."""

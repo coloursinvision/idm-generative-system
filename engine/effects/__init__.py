@@ -72,16 +72,16 @@ from engine.effects.vinyl import VinylMastering
 # ---------------------------------------------------------------------------
 
 CANONICAL_ORDER: list[tuple[str, type]] = [
-    ("noise_floor",  NoiseFloor),
-    ("bitcrusher",   Bitcrusher),
-    ("filter",       ResonantFilter),
-    ("saturation",   Saturation),
-    ("reverb",       Reverb),
-    ("delay",        TapeDelay),
-    ("spatial",      SpatialProcessor),
-    ("glitch",       GlitchEngine),
-    ("compressor",   Compressor),
-    ("vinyl",        VinylMastering),
+    ("noise_floor", NoiseFloor),
+    ("bitcrusher", Bitcrusher),
+    ("filter", ResonantFilter),
+    ("saturation", Saturation),
+    ("reverb", Reverb),
+    ("delay", TapeDelay),
+    ("spatial", SpatialProcessor),
+    ("glitch", GlitchEngine),
+    ("compressor", Compressor),
+    ("vinyl", VinylMastering),
 ]
 
 
@@ -113,8 +113,8 @@ def build_chain(
 
         >>> # Skip noise floor and spatial, heavy glitch
         >>> chain = build_chain(
-        ...     overrides={'glitch': {'stutter_density': 0.4, 'xor_mode': 'heavy'}},
-        ...     skip=['noise_floor', 'spatial'],
+        ...     overrides={"glitch": {"stutter_density": 0.4, "xor_mode": "heavy"}},
+        ...     skip=["noise_floor", "spatial"],
         ... )
     """
     overrides = overrides or {}

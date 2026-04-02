@@ -68,9 +68,5 @@ class BaseEffect(ABC):
         ...
 
     def __repr__(self) -> str:
-        params = ", ".join(
-            f"{k}={v!r}"
-            for k, v in self.__dict__.items()
-            if not k.startswith("_")
-        )
+        params = ", ".join(f"{k}={v!r}" for k, v in self.__dict__.items() if not k.startswith("_"))
         return f"{self.__class__.__name__}({params})"

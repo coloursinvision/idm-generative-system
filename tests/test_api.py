@@ -32,6 +32,7 @@ from api.main import GENERATORS, app
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture(scope="module")
 def client() -> TestClient:
     """Shared test client — single instance for the module."""
@@ -63,6 +64,7 @@ def stereo_wav_bytes() -> bytes:
 # GET /health
 # ---------------------------------------------------------------------------
 
+
 class TestHealth:
     """GET /health — liveness check."""
 
@@ -81,8 +83,16 @@ class TestHealth:
 # ---------------------------------------------------------------------------
 
 EXPECTED_KEYS = [
-    "noise_floor", "bitcrusher", "filter", "saturation", "reverb",
-    "delay", "spatial", "glitch", "compressor", "vinyl",
+    "noise_floor",
+    "bitcrusher",
+    "filter",
+    "saturation",
+    "reverb",
+    "delay",
+    "spatial",
+    "glitch",
+    "compressor",
+    "vinyl",
 ]
 
 
@@ -113,8 +123,7 @@ class TestEffects:
         required = {"position", "key", "class_name", "params", "docstring"}
         for block in data:
             assert required.issubset(block.keys()), (
-                f"Block '{block.get('key')}' missing keys: "
-                f"{required - block.keys()}"
+                f"Block '{block.get('key')}' missing keys: {required - block.keys()}"
             )
 
     def test_effects_params_have_type_and_default(self, client: TestClient) -> None:
@@ -122,17 +131,14 @@ class TestEffects:
         data = client.get("/effects").json()
         for block in data:
             for pname, pinfo in block["params"].items():
-                assert "type" in pinfo, (
-                    f"{block['key']}.{pname} missing 'type'"
-                )
-                assert "default" in pinfo, (
-                    f"{block['key']}.{pname} missing 'default'"
-                )
+                assert "type" in pinfo, f"{block['key']}.{pname} missing 'type'"
+                assert "default" in pinfo, f"{block['key']}.{pname} missing 'default'"
 
 
 # ---------------------------------------------------------------------------
 # POST /generate
 # ---------------------------------------------------------------------------
+
 
 class TestGenerate:
     """POST /generate — sample generation + chain processing."""
@@ -166,50 +172,65 @@ class TestGenerate:
             "Expected 'bit_depth' in bitcrusher params — schema changed?"
         )
 
-        resp = client.post("/generate", json={
-            "generator": "glitch_click",
-            "chain_overrides": {
-                "bitcrusher": {"bit_depth": 8},
+        resp = client.post(
+            "/generate",
+            json={
+                "generator": "glitch_click",
+                "chain_overrides": {
+                    "bitcrusher": {"bit_depth": 8},
+                },
             },
-        })
+        )
         assert resp.status_code == 200
         audio, _ = sf.read(io.BytesIO(resp.content), dtype="float64")
         assert len(audio) > 0
 
     def test_generate_with_chain_skip(self, client: TestClient) -> None:
         """Skipping blocks reduces chain length, still produces valid output."""
-        resp = client.post("/generate", json={
-            "generator": "noise_burst",
-            "chain_skip": ["reverb", "delay", "glitch"],
-        })
+        resp = client.post(
+            "/generate",
+            json={
+                "generator": "noise_burst",
+                "chain_skip": ["reverb", "delay", "glitch"],
+            },
+        )
         assert resp.status_code == 200
         audio, _ = sf.read(io.BytesIO(resp.content), dtype="float64")
         assert len(audio) > 0
 
     def test_generate_bypass_chain(self, client: TestClient) -> None:
         """bypass_chain=true returns raw sample without effects processing."""
-        resp = client.post("/generate", json={
-            "generator": "glitch_click",
-            "bypass_chain": True,
-        })
+        resp = client.post(
+            "/generate",
+            json={
+                "generator": "glitch_click",
+                "bypass_chain": True,
+            },
+        )
         assert resp.status_code == 200
         audio, _ = sf.read(io.BytesIO(resp.content), dtype="float64")
         assert len(audio) > 0
 
     def test_generate_invalid_generator_400(self, client: TestClient) -> None:
         """Unknown generator name returns 400."""
-        resp = client.post("/generate", json={
-            "generator": "nonexistent_gen",
-        })
+        resp = client.post(
+            "/generate",
+            json={
+                "generator": "nonexistent_gen",
+            },
+        )
         assert resp.status_code == 400
         assert "nonexistent_gen" in resp.json()["detail"]
 
     def test_generate_invalid_params_400(self, client: TestClient) -> None:
         """Invalid generator kwargs return 400."""
-        resp = client.post("/generate", json={
-            "generator": "glitch_click",
-            "generator_params": {"totally_bogus_param": 999},
-        })
+        resp = client.post(
+            "/generate",
+            json={
+                "generator": "glitch_click",
+                "generator_params": {"totally_bogus_param": 999},
+            },
+        )
         assert resp.status_code == 400
         assert "Invalid generator params" in resp.json()["detail"]
 
@@ -218,12 +239,11 @@ class TestGenerate:
 # POST /process
 # ---------------------------------------------------------------------------
 
+
 class TestProcess:
     """POST /process — upload WAV, process through chain, return WAV."""
 
-    def test_process_mono_wav(
-        self, client: TestClient, mono_wav_bytes: bytes
-    ) -> None:
+    def test_process_mono_wav(self, client: TestClient, mono_wav_bytes: bytes) -> None:
         """Upload mono WAV → processed WAV returned."""
         resp = client.post(
             "/process",
@@ -295,9 +315,7 @@ class TestProcess:
         audio, _ = sf.read(io.BytesIO(resp.content), dtype="float64")
         assert audio.ndim == 1, "Output must be mono even for stereo input"
 
-    def test_process_with_overrides(
-        self, client: TestClient, mono_wav_bytes: bytes
-    ) -> None:
+    def test_process_with_overrides(self, client: TestClient, mono_wav_bytes: bytes) -> None:
         """Chain overrides applied via JSON string in form field."""
         overrides = json.dumps({"bitcrusher": {"bit_depth": 6}})
         resp = client.post(
@@ -307,9 +325,7 @@ class TestProcess:
         )
         assert resp.status_code == 200
 
-    def test_process_with_skip(
-        self, client: TestClient, mono_wav_bytes: bytes
-    ) -> None:
+    def test_process_with_skip(self, client: TestClient, mono_wav_bytes: bytes) -> None:
         """Chain skip applied via JSON string in form field."""
         skip = json.dumps(["reverb", "delay"])
         resp = client.post(
@@ -335,9 +351,7 @@ class TestProcess:
         assert resp.status_code == 400
         assert "chain_overrides" in resp.json()["detail"].lower()
 
-    def test_process_invalid_skip_json_400(
-        self, client: TestClient, mono_wav_bytes: bytes
-    ) -> None:
+    def test_process_invalid_skip_json_400(self, client: TestClient, mono_wav_bytes: bytes) -> None:
         """Malformed chain_skip JSON returns 400."""
         resp = client.post(
             "/process?chain_skip=NOT_VALID_JSON",

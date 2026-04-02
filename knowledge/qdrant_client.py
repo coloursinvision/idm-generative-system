@@ -61,12 +61,13 @@ QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333")
 
 # Chunking
 MAX_CHUNK_CHARS = 2000  # Soft limit — split further on ### if exceeded
-MIN_CHUNK_CHARS = 100   # Skip trivially small chunks
+MIN_CHUNK_CHARS = 100  # Skip trivially small chunks
 
 
 # ---------------------------------------------------------------------------
 # Chunking
 # ---------------------------------------------------------------------------
+
 
 def chunk_markdown(text: str) -> list[dict[str, Any]]:
     """
@@ -98,12 +99,14 @@ def chunk_markdown(text: str) -> list[dict[str, Any]]:
     if h2_positions:
         pre_toc = "\n".join(lines[: h2_positions[0][0]]).strip()
         if len(pre_toc) >= MIN_CHUNK_CHARS:
-            chunks.append({
-                "text": pre_toc,
-                "part": "TOC",
-                "subsection": None,
-                "title": "Table of Contents",
-            })
+            chunks.append(
+                {
+                    "text": pre_toc,
+                    "part": "TOC",
+                    "subsection": None,
+                    "title": "Table of Contents",
+                }
+            )
 
     # Process each ## section
     for idx, (start, title) in enumerate(h2_positions):
@@ -118,12 +121,14 @@ def chunk_markdown(text: str) -> list[dict[str, Any]]:
         # If section is small enough, keep as single chunk
         if len(section_text) <= MAX_CHUNK_CHARS:
             if len(section_text) >= MIN_CHUNK_CHARS:
-                chunks.append({
-                    "text": section_text,
-                    "part": part,
-                    "subsection": None,
-                    "title": title,
-                })
+                chunks.append(
+                    {
+                        "text": section_text,
+                        "part": part,
+                        "subsection": None,
+                        "title": title,
+                    }
+                )
             continue
 
         # Section too large — split on ### subsections
@@ -133,9 +138,7 @@ def chunk_markdown(text: str) -> list[dict[str, Any]]:
     return chunks
 
 
-def _split_on_h3(
-    lines: list[str], part: str, parent_title: str
-) -> list[dict[str, Any]]:
+def _split_on_h3(lines: list[str], part: str, parent_title: str) -> list[dict[str, Any]]:
     """
     Split a ## section further on ### headers.
 
@@ -152,44 +155,46 @@ def _split_on_h3(
         # No ### headers — keep as single large chunk
         text = "\n".join(lines).strip()
         if len(text) >= MIN_CHUNK_CHARS:
-            chunks.append({
-                "text": text,
-                "part": part,
-                "subsection": None,
-                "title": parent_title,
-            })
+            chunks.append(
+                {
+                    "text": text,
+                    "part": part,
+                    "subsection": None,
+                    "title": parent_title,
+                }
+            )
         return chunks
 
     # Content before first ### (includes ## header)
     pre_h3 = "\n".join(lines[: h3_positions[0][0]]).strip()
     if len(pre_h3) >= MIN_CHUNK_CHARS:
-        chunks.append({
-            "text": pre_h3,
-            "part": part,
-            "subsection": None,
-            "title": parent_title,
-        })
+        chunks.append(
+            {
+                "text": pre_h3,
+                "part": part,
+                "subsection": None,
+                "title": parent_title,
+            }
+        )
 
     # Each ### subsection
     context_header = lines[0].strip()  # The ## line for context
     for idx, (start, sub_title) in enumerate(h3_positions):
-        end = (
-            h3_positions[idx + 1][0]
-            if idx + 1 < len(h3_positions)
-            else len(lines)
-        )
+        end = h3_positions[idx + 1][0] if idx + 1 < len(h3_positions) else len(lines)
         sub_text = "\n".join(lines[start:end]).strip()
 
         # Prepend parent ## header for retrieval context
         full_text = f"{context_header}\n\n{sub_text}"
 
         if len(full_text) >= MIN_CHUNK_CHARS:
-            chunks.append({
-                "text": full_text,
-                "part": part,
-                "subsection": sub_title[:100],
-                "title": f"{parent_title} > {sub_title}",
-            })
+            chunks.append(
+                {
+                    "text": full_text,
+                    "part": part,
+                    "subsection": sub_title[:100],
+                    "title": f"{parent_title} > {sub_title}",
+                }
+            )
 
     return chunks
 
@@ -202,6 +207,7 @@ def _deterministic_id(text: str) -> str:
 # ---------------------------------------------------------------------------
 # KnowledgeBase
 # ---------------------------------------------------------------------------
+
 
 class KnowledgeBase:
     """
@@ -265,9 +271,7 @@ class KnowledgeBase:
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=1, max=10),
-        retry=retry_if_exception_type(
-            (RateLimitError, APITimeoutError, APIConnectionError)
-        ),
+        retry=retry_if_exception_type((RateLimitError, APITimeoutError, APIConnectionError)),
     )
     def embed(self, texts: list[str]) -> list[list[float]]:
         """
@@ -403,6 +407,7 @@ class KnowledgeBase:
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
+
 
 def _cli() -> None:
     """Minimal CLI for ingestion and search testing."""
