@@ -1,0 +1,196 @@
+# =============================================================================
+# IDM Generative System — CI Pipeline
+# Gitflow: develop = active dev, main = release-ready only.
+#
+# Triggers:
+#   push to develop   → lint + type-check + test + Docker build (no push)
+#   PR to main        → lint + type-check + test + Docker build (no push)
+#   push to main      → lint + type-check + test + Docker build + push to GHCR
+#   hotfix/* branches → lint + type-check + test
+# =============================================================================
+
+name: CI
+
+on:
+  push:
+    branches: [develop, main, "hotfix/**"]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: write  # GHCR push on main
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.11"
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1 — Lint & Format
+  # ---------------------------------------------------------------------------
+  lint:
+    name: "Lint & Format"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install ruff
+        run: pip install ruff
+
+      - name: Ruff lint
+        run: ruff check .
+
+      - name: Ruff format check
+        run: ruff format --check .
+
+  # ---------------------------------------------------------------------------
+  # Job 2 — Type Check
+  # ---------------------------------------------------------------------------
+  typecheck:
+    name: "Type Check (mypy)"
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-typecheck-${{ hashFiles('pyproject.toml') }}
+          restore-keys: pip-typecheck-
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install ".[dev]"
+
+      - name: Run mypy
+        run: mypy engine/ api/ knowledge/ --config-file pyproject.toml
+
+  # ---------------------------------------------------------------------------
+  # Job 3 — Test
+  # ---------------------------------------------------------------------------
+  test:
+    name: "Test Suite"
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-test-${{ hashFiles('pyproject.toml') }}
+          restore-keys: pip-test-
+
+      - name: Install system deps
+        run: sudo apt-get update && sudo apt-get install -y libsndfile1
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install ".[dev]"
+
+      - name: Run tests
+        env:
+          # Stub keys — external services are mocked in tests.
+          OPENAI_API_KEY: "sk-test-000000000000000000000000000000000000000000000000"
+          QDRANT_URL: "http://localhost:6333"
+          QDRANT_API_KEY: "test-key"
+        run: |
+          pytest \
+            --tb=short \
+            --strict-markers \
+            -q \
+            --cov=engine --cov=api --cov=knowledge \
+            --cov-report=term-missing \
+            --cov-report=xml:coverage.xml
+
+      - name: Upload coverage
+        if: github.ref == 'refs/heads/develop'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+          retention-days: 14
+
+  # ---------------------------------------------------------------------------
+  # Job 4 — Docker Build (+ Push on main)
+  # ---------------------------------------------------------------------------
+  docker:
+    name: "Docker"
+    runs-on: ubuntu-latest
+    needs: [lint, typecheck, test]
+    # Only build Docker on develop pushes, main pushes, and PRs to main.
+    if: >-
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main')
+      || github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: buildx-${{ github.sha }}
+          restore-keys: buildx-
+
+      - name: Log in to GHCR
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build (and push on main)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          # Push ONLY on merge to main.
+          push: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+
+      # Rotate cache to prevent unbounded growth.
+      - name: Rotate cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
