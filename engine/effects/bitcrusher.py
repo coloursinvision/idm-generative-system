@@ -30,8 +30,8 @@ Signal position: NoiseFloor → [Block 2] → ResonantFilter → ...
 from __future__ import annotations
 
 import numpy as np
-from engine.effects.base import BaseEffect
 
+from engine.effects.base import BaseEffect
 
 # ---------------------------------------------------------------------------
 # Hardware presets
@@ -177,4 +177,3 @@ class Bitcrusher(BaseEffect):
 
     def reset(self) -> None:
         """Stateless effect — nothing to reset."""
-        pass

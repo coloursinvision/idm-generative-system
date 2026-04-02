@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import numpy as np
 from scipy import signal as scipy_signal
+
 from engine.effects.base import BaseEffect
 
 
@@ -100,7 +101,7 @@ class SpatialProcessor(BaseEffect):
         Returns:
             Left channel of the processed stereo pair.
         """
-        left, right = self.process_mono(signal)
+        left, _right = self.process_mono(signal)
         return left
 
     def process_mono(
@@ -176,7 +177,6 @@ class SpatialProcessor(BaseEffect):
 
     def reset(self) -> None:
         """Stateless effect — nothing to reset."""
-        pass
 
     # ------------------------------------------------------------------
     # Private helpers

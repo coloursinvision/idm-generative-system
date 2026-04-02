@@ -20,26 +20,24 @@ Run:
 
 from __future__ import annotations
 
-import json
+# ---------------------------------------------------------------------------
+# Secrets bridge — Streamlit Cloud uses st.secrets, not .env
+# Map secrets to env vars so knowledge/ modules work unchanged.
+# ---------------------------------------------------------------------------
+import contextlib
+import os
 import sys
 from pathlib import Path
 
 import streamlit as st
 
-# ---------------------------------------------------------------------------
-# Secrets bridge — Streamlit Cloud uses st.secrets, not .env
-# Map secrets to env vars so knowledge/ modules work unchanged.
-# ---------------------------------------------------------------------------
-import os
 
 def _bridge_secrets() -> None:
     """Copy Streamlit secrets to os.environ if available."""
     for key in ("OPENAI_API_KEY", "QDRANT_URL", "QDRANT_API_KEY"):
         if key not in os.environ:
-            try:
+            with contextlib.suppress(KeyError, FileNotFoundError):
                 os.environ[key] = st.secrets[key]
-            except (KeyError, FileNotFoundError):
-                pass
 
 _bridge_secrets()
 
@@ -47,11 +45,11 @@ _bridge_secrets()
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from dotenv import load_dotenv
+
 load_dotenv()
 
-from knowledge.rag import RAGPipeline
 from engine.effects import CANONICAL_ORDER
-
+from knowledge.rag import RAGPipeline
 
 # ---------------------------------------------------------------------------
 # Page config

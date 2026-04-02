@@ -35,38 +35,37 @@ Usage:
 """
 
 from engine.effects.base import BaseEffect
-from engine.effects.chain import EffectChain
-
-# Block 1 — Analogue noise floor (Mackie CR-1604)
-from engine.effects.noise_floor import NoiseFloor
 
 # Block 2 — Bitcrusher (SP-1200, S950, RZ-1)
 from engine.effects.bitcrusher import Bitcrusher
-
-# Block 3 — Resonant filter (TB-303, SH-101)
-from engine.effects.filter import ResonantFilter
-
-# Block 4 — Saturation (Mackie bus, tape)
-from engine.effects.saturation import Saturation
-
-# Block 5 — Reverb (Alesis Quadraverb)
-from engine.effects.reverb import Reverb
-
-# Block 6 — Tape delay (Roland Space Echo RE-201)
-from engine.effects.delay import TapeDelay
-
-# Block 7 — Spatial processor (stereo field)
-from engine.effects.spatial import SpatialProcessor
-
-# Block 8 — Glitch engine (Braindance stutter, ASR-10, XOR)
-from engine.effects.glitch import GlitchEngine
+from engine.effects.chain import EffectChain
 
 # Block 9 — Bus compressor (SSL, Neve, dbx)
 from engine.effects.compressor import Compressor
 
+# Block 6 — Tape delay (Roland Space Echo RE-201)
+from engine.effects.delay import TapeDelay
+
+# Block 3 — Resonant filter (TB-303, SH-101)
+from engine.effects.filter import ResonantFilter
+
+# Block 8 — Glitch engine (Braindance stutter, ASR-10, XOR)
+from engine.effects.glitch import GlitchEngine
+
+# Block 1 — Analogue noise floor (Mackie CR-1604)
+from engine.effects.noise_floor import NoiseFloor
+
+# Block 5 — Reverb (Alesis Quadraverb)
+from engine.effects.reverb import Reverb
+
+# Block 4 — Saturation (Mackie bus, tape)
+from engine.effects.saturation import Saturation
+
+# Block 7 — Spatial processor (stereo field)
+from engine.effects.spatial import SpatialProcessor
+
 # Block 10 — Vinyl mastering (RIAA, DAT, surface noise)
 from engine.effects.vinyl import VinylMastering
-
 
 # ---------------------------------------------------------------------------
 # Canonical chain order — used by build_chain()

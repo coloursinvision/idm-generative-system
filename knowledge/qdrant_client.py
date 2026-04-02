@@ -29,26 +29,26 @@ Usage:
 
 from __future__ import annotations
 
+import hashlib
 import os
 import re
 import sys
-import hashlib
 from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
-from openai import OpenAI, RateLimitError, APITimeoutError, APIConnectionError
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
-from qdrant_client import QdrantClient
+from openai import APIConnectionError, APITimeoutError, OpenAI, RateLimitError
 from qdrant_client.models import (
     Distance,
+    FieldCondition,
+    Filter,
+    MatchValue,
     PointStruct,
     VectorParams,
-    Filter,
-    FieldCondition,
-    MatchValue,
 )
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
+from qdrant_client import QdrantClient
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -318,7 +318,7 @@ class KnowledgeBase:
 
         # Build Qdrant points
         points: list[PointStruct] = []
-        for chunk, vector in zip(chunks, embeddings):
+        for chunk, vector in zip(chunks, embeddings, strict=True):
             point_id = _deterministic_id(chunk["text"])
             points.append(
                 PointStruct(

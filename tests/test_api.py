@@ -22,12 +22,11 @@ import io
 import json
 
 import numpy as np
-import soundfile as sf
 import pytest
+import soundfile as sf
 from fastapi.testclient import TestClient
 
-from api.main import app, GENERATORS
-
+from api.main import GENERATORS, app
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -39,7 +38,7 @@ def client() -> TestClient:
     return TestClient(app)
 
 
-@pytest.fixture()
+@pytest.fixture
 def mono_wav_bytes() -> bytes:
     """Generate a short mono WAV file in memory (1024 samples, 44100 Hz)."""
     signal = np.random.default_rng(42).uniform(-0.5, 0.5, 1024)
@@ -49,7 +48,7 @@ def mono_wav_bytes() -> bytes:
     return buf.read()
 
 
-@pytest.fixture()
+@pytest.fixture
 def stereo_wav_bytes() -> bytes:
     """Generate a short stereo WAV file in memory (1024 frames, 2 channels)."""
     rng = np.random.default_rng(99)
