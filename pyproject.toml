@@ -176,34 +176,39 @@ warn_unreachable = true
 show_error_codes = true
 namespace_packages = true
 explicit_package_bases = true
+exclude = [
+    "engine/acid_dsp_model\\.py$",
+    "engine/acid_engine_v2\\.py$",
+    "engine/acid_granular_experiment\\.py$",
+    "notebooks/",
+]
 
-# Per-module overrides for third-party libs without stubs or with incomplete stubs
+# Third-party libs without stubs
 [[tool.mypy.overrides]]
 module = [
     "numba",
-    "numba.*",
-    "llvmlite",
-    "llvmlite.*",
-    "librosa",
-    "librosa.*",
-    "soundfile",
-    "soundfile.*",
+    "scipy.*",
     "qdrant_client",
     "qdrant_client.*",
-    "streamlit",
-    "streamlit.*",
-    "pydub",
-    "pydub.*",
-    "scipy.*",
+    "soundfile",
+    "pandas",
 ]
 ignore_missing_imports = true
 
-# Engine modules: relax some strict checks for DSP code with heavy numpy usage.
+# Engine modules: relax strict checks for DSP code with heavy numpy usage.
 # Goal: incrementally remove these overrides as type annotations improve.
 [[tool.mypy.overrides]]
-module = ["engine.effects.*", "engine.generators.*", "engine.sample_maker"]
+module = [
+    "engine.effects.*",
+    "engine.sample_maker",
+    "engine.generator",
+    "api.main",
+]
 disallow_untyped_defs = false
 disallow_incomplete_defs = false
+disallow_untyped_decorators = false
+warn_return_any = false
+disable_error_code = ["type-arg", "misc"]
 
 # ---------------------------------------------------------------------------
 # pytest

@@ -401,6 +401,7 @@ class KnowledgeBase:
                 "score": hit.score,
             }
             for hit in results.points
+            if hit.payload is not None
         ]
 
 
