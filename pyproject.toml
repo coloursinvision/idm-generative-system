@@ -192,6 +192,8 @@ module = [
     "qdrant_client.*",
     "soundfile",
     "pandas",
+    "matplotlib",
+    "matplotlib.*",
 ]
 ignore_missing_imports = true
 
