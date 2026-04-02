@@ -14,7 +14,6 @@ Algorithms:
 
 from __future__ import annotations
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -242,11 +241,12 @@ def plot_pattern(
 ) -> None:
     """
     Render a rhythm matrix as a heatmap.
-
     Args:
         df: pd.DataFrame (tracks × steps, int 0/1).
         title: Plot title.
     """
+    import matplotlib.pyplot as plt
+
     plt.figure(figsize=(10, 3))
     plt.imshow(df, aspect="auto", interpolation="nearest")
     plt.yticks(range(len(df)), df.index)
