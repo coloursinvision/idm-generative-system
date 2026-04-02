@@ -6,6 +6,35 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.3.0] — 2026-04-02 — Infrastructure & CI Pipeline (Phase 5)
+
+### Added
+- **pyproject.toml** — single source of truth for project metadata, dependencies (core + dev/ml/monitoring/streamlit extras), and all tool configurations (ruff, mypy, pytest, coverage).
+- **Dockerfile** — multi-stage production build (Python 3.11-slim). Builder stage compiles native extensions; runtime stage runs as unprivileged user with healthcheck. Numba kernels pre-compiled during build. Target: Digital Ocean App Platform.
+- **GitHub Actions CI pipeline** (`.github/workflows/ci.yml`) — gitflow-aware: `develop` runs lint → typecheck → test → Docker build; `main` adds GHCR push; hotfix branches run lint → typecheck → test.
+- **Pre-commit hooks** (`.pre-commit-config.yaml`) — ruff lint+format, mypy, trailing whitespace, gitleaks (secrets detection), commitizen (conventional commits).
+- `.env.example` — environment variable template for onboarding.
+- `.dockerignore` — lean Docker build context.
+- `api/__init__.py` — `__version__` from `importlib.metadata`, reads version from pyproject.toml (CR-16). `__all__` defined (CR-20).
+- `knowledge/__init__.py` — `__all__` with `KnowledgeBase`, `RAGPipeline` exports (CR-20).
+
+### Changed
+- **requirements.txt** — cleaned, synchronised with pyproject.toml. Exists only for Streamlit Cloud deployment.
+- **22 Python files** — ruff lint fixes (import sorting, `raise...from`, unused vars, `contextlib.suppress`) + ruff format applied.
+- **engine/generator.py** — lazy import `matplotlib.pyplot` (moved into `plot_pattern()`). Prevents import failure in environments without matplotlib.
+- **knowledge/qdrant_client.py** — `zip(..., strict=True)` on chunk/embedding pairing. Payload `None` guard on search results.
+- **streamlit_app/app.py** — `contextlib.suppress` replacing try/except/pass in secrets bridge.
+
+### Fixed
+- **mypy strict** — project-wide strict type checking with pragmatic per-module relaxation for DSP/NumPy code. Third-party stub ignores for numba, scipy, qdrant_client, soundfile, pandas, matplotlib.
+- **pandas** added to core dependencies — required by `engine/generator.py` at import time.
+
+### Infrastructure
+- **Gitflow adopted** — `develop` for active work, `main` for releases only, `hotfix/*` for emergency patches.
+- **CI status** — all 4 jobs passing: Lint & Format, Type Check (mypy), Test Suite (208/209, 1 pre-existing skip), Docker Build.
+
+---
+
 ## [0.2.2] — 2026-04-02
 
 Critical bug fix release. All five bugs trace to a single root cause: CR-14 (2026-04-01) changed the return type of `rag.compose()` from JSON string to parsed dict, but the change was not propagated to the three downstream consumers (Streamlit, React frontend, FastAPI docstring). A secondary environment-loading order bug prevented the FastAPI backend from connecting to Qdrant Cloud.
