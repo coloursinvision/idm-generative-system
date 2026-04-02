@@ -1,0 +1,64 @@
+# =============================================================================
+# IDM Generative System — Pre-commit hooks
+# Install: pre-commit install
+# Run all: pre-commit run --all-files
+# =============================================================================
+
+default_language_version:
+  python: python3.11
+
+repos:
+  # ---- General file hygiene ------------------------------------------------
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+        exclude: "frontend/"
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+      - id: check-merge-conflict
+      - id: debug-statements
+      - id: detect-private-key
+
+  # ---- Ruff (lint + format) ------------------------------------------------
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.8
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        types_or: [python, pyi]
+      - id: ruff-format
+        types_or: [python, pyi]
+
+  # ---- mypy (type checking) ------------------------------------------------
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.10.0
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          - numpy>=1.26.0
+          - types-requests
+          - pydantic>=2.0.0
+          - fastapi>=0.110.0
+        args: [--config-file=pyproject.toml]
+        # Only run on files that are part of the Python packages.
+        files: ^(engine|api|knowledge)/
+        pass_filenames: false
+
+  # ---- Secrets detection ---------------------------------------------------
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.4
+    hooks:
+      - id: gitleaks
+
+  # ---- Commit message convention -------------------------------------------
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v3.27.0
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]
