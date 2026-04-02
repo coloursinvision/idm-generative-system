@@ -6,6 +6,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.2.2] — 2026-04-02
+
+Critical bug fix release. All five bugs trace to a single root cause: CR-14 (2026-04-01) changed the return type of `rag.compose()` from JSON string to parsed dict, but the change was not propagated to the three downstream consumers (Streamlit, React frontend, FastAPI docstring). A secondary environment-loading order bug prevented the FastAPI backend from connecting to Qdrant Cloud.
+
+### Fixed
+
+- **[CRITICAL] Streamlit Composer TypeError** — removed `json.loads()` call on already-parsed dict in `streamlit_app/app.py`. Added `ValueError`/`Exception` handling around `rag.compose()` with `st.error()` + `st.stop()` for graceful UI feedback. (BUG-01)
+- **GPT-4o JSON extraction hardening** — replaced naive `startswith("```")` fence stripping in `rag.py:_parse_compose_output()` with regex fence extraction (`re.search`) and brace-pair fallback (`find("{")` / `rfind("}")`). Handles preamble text before fences, missing fences, and other LLM output edge cases. (BUG-02)
+- **React Composer crash** — removed `JSON.parse(data.config)` in `ComposerPanel.tsx` (config is already a parsed object since v0.2.1 CR-14). Fallback render uses `JSON.stringify` for safety. Updated `ComposeResponse.config` type from `string` to `Record<string, unknown>` in `types/index.ts`. (BUG-03)
+- **FastAPI Qdrant connection refused** — `QDRANT_URL` module-level constant in `qdrant_client.py` evaluated at import time before `.env` was loaded, always falling back to `localhost:6333`. Added `load_dotenv()` before knowledge module imports in `api/main.py`. (BUG-04)
+- **`/compose` docstring** — corrected return type description from "JSON string" to "parsed dict". (BUG-05)
+
+### Maintenance
+
+- **Rollup native module** — regenerated `frontend/package-lock.json` and `node_modules` to resolve `@rollup/rollup-linux-x64-gnu` missing module error (npm optional dependency bug).
+- `import re` added to `knowledge/rag.py` module-level imports (stdlib, no new external dependency).
+
+---
+
 ## [0.2.1] — 2026-04-01
 
 Full backend code review and 4-phase implementation cycle. 20 findings identified across `engine/`, `api/`, `knowledge/`, and `tests/`. 14 findings resolved (1 CRITICAL, 5 HIGH, 8 MEDIUM). 6 LOW findings deferred. Test suite expanded from 23 to 209 cases. DSP hot paths compiled to native LLVM via Numba.

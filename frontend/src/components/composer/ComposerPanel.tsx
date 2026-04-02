@@ -22,10 +22,14 @@ export function ComposerPanel() {
       const data = await postCompose({ description: description.trim(), limit });
       setResult(data);
 
-      try {
-        setParsed(JSON.parse(data.config));
-      } catch {
-        setParsed(null);
+      if (typeof data.config === "object" && data.config !== null) {
+        setParsed(data.config);
+      } else {
+        try {
+          setParsed(JSON.parse(data.config));
+        } catch {
+          setParsed(null);
+        }
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Request failed");
@@ -108,7 +112,9 @@ export function ComposerPanel() {
                   RAW RESPONSE (NOT VALID JSON)
                 </p>
                 <pre className="text-xs text-text-secondary leading-relaxed overflow-x-auto">
-                  {result.config}
+                {typeof result.config === "string"
+                  ? result.config
+                  : JSON.stringify(result.config, null, 2)}
                 </pre>
               </>
             )}

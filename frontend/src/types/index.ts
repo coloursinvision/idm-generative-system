@@ -51,7 +51,7 @@ export interface ComposeRequest {
 }
 
 export interface ComposeResponse {
-  config: string;
+  config: Record<string, unknown>;
   sources: SourceRef[];
   model: string;
   usage: TokenUsage;

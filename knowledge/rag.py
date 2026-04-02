@@ -24,6 +24,7 @@ Usage:
 from __future__ import annotations
 
 import json
+import re
 import os
 from typing import Any
 
@@ -308,36 +309,25 @@ class RAGPipeline:
             },
         }
 
-    # ------------------------------------------------------------------
+ # ------------------------------------------------------------------
     # Output validation
     # ------------------------------------------------------------------
 
     @staticmethod
     def _parse_compose_output(raw: str) -> dict[str, Any]:
-        """
-        Parse and validate the JSON config returned by GPT-4o.
-
-        Handles common LLM output issues: markdown code fences,
-        preamble text, truncated output. Validates required keys.
-
-        Args:
-            raw: Raw string from GPT-4o completion.
-
-        Returns:
-            Parsed config dict.
-
-        Raises:
-            ValueError: If output is not valid JSON or missing required keys.
-        """
         text = raw.strip()
 
-        # Strip markdown code fences if present
-        if text.startswith("```"):
-            # Remove opening fence (with optional language tag)
-            text = text.split("\n", 1)[1] if "\n" in text else text[3:]
-        if text.endswith("```"):
-            text = text.rsplit("```", 1)[0]
-        text = text.strip()
+        # Extract JSON from markdown code fence (handles preamble before fence)
+        import re
+        fence_match = re.search(r"```(?:json)?\s*\n(.*?)```", text, re.DOTALL)
+        if fence_match:
+            text = fence_match.group(1).strip()
+        else:
+            # No fence — try to extract raw JSON object
+            brace_start = text.find("{")
+            brace_end = text.rfind("}")
+            if brace_start != -1 and brace_end > brace_start:
+                text = text[brace_start : brace_end + 1]
 
         try:
             config = json.loads(text)
