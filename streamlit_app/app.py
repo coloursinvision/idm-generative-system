@@ -293,23 +293,24 @@ with tab_composer:
 
     if compose_clicked and description.strip():
         with st.spinner("Composing with GPT-4o..."):
-            result = rag.compose(description=description.strip(), limit=limit2)
+            try:
+                result = rag.compose(description=description.strip(), limit=limit2)
+            except ValueError as e:
+                st.error(f"Composition failed: {e}")
+                st.stop()
+            except Exception as e:
+                st.error(f"RAG pipeline error: {e}")
+                st.stop()
 
         # Parse and display config
         st.markdown("#### Generated Configuration")
 
-        try:
-            config = json.loads(result["config"])
-            st.json(config)
+        config = result["config"]
+        st.json(config)
 
-            # Reasoning (if present)
-            if "reasoning" in config:
-                st.markdown("#### Reasoning")
-                st.markdown(config["reasoning"])
-
-        except json.JSONDecodeError:
-            st.markdown("*Raw response (not valid JSON):*")
-            st.code(result["config"], language="json")
+        if "reasoning" in config:
+            st.markdown("#### Reasoning")
+            st.markdown(config["reasoning"])
 
         # Sources
         st.markdown("#### Sources")
