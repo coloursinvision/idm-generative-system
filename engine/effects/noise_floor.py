@@ -50,7 +50,7 @@ class NoiseFloor(BaseEffect):
         sr:             Sample rate in Hz. Default: 44100.
 
     Example:
-        >>> nf = NoiseFloor(noise_floor_db=-78.0, noise_type='hum_uk')
+        >>> nf = NoiseFloor(noise_floor_db=-78.0, noise_type="hum_uk")
         >>> output = nf(signal)
     """
 
@@ -66,8 +66,7 @@ class NoiseFloor(BaseEffect):
     ) -> None:
         if noise_type not in self._VALID_NOISE_TYPES:
             raise ValueError(
-                f"Invalid noise_type '{noise_type}'. "
-                f"Options: {sorted(self._VALID_NOISE_TYPES)}"
+                f"Invalid noise_type '{noise_type}'. Options: {sorted(self._VALID_NOISE_TYPES)}"
             )
 
         self.noise_floor_db = noise_floor_db

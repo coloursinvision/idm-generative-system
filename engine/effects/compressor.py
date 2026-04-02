@@ -67,28 +67,28 @@ from engine.effects.base import BaseEffect
 
 COMPRESSOR_PRESETS: dict[str, dict] = {
     "ssl_glue": {
-        "threshold_db":  -18.0,
-        "ratio":         4.0,
-        "attack_ms":     10.0,
-        "release_ms":    100.0,
-        "knee_db":       4.0,
-        "auto_release":  True,
+        "threshold_db": -18.0,
+        "ratio": 4.0,
+        "attack_ms": 10.0,
+        "release_ms": 100.0,
+        "knee_db": 4.0,
+        "auto_release": True,
     },
     "neve_warm": {
-        "threshold_db":  -14.0,
-        "ratio":         3.0,
-        "attack_ms":     20.0,
-        "release_ms":    200.0,
-        "knee_db":       10.0,
-        "auto_release":  False,
+        "threshold_db": -14.0,
+        "ratio": 3.0,
+        "attack_ms": 20.0,
+        "release_ms": 200.0,
+        "knee_db": 10.0,
+        "auto_release": False,
     },
     "dbx_punch": {
-        "threshold_db":  -20.0,
-        "ratio":         8.0,
-        "attack_ms":     0.5,
-        "release_ms":    50.0,
-        "knee_db":       2.0,
-        "auto_release":  False,
+        "threshold_db": -20.0,
+        "ratio": 8.0,
+        "attack_ms": 0.5,
+        "release_ms": 50.0,
+        "knee_db": 2.0,
+        "auto_release": False,
     },
 }
 
@@ -100,6 +100,7 @@ COMPRESSOR_PRESETS: dict[str, dict] = {
 # These are the compressor's tightest inner loops — per-sample attack/release
 # ballistics that cannot be vectorised (each sample depends on the previous).
 # ---------------------------------------------------------------------------
+
 
 @njit(cache=True)
 def _smooth_envelope_single(
@@ -251,12 +252,10 @@ class Compressor(BaseEffect):
         >>> comp = Compressor(threshold_db=-24, ratio=8, mix=0.4)
 
         >>> # Neve-style warm bus compression
-        >>> comp = Compressor(threshold_db=-14, ratio=3, knee_db=10,
-        ...                   attack_ms=20, release_ms=200)
+        >>> comp = Compressor(threshold_db=-14, ratio=3, knee_db=10, attack_ms=20, release_ms=200)
 
         >>> # dbx-style aggressive drum bus
-        >>> comp = Compressor(threshold_db=-20, ratio=8, attack_ms=0.5,
-        ...                   knee_db=2, auto_makeup=True)
+        >>> comp = Compressor(threshold_db=-20, ratio=8, attack_ms=0.5, knee_db=2, auto_makeup=True)
     """
 
     def __init__(
@@ -355,9 +354,7 @@ class Compressor(BaseEffect):
         if self.sidechain_hpf_hz <= 0.0:
             return signal
 
-        cutoff_norm = np.clip(
-            self.sidechain_hpf_hz / (self.sr / 2.0), 0.001, 0.999
-        )
+        cutoff_norm = np.clip(self.sidechain_hpf_hz / (self.sr / 2.0), 0.001, 0.999)
         sos = scipy_signal.butter(2, cutoff_norm, btype="high", output="sos")
         return scipy_signal.sosfilt(sos, signal)
 
@@ -376,7 +373,7 @@ class Compressor(BaseEffect):
         window_samp = max(int(self.rms_window_ms * self.sr / 1000), 1)
 
         # Squared signal — cumulative sum for efficient windowed RMS
-        sq = signal ** 2
+        sq = signal**2
         cumsum = np.cumsum(sq)
         cumsum = np.insert(cumsum, 0, 0.0)
 
@@ -424,23 +421,16 @@ class Compressor(BaseEffect):
 
             # Quadratic knee (peaking at threshold ± half_knee)
             knee_delta = env_db[in_knee] - threshold + half_knee
-            output_db[in_knee] = (
-                env_db[in_knee]
-                + (1.0 / ratio - 1.0)
-                * (knee_delta ** 2)
-                / (2.0 * self.knee_db)
+            output_db[in_knee] = env_db[in_knee] + (1.0 / ratio - 1.0) * (knee_delta**2) / (
+                2.0 * self.knee_db
             )
 
             # Linear compression above knee
-            output_db[above] = (
-                threshold + (env_db[above] - threshold) / ratio
-            )
+            output_db[above] = threshold + (env_db[above] - threshold) / ratio
         else:
             # --- Hard knee ---
             above = env_db > threshold
-            output_db[above] = (
-                threshold + (env_db[above] - threshold) / ratio
-            )
+            output_db[above] = threshold + (env_db[above] - threshold) / ratio
 
         # Gain reduction = difference between input level and output level
         # (always ≤ 0 dB)
@@ -471,7 +461,8 @@ class Compressor(BaseEffect):
             slow_release_coeff = np.exp(-1.0 / (600.0 * self.sr / 1000))
 
             smoothed, final_env = _smooth_envelope_auto(
-                gr_db, n,
+                gr_db,
+                n,
                 float(attack_coeff),
                 float(fast_release_coeff),
                 float(slow_release_coeff),
@@ -481,7 +472,8 @@ class Compressor(BaseEffect):
         else:
             # Standard single-detector attack/release
             smoothed, final_env = _smooth_envelope_single(
-                gr_db, n,
+                gr_db,
+                n,
                 float(attack_coeff),
                 float(release_coeff),
                 float(self._env_state),
@@ -503,10 +495,6 @@ class Compressor(BaseEffect):
         half its time above threshold (empirical, SSL-calibrated).
         """
         if self.auto_makeup:
-            estimated_gr = (
-                -float(self.threshold_db)
-                * (1.0 - 1.0 / float(self.ratio))
-                * 0.5
-            )
+            estimated_gr = -float(self.threshold_db) * (1.0 - 1.0 / float(self.ratio)) * 0.5
             return float(np.power(10.0, estimated_gr / 20.0))
         return float(np.power(10.0, self.makeup_db / 20.0))

@@ -95,8 +95,7 @@ class ResonantFilter(BaseEffect):
     ) -> None:
         if filter_type not in self._VALID_FILTER_TYPES:
             raise ValueError(
-                f"Invalid filter_type '{filter_type}'. "
-                f"Options: {sorted(self._VALID_FILTER_TYPES)}"
+                f"Invalid filter_type '{filter_type}'. Options: {sorted(self._VALID_FILTER_TYPES)}"
             )
 
         self.cutoff_hz = cutoff_hz
@@ -120,28 +119,20 @@ class ResonantFilter(BaseEffect):
         # TB-303 accent coupling: boost resonance (MASTER_DATASET Part 4.2)
         effective_resonance = self.resonance
         if self.accent > 0:
-            effective_resonance = min(
-                self.resonance + self.accent * 0.15, 0.98
-            )
+            effective_resonance = min(self.resonance + self.accent * 0.15, 0.98)
 
         # Build filter coefficients
-        cutoff_norm = np.clip(
-            self.cutoff_hz / (self.sr / 2.0), 0.001, 0.999
-        )
+        cutoff_norm = np.clip(self.cutoff_hz / (self.sr / 2.0), 0.001, 0.999)
         sos = self._build_filter(cutoff_norm)
         filtered = scipy_signal.sosfilt(sos, signal)
 
         # Resonance feedback injection (self-oscillation character)
         if effective_resonance > 0.1:
-            filtered = self._apply_resonance_feedback(
-                filtered, cutoff_norm, effective_resonance
-            )
+            filtered = self._apply_resonance_feedback(filtered, cutoff_norm, effective_resonance)
 
         # Nonlinear VCA saturation (TB-303 accent / high resonance)
         if self.accent > 0 or effective_resonance > 0.6:
-            filtered = self._apply_vca_saturation(
-                filtered, effective_resonance
-            )
+            filtered = self._apply_vca_saturation(filtered, effective_resonance)
 
         return filtered
 
@@ -157,24 +148,16 @@ class ResonantFilter(BaseEffect):
         order = self.poles
 
         if self.filter_type == "lp":
-            return scipy_signal.butter(
-                order, cutoff_norm, btype="low", output="sos"
-            )
+            return scipy_signal.butter(order, cutoff_norm, btype="low", output="sos")
         if self.filter_type == "hp":
-            return scipy_signal.butter(
-                order, cutoff_norm, btype="high", output="sos"
-            )
+            return scipy_signal.butter(order, cutoff_norm, btype="high", output="sos")
         if self.filter_type == "bp":
             bw = cutoff_norm * 0.3
             low = max(cutoff_norm - bw, 0.001)
             high = min(cutoff_norm + bw, 0.999)
-            return scipy_signal.butter(
-                max(order // 2, 1), [low, high], btype="band", output="sos"
-            )
+            return scipy_signal.butter(max(order // 2, 1), [low, high], btype="band", output="sos")
         # Fallback: low-pass
-        return scipy_signal.butter(
-            order, cutoff_norm, btype="low", output="sos"
-        )
+        return scipy_signal.butter(order, cutoff_norm, btype="low", output="sos")
 
     def _apply_resonance_feedback(
         self,
@@ -188,10 +171,8 @@ class ResonantFilter(BaseEffect):
         At high resonance values this creates the characteristic
         'singing' quality of the TB-303 and SH-101 at cutoff.
         """
-        feedback_gain = resonance ** 2 * 0.6
-        fb_sos = scipy_signal.butter(
-            2, cutoff_norm, btype="low", output="sos"
-        )
+        feedback_gain = resonance**2 * 0.6
+        fb_sos = scipy_signal.butter(2, cutoff_norm, btype="low", output="sos")
         feedback = scipy_signal.sosfilt(fb_sos, filtered) * feedback_gain
         return filtered + feedback
 

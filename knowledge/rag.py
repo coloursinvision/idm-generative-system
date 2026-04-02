@@ -89,6 +89,7 @@ Rules:
 # RAG Pipeline
 # ---------------------------------------------------------------------------
 
+
 class RAGPipeline:
     """
     Retrieval-Augmented Generation pipeline.
@@ -117,9 +118,7 @@ class RAGPipeline:
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=1, max=10),
-        retry=retry_if_exception_type(
-            (RateLimitError, APITimeoutError, APIConnectionError)
-        ),
+        retry=retry_if_exception_type((RateLimitError, APITimeoutError, APIConnectionError)),
     )
     def _complete(
         self,
@@ -225,10 +224,7 @@ class RAGPipeline:
             part_filter=part_filter,
         )
 
-        user_message = (
-            f"CONTEXT:\n{context}\n\n"
-            f"QUESTION:\n{question}"
-        )
+        user_message = f"CONTEXT:\n{context}\n\nQUESTION:\n{question}"
 
         response = self._complete(
             system_prompt=SYSTEM_PROMPT_ADVISOR,
@@ -239,8 +235,7 @@ class RAGPipeline:
         choice = response.choices[0]
 
         source_titles = [
-            {"title": s["title"], "part": s["part"], "score": s["score"]}
-            for s in results
+            {"title": s["title"], "part": s["part"], "score": s["score"]} for s in results
         ]
 
         return {
@@ -275,10 +270,7 @@ class RAGPipeline:
         """
         context, results = self._retrieve_context(query=description, limit=limit)
 
-        user_message = (
-            f"CONTEXT:\n{context}\n\n"
-            f"AESTHETIC DESCRIPTION:\n{description}"
-        )
+        user_message = f"CONTEXT:\n{context}\n\nAESTHETIC DESCRIPTION:\n{description}"
 
         response = self._complete(
             system_prompt=SYSTEM_PROMPT_COMPOSER,
@@ -292,8 +284,7 @@ class RAGPipeline:
         config = self._parse_compose_output(choice.message.content)
 
         source_titles = [
-            {"title": s["title"], "part": s["part"], "score": s["score"]}
-            for s in results
+            {"title": s["title"], "part": s["part"], "score": s["score"]} for s in results
         ]
 
         return {
@@ -307,7 +298,7 @@ class RAGPipeline:
             },
         }
 
- # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # Output validation
     # ------------------------------------------------------------------
 
@@ -330,20 +321,15 @@ class RAGPipeline:
             config = json.loads(text)
         except json.JSONDecodeError as e:
             raise ValueError(
-                f"GPT-4o returned invalid JSON: {e}. "
-                f"Raw output (first 500 chars): {raw[:500]}"
+                f"GPT-4o returned invalid JSON: {e}. Raw output (first 500 chars): {raw[:500]}"
             ) from e
 
         if not isinstance(config, dict):
-            raise ValueError(
-                f"GPT-4o returned {type(config).__name__}, expected dict."
-            )
+            raise ValueError(f"GPT-4o returned {type(config).__name__}, expected dict.")
 
         required = {"generator", "generator_params", "chain_overrides"}
         missing = required - config.keys()
         if missing:
-            raise ValueError(
-                f"GPT-4o config missing required keys: {sorted(missing)}"
-            )
+            raise ValueError(f"GPT-4o config missing required keys: {sorted(missing)}")
 
         return config

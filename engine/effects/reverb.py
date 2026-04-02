@@ -48,11 +48,11 @@ from engine.effects.base import BaseEffect
 # ---------------------------------------------------------------------------
 
 REVERB_TYPE_DECAY: dict[str, float] = {
-    "room":    0.4,
+    "room": 0.4,
     "chamber": 0.6,
-    "plate":   1.0,   # reference — Quadraverb plate is the IDM standard
-    "hall":    1.4,
-    "spring":  0.7,
+    "plate": 1.0,  # reference — Quadraverb plate is the IDM standard
+    "hall": 1.4,
+    "spring": 0.7,
 }
 
 # Comb filter delay times in ms — tuned to Quadraverb plate character
@@ -67,6 +67,7 @@ COMB_DELAYS_MS: list[float] = [29.7, 37.1, 41.1, 43.7, 47.3, 53.1]
 # LLVM-compiled on first call, cached to __pycache__ for subsequent loads.
 # No Python object overhead — operates directly on NumPy memory buffers.
 # ---------------------------------------------------------------------------
+
 
 @njit(cache=True)
 def _comb_filter_kernel(
@@ -158,7 +159,7 @@ class Reverb(BaseEffect):
         sr:            Sample rate in Hz. Default: 44100.
 
     Example:
-        >>> rev = Reverb(reverb_type='plate', decay_s=3.0, mix=0.3)
+        >>> rev = Reverb(reverb_type="plate", decay_s=3.0, mix=0.3)
         >>> output = rev(signal)
 
         >>> # Dark atmospheric IDM pad reverb
@@ -180,8 +181,7 @@ class Reverb(BaseEffect):
     ) -> None:
         if reverb_type not in REVERB_TYPE_DECAY:
             raise ValueError(
-                f"Invalid reverb_type '{reverb_type}'. "
-                f"Options: {sorted(REVERB_TYPE_DECAY.keys())}"
+                f"Invalid reverb_type '{reverb_type}'. Options: {sorted(REVERB_TYPE_DECAY.keys())}"
             )
 
         self.reverb_type = reverb_type

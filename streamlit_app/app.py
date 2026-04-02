@@ -39,6 +39,7 @@ def _bridge_secrets() -> None:
             with contextlib.suppress(KeyError, FileNotFoundError):
                 os.environ[key] = st.secrets[key]
 
+
 _bridge_secrets()
 
 # Ensure project root is on path
@@ -66,7 +67,8 @@ st.set_page_config(
 # Custom CSS — Sheffield / Designers Republic nod
 # ---------------------------------------------------------------------------
 
-st.markdown("""
+st.markdown(
+    """
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;600&display=swap');
 
@@ -158,12 +160,15 @@ st.markdown("""
         color: #0a0a0a;
     }
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 
 # ---------------------------------------------------------------------------
 # Init
 # ---------------------------------------------------------------------------
+
 
 @st.cache_resource
 def get_rag() -> RAGPipeline:
@@ -193,11 +198,13 @@ st.markdown("---")
 # Tabs
 # ---------------------------------------------------------------------------
 
-tab_advisor, tab_composer, tab_explorer = st.tabs([
-    "⚡ ADVISOR",
-    "🔧 COMPOSER",
-    "📋 EFFECTS",
-])
+tab_advisor, tab_composer, tab_explorer = st.tabs(
+    [
+        "⚡ ADVISOR",
+        "🔧 COMPOSER",
+        "📋 EFFECTS",
+    ]
+)
 
 
 # ---------------------------------------------------------------------------
@@ -221,9 +228,7 @@ with tab_advisor:
     col_btn, col_opts = st.columns([1, 3])
 
     with col_opts:
-        limit = st.slider(
-            "Context chunks", min_value=1, max_value=10, value=5, key="advisor_limit"
-        )
+        limit = st.slider("Context chunks", min_value=1, max_value=10, value=5, key="advisor_limit")
 
     with col_btn:
         st.markdown("<br>", unsafe_allow_html=True)
@@ -241,9 +246,7 @@ with tab_advisor:
         sources_html = ""
         for s in result["sources"]:
             sources_html += (
-                f'<span class="source-tag">'
-                f'{s["title"][:60]} (score: {s["score"]:.3f})'
-                f'</span>'
+                f'<span class="source-tag">{s["title"][:60]} (score: {s["score"]:.3f})</span>'
             )
         st.markdown(sources_html, unsafe_allow_html=True)
 
@@ -251,9 +254,9 @@ with tab_advisor:
         usage = result["usage"]
         st.markdown(
             f'<div class="token-info">'
-            f'tokens: {usage["prompt_tokens"]}p + {usage["completion_tokens"]}c '
-            f'= {usage["total_tokens"]} | model: {result["model"]}'
-            f'</div>',
+            f"tokens: {usage['prompt_tokens']}p + {usage['completion_tokens']}c "
+            f"= {usage['total_tokens']} | model: {result['model']}"
+            f"</div>",
             unsafe_allow_html=True,
         )
 
@@ -285,9 +288,7 @@ with tab_composer:
 
     with col_btn2:
         st.markdown("<br>", unsafe_allow_html=True)
-        compose_clicked = st.button(
-            "COMPOSE", key="composer_btn", use_container_width=True
-        )
+        compose_clicked = st.button("COMPOSE", key="composer_btn", use_container_width=True)
 
     if compose_clicked and description.strip():
         with st.spinner("Composing with GPT-4o..."):
@@ -315,9 +316,7 @@ with tab_composer:
         sources_html = ""
         for s in result["sources"]:
             sources_html += (
-                f'<span class="source-tag">'
-                f'{s["title"][:60]} (score: {s["score"]:.3f})'
-                f'</span>'
+                f'<span class="source-tag">{s["title"][:60]} (score: {s["score"]:.3f})</span>'
             )
         st.markdown(sources_html, unsafe_allow_html=True)
 
@@ -325,9 +324,9 @@ with tab_composer:
         usage = result["usage"]
         st.markdown(
             f'<div class="token-info">'
-            f'tokens: {usage["prompt_tokens"]}p + {usage["completion_tokens"]}c '
-            f'= {usage["total_tokens"]} | model: {result["model"]}'
-            f'</div>',
+            f"tokens: {usage['prompt_tokens']}p + {usage['completion_tokens']}c "
+            f"= {usage['total_tokens']} | model: {result['model']}"
+            f"</div>",
             unsafe_allow_html=True,
         )
 
@@ -338,9 +337,7 @@ with tab_composer:
 
 with tab_explorer:
     st.markdown("### Effects Chain Explorer")
-    st.markdown(
-        "All 10 hardware-sourced DSP blocks in canonical signal chain order."
-    )
+    st.markdown("All 10 hardware-sourced DSP blocks in canonical signal chain order.")
 
     st.markdown(
         "<div style='font-family: Space Mono; font-size: 0.7rem; color: #555; "
@@ -356,38 +353,27 @@ with tab_explorer:
     st.markdown("")
 
     for idx, (key, cls) in enumerate(CANONICAL_ORDER):
-        with st.expander(
-            f"**[{idx}]** {cls.__name__}  —  `{key}`", expanded=False
-        ):
+        with st.expander(f"**[{idx}]** {cls.__name__}  —  `{key}`", expanded=False):
             # Docstring
             doc = (cls.__doc__ or "No documentation.").strip()
             st.markdown(f"*{doc[:500]}*")
 
             # Parameters
             import inspect
+
             sig = inspect.signature(cls.__init__)
-            params = {
-                name: param
-                for name, param in sig.parameters.items()
-                if name != "self"
-            }
+            params = {name: param for name, param in sig.parameters.items() if name != "self"}
 
             if params:
                 st.markdown("**Parameters:**")
                 for pname, param in params.items():
-                    default = (
-                        param.default
-                        if param.default is not inspect.Parameter.empty
-                        else "—"
-                    )
+                    default = param.default if param.default is not inspect.Parameter.empty else "—"
                     type_hint = param.annotation
                     type_name = (
                         getattr(type_hint, "__name__", str(type_hint))
                         if type_hint is not inspect.Parameter.empty
                         else "any"
                     )
-                    st.markdown(
-                        f"- `{pname}` : {type_name} = `{default}`"
-                    )
+                    st.markdown(f"- `{pname}` : {type_name} = `{default}`")
             else:
                 st.markdown("*No configurable parameters.*")

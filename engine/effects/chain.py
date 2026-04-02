@@ -114,7 +114,5 @@ class EffectChain:
         return len(self.effects)
 
     def __repr__(self) -> str:
-        chain_str = "\n  ".join(
-            f"[{i}] {effect!r}" for i, effect in enumerate(self.effects)
-        )
+        chain_str = "\n  ".join(f"[{i}] {effect!r}" for i, effect in enumerate(self.effects))
         return f"EffectChain(\n  {chain_str}\n)"
