@@ -74,7 +74,7 @@ WORKDIR /app
 COPY engine/ ./engine/
 COPY api/ ./api/
 COPY knowledge/ ./knowledge/
-COPY pyproject.toml ./
+COPY pyproject.toml README.md ./
 
 # Pre-compile Numba kernels during build (avoids cold-start latency).
 # If this fails, the container still starts — JIT compiles on first call.
