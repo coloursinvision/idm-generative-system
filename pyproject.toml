@@ -50,6 +50,9 @@ dependencies = [
 
     # LLM
     "openai>=1.0.0",
+
+    # Data (engine/generator.py — pattern DataFrames)
+    "pandas>=2.0.0",
 ]
 
 [project.optional-dependencies]
