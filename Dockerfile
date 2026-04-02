@@ -20,14 +20,13 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /build
 
 # System deps for building native extensions (numba/llvmlite, numpy, scipy).
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        build-essential \
-        gcc \
-        g++ \
-        libsndfile1-dev \
-        llvm-14-dev \
-    && rm -rf /var/lib/apt/lists/*
+RRUN apt-get update && \
+apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    g++ \
+    libsndfile1-dev \
+&& rm -rf /var/lib/apt/lists/*
 
 # Create venv — isolates deps from system Python.
 RUN python -m venv /opt/venv
