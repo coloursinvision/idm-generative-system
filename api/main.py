@@ -8,6 +8,8 @@ Endpoints:
     GET  /effects   — list available effect blocks with parameter schemas
     POST /generate  — generate a sample and process through effects chain
     POST /process   — upload audio, process through effects chain, return WAV
+    POST /synthdef  — generate SuperCollider code from engine configuration
+    POST /tidal     — generate TidalCycles code from engine configuration
     POST /ask       — sound design advisor (RAG: Qdrant + GPT-4o)
     POST /compose   — auto-composer (RAG: Qdrant + GPT-4o)
 
@@ -37,6 +39,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
+from engine.codegen import generate_synthdef, generate_tidal
 from engine.effects import (
     CANONICAL_ORDER,
     EffectChain,
@@ -166,6 +169,79 @@ class ComposeRequest(BaseModel):
         ge=1,
         le=10,
         description="Max number of knowledge base chunks for context.",
+    )
+
+
+class CodegenRequest(BaseModel):
+    """Request body for /synthdef and /tidal."""
+
+    generator: str = Field(
+        default="glitch_click",
+        description="Sample generator. Options: 'glitch_click', 'noise_burst', 'fm_blip'.",
+    )
+    generator_params: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Keyword arguments for the generator function.",
+    )
+    effects: dict[str, dict[str, Any]] = Field(
+        default_factory=dict,
+        description=(
+            "Per-block effect parameters. Only blocks present are included in output. "
+            "Keys: 'noise_floor', 'bitcrusher', 'filter', 'saturation', "
+            "'reverb', 'delay', 'spatial', 'glitch', 'compressor', 'vinyl'."
+        ),
+    )
+    pattern: dict[str, Any] | None = Field(
+        default=None,
+        description=(
+            "Pattern configuration. Required key: 'type' (euclidean/probabilistic/density). "
+            "Euclidean: {'type': 'euclidean', 'pulses': {'kick': 5}, 'steps': 16}. "
+            "Density: {'type': 'density', 'density': 0.3, 'steps': 16}."
+        ),
+    )
+    mode: str = Field(
+        default="studio",
+        description="Generation mode: 'studio' (self-contained) or 'live' (hot-swap).",
+    )
+    include_pattern: bool = Field(
+        default=True,
+        description="Include pattern code (Pbind/Pdef for SC, d1/d2 for Tidal).",
+    )
+    bpm: float = Field(
+        default=120.0,
+        ge=20.0,
+        le=300.0,
+        description="Beats per minute — controls pattern timing.",
+    )
+    bus_offset: int = Field(
+        default=16,
+        ge=0,
+        le=128,
+        description="Starting private bus number (SuperCollider only).",
+    )
+
+
+class CodegenResponse(BaseModel):
+    """Response body for /synthdef and /tidal."""
+
+    code: str = Field(description="Generated source code string.")
+    target: str = Field(description="Target language: 'supercollider' or 'tidalcycles'.")
+    mode: str = Field(description="Generation mode used: 'studio' or 'live'.")
+    warnings: list[str] = Field(
+        default_factory=list,
+        description="Mapping approximation warnings.",
+    )
+    unmapped_params: dict[str, list[str]] = Field(
+        default_factory=dict,
+        description="Parameters with no target equivalent (documented, not dropped).",
+    )
+    metadata: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Target-specific metadata (SynthDef names, bus allocation, etc.).",
+    )
+    setup_notes: list[str] = Field(
+        default_factory=list,
+        description="User-facing setup instructions for the generated code.",
     )
 
 
@@ -475,6 +551,95 @@ async def process_audio(
         signal = _process_through_chain(signal, chain, sr=sr)
 
     return _signal_to_wav_response(signal, sr=sr, filename="processed.wav")
+
+
+# ---------------------------------------------------------------------------
+# Endpoints — Code Generation (SuperCollider / TidalCycles)
+# ---------------------------------------------------------------------------
+
+
+def _codegen_result_to_response(result: Any) -> CodegenResponse:
+    """Convert a CodegenResult dataclass to a Pydantic response model."""
+    return CodegenResponse(
+        code=result.code,
+        target=result.target.value,
+        mode=result.mode.value,
+        warnings=result.warnings,
+        unmapped_params=result.unmapped_params,
+        metadata=result.metadata,
+        setup_notes=result.setup_notes,
+    )
+
+
+@app.post("/synthdef", response_model=CodegenResponse)
+async def synthdef(req: CodegenRequest) -> CodegenResponse:
+    """
+    Generate SuperCollider (.scd) code from engine configuration.
+
+    Produces composable SynthDefs with bus routing, group ordering,
+    and optional Pbind/Pdef pattern code. Supports studio and live modes.
+
+    Returns:
+        code:            Generated SuperCollider source code.
+        target:          'supercollider'.
+        mode:            Generation mode used ('studio' or 'live').
+        warnings:        Mapping approximation warnings.
+        unmapped_params: Parameters with no SC equivalent.
+        metadata:        SynthDef names, bus allocation, effects chain.
+        setup_notes:     User-facing setup instructions.
+    """
+    try:
+        result = generate_synthdef(
+            generator=req.generator,
+            generator_params=req.generator_params,
+            effects=req.effects,
+            pattern=req.pattern,
+            mode=req.mode,
+            include_pattern=req.include_pattern,
+            bpm=req.bpm,
+            bus_offset=req.bus_offset,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Code generation error: {e}") from e
+
+    return _codegen_result_to_response(result)
+
+
+@app.post("/tidal", response_model=CodegenResponse)
+async def tidal(req: CodegenRequest) -> CodegenResponse:
+    """
+    Generate TidalCycles (Haskell DSL) code from engine configuration.
+
+    Produces ready-to-evaluate Tidal patterns with effect chains.
+    Supports studio (full setup) and live (bare patterns) modes.
+
+    Returns:
+        code:            Generated TidalCycles source code.
+        target:          'tidalcycles'.
+        mode:            Generation mode used ('studio' or 'live').
+        warnings:        Mapping approximation warnings.
+        unmapped_params: Parameters with no Tidal equivalent.
+        metadata:        Tidal sound name, orbit assignments, BPM.
+        setup_notes:     User-facing setup instructions.
+    """
+    try:
+        result = generate_tidal(
+            generator=req.generator,
+            generator_params=req.generator_params,
+            effects=req.effects,
+            pattern=req.pattern,
+            mode=req.mode,
+            include_pattern=req.include_pattern,
+            bpm=req.bpm,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Code generation error: {e}") from e
+
+    return _codegen_result_to_response(result)
 
 
 # ---------------------------------------------------------------------------
