@@ -6,6 +6,39 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.4.0] — 2026-04-03 — SuperCollider + TidalCycles Code Generation
+
+### Added
+- **Code generation module** (`engine/codegen/`) — generates runnable SuperCollider and TidalCycles code from engine configurations. Pure string transforms, no new dependencies.
+  - `mappings.py` — central parameter translation layer mapping all ~80 engine parameters to SC and Tidal equivalents with named value transform functions. Zero silent parameter drops: every param is mapped or explicitly documented as unmappable. `validate_mapping_completeness()` enforces this via test.
+  - `base.py` — `BaseCodegen` abstract class, `CodegenInput`/`CodegenResult`/`CodegenOptions` dataclasses, `CodegenMode` StrEnum (studio/live).
+  - `synthdef.py` — SuperCollider codegen: composable SynthDefs (3 generators, 10 effects) with private bus routing (`In.ar`/`ReplaceOut.ar`), Group-based execution ordering (`genGroup` → `fxGroup` with `addToTail`), Pbind (studio) / Pdef (live) pattern output.
+  - `tidal.py` — TidalCycles codegen: native Euclidean `e(k,n)` syntax, `degradeBy` for probabilistic patterns, `stack []` for multi-track, full effects mapping (`# room`, `# crush`, `# lpf`, `# delay`, `# distort`, `# pan`, etc.).
+  - `__init__.py` — public API with `generate_synthdef()` and `generate_tidal()` convenience functions.
+
+- **API endpoints** — two new FastAPI routes for code generation.
+  - `POST /synthdef` — generates SuperCollider (.scd) code. Returns structured `CodegenResponse` with code, warnings, unmapped parameters, metadata (SynthDef names, bus allocation, effects chain), and setup notes.
+  - `POST /tidal` — generates TidalCycles (Haskell DSL) code. Returns structured `CodegenResponse` with code, warnings, metadata (Tidal sound name, orbit assignments, BPM), and setup notes.
+  - Shared `CodegenRequest` model: generator, generator_params, effects, pattern, mode (studio/live), include_pattern, bpm, bus_offset.
+  - Shared `CodegenResponse` model: code, target, mode, warnings, unmapped_params, metadata, setup_notes.
+
+- **Studio / Live modes** — two generation modes for different workflows.
+  - Studio: self-contained script with server boot, full comments, cleanup. Copy-paste-evaluate.
+  - Live: minimal boilerplate, hot-swap via Pdef/Ndef (SC) or bare d1 (Tidal). Assumes server running.
+
+- **Test suite expansion** — 109 new tests (69 unit + 40 integration).
+  - `tests/test_codegen.py` — mapping completeness, value transforms, SC/Tidal output validation, mode switching, edge cases.
+  - `tests/test_codegen_api.py` — FastAPI TestClient integration tests for `/synthdef` and `/tidal` endpoints (schema, all generators, effects chain order, error handling, cross-endpoint consistency).
+  - Total suite: **318 cases** (317 passed, 1 skipped).
+
+### Changed
+- `api/main.py` — added codegen imports, `CodegenRequest`/`CodegenResponse` Pydantic models, two endpoints, `_codegen_result_to_response()` helper. No modifications to existing endpoints or models.
+
+### Not Yet Implemented
+- Frontend code display panels for SuperCollider and TidalCycles output. API contract (`CodegenResponse`) is ready; frontend work (collapsible code panel, syntax highlighting, copy-to-clipboard, studio/live toggle) deferred to next session.
+
+---
+
 ## [0.3.0] — 2026-04-02 — Infrastructure & CI Pipeline (Phase 5)
 
 ### Added
