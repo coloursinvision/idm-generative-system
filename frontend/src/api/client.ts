@@ -74,3 +74,5 @@ export async function postGenerate(
 
   return res.blob();
 }
+
+export { postSynthdef, postTidal } from "./codegen";
