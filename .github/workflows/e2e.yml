@@ -34,11 +34,11 @@ jobs:
 
       - name: Install Playwright browsers
         working-directory: frontend
-        run: npx playwright install --with-deps chromium firefox
+        run: npm run e2e:install -- --with-deps chromium firefox
 
       - name: Run E2E tests
         working-directory: frontend
-        run: npx playwright test --project=chromium --project=firefox
+        run: npm run e2e -- --project=chromium --project=firefox
         env:
           CI: true
 
