@@ -67,7 +67,8 @@ test.describe("T-08: Codegen Core Flow", () => {
     expect(bg).toMatch(/rgb\(0,\s*43,\s*54\)/);
   });
 
-  test("T-08.6 — COPY button copies code to clipboard", async ({ page, context }) => {
+  test("T-08.6 — COPY button copies code to clipboard", async ({ page, context, browserName }) => {
+    test.skip(browserName === "firefox", "Firefox does not support clipboard permissions");
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
 
     await page.locator("button").filter({ hasText: /generate/i }).first().click();
