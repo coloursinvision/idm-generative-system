@@ -6,6 +6,45 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.5.0] — 2026-04-06 — Frontend Codegen Panel (SC / TidalCycles)
+
+### Added
+- **Codegen panel** (`frontend/src/components/codegen/`) — 7th tab in the React frontend for generating and exporting SuperCollider (sclang) and TidalCycles (Haskell DSL) code from engine configurations.
+  - `CodegenPanel.tsx` — docked tab with SC|TIDAL target tabs, collapsible CONFIG drawer (generator, mode, BPM, effects chain toggles), popout window management via `⧉` button. 3-click live flow: target → GENERATE → COPY.
+  - `CodegenPopout.tsx` — standalone detached window for dual-monitor live performance workflows. Receives state from main app via BroadcastChannel, falls back to local config when opened standalone (graceful degradation).
+  - `CodeBlock.tsx` — production code display with solarized dark background (#002b36), dual syntax highlighting (sclang keywords/UGens + Haskell/Tidal functions/operators), line numbers, copy to clipboard, and download as `.scd`/`.tidal`.
+  - `useBroadcastChannel.ts` — generic typed React hook for inter-window communication via native BroadcastChannel API. Heartbeat mechanism (2s interval, 5s timeout) for connection status tracking.
+
+- **API client helpers** (`frontend/src/api/codegen.ts`) — `postSynthdef()` and `postTidal()` with typed error handling: FastAPI HTTPException detail extraction, Pydantic validation error array joining, and network failure wrapping. Uses `/api` proxy consistent with existing `client.ts`.
+
+- **TypeScript types** (`frontend/src/types/codegen.ts`) — `CodegenRequest`, `CodegenResponse`, `PatternConfig` (tagged union: euclidean/probabilistic/density), `CodegenTarget`, `CodegenMode`, `CodegenBroadcastMessage`. Full contract mirror of FastAPI Pydantic models.
+
+- **Frontend test infrastructure** — Vitest + React Testing Library + jsdom added to the project.
+  - `vite.config.ts` — test configuration block added (globals, jsdom environment, setup file).
+  - `tests/setup.ts` — global jest-dom matcher import.
+  - `tests/codegen/codegen.test.tsx` — **48 unit tests** across 6 sections: Type contracts (6), API helpers (6), useBroadcastChannel hook (9), CodeBlock rendering (8), CodegenPanel flow (12), CodegenPopout sync (7). All passing.
+
+- **Navigation** — CODEGEN tab added to NavBar. Routes `/codegen` and `/codegen-popout` registered in App.tsx.
+
+### Changed
+- `frontend/src/types/index.ts` — re-exports codegen types.
+- `frontend/src/api/client.ts` — re-exports `postSynthdef`, `postTidal`.
+- `frontend/src/App.tsx` — CodegenPanel and CodegenPopout routes added.
+- `frontend/src/components/layout/NavBar.tsx` — CODEGEN tab added after EP-133.
+- `frontend/package.json` — `vitest`, `@testing-library/react`, `@testing-library/jest-dom`, `jsdom` added as dev dependencies. `test` and `test:watch` scripts added.
+- `frontend/vite.config.ts` — Vitest test configuration added.
+
+### Design Decisions
+- **Layout v4 (live-ready)** — informed by UX research on Sonic Pi, Ableton Live Control Bar, and Ableton UX redesign study. Live performance requires minimal visible controls; config is set once then hidden. SC|TIDAL tabs + GENERATE button are the only always-visible interactive elements.
+- **Solarized dark code blocks** — overrides UX_UI_ALIGNMENT.md §2 (which specified light background #e4e4e7). Night-use studio environments require dark code blocks. Solarized base03 (#002b36) with TE orange keywords, project amber strings, solarized cyan numbers, solarized magenta UGens/functions.
+- **Popout window via BroadcastChannel** — follows Ableton Live `Shift+Cmd+W` and Chrome DevTools undock conventions. Zero server involvement, same-origin native API.
+- **Label precision** — toggle buttons use short `SC | TIDAL`, code block toolbar shows precise `SCLANG .SCD` / `HASKELL / TIDAL .TIDAL`.
+
+### Resolved from v0.4.0
+- "Not Yet Implemented: Frontend code display panels" — **fully implemented** in this release.
+
+---
+
 ## [0.4.0] — 2026-04-03 — SuperCollider + TidalCycles Code Generation
 
 ### Added
@@ -33,9 +72,6 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 - `api/main.py` — added codegen imports, `CodegenRequest`/`CodegenResponse` Pydantic models, two endpoints, `_codegen_result_to_response()` helper. No modifications to existing endpoints or models.
-
-### Not Yet Implemented
-- Frontend code display panels for SuperCollider and TidalCycles output. API contract (`CodegenResponse`) is ready; frontend work (collapsible code panel, syntax highlighting, copy-to-clipboard, studio/live toggle) deferred to next session.
 
 ---
 
