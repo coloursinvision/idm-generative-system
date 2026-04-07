@@ -6,6 +6,34 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.5.1] — 2026-04-07 — Playwright E2E Test Suite
+
+### Added
+- **Playwright E2E test suite** (`frontend/e2e/`) — 56 browser-level tests across 9 spec files covering all 7 tabs, codegen popout window, error states, and console audit. Tests run against Vite dev server with mocked API routes (zero backend dependency).
+  - `fixtures.ts` — shared test fixture with auto-mocking (`mockApi`), deterministic API response payloads matching exact backend response shapes (`EffectBlock[]`, `CodegenResponse`, `AskResponse`, etc.), minimal WAV binary generator, and page helpers (`navigateToTab`, `getCodeBlockText`, `collectConsoleErrors`).
+  - `navigation.spec.ts` — 7 tests: app shell render, 7-tab navigation, routing, active indicator, responsive layout, StatusBar health, default redirect.
+  - `advisor.spec.ts` — 4 tests: input render, typing, submit→answer+sources, content validation.
+  - `composer.spec.ts` — 3 tests: input render, submit→JSON config, sources display.
+  - `effects.spec.ts` — 3 tests: 10-block display, signal chain order, parameter expansion.
+  - `generator.spec.ts` — 5 tests: controls render, waveform display, play/download buttons, WAV file save.
+  - `guides.spec.ts` — 7 tests: PO-33 sequencer grid + step toggle + play + BPM, EP-133 group layout + pad interaction + play.
+  - `codegen.spec.ts` — 20 tests: SC/TIDAL generation flow, solarized dark background, COPY/DOWNLOAD, toolbar labels, config drawer (expand/collapse/summary/mode), popout route + standalone generate.
+  - `error-states.spec.ts` — 7 tests: backend failure handling (advisor/codegen/generator), unhandled rejection check, console error audit across all tabs, rapid navigation stability, codegen flow pageerror check.
+
+- **CI pipeline** (`.github/workflows/e2e.yml`) — GitHub Actions job: checkout → Node 24 → `npm ci` → Playwright browser install (Chromium + Firefox) → `npm run e2e` → report/trace upload. 112 tests (56×2 browsers), 15-minute timeout, retry 2 on CI.
+
+- **package.json scripts** — `"e2e": "playwright test"` and `"e2e:install": "playwright install"` added for CI-safe binary resolution (avoids `npx` downloading standalone Playwright outside project `node_modules`).
+
+### Fixed
+- **E2E mock data shape** — `EFFECTS_RESPONSE` rebuilt to match `EffectBlock` interface (`key`, `class_name`, `position`, `params: { name: { type, default } }`, `docstring`). Previous mock caused EffectsExplorer crash on `block.class_name === undefined`.
+- **Firefox clipboard test** — `test.skip(browserName === "firefox")` on T-08.6 (clipboard permissions not supported in Firefox Playwright context).
+- **Firefox responsive tolerance** — scrollbar width varies across browsers; overflow check tolerance increased from 1px to 10px.
+
+### Discovered
+- **ComposerPanel reasoning bug** — `ComposerPanel.tsx` checks `parsed.reasoning` (inside `data.config` object) instead of `result.reasoning` (top-level response field). Reasoning section never renders. Fix deferred to next session.
+
+---
+
 ## [0.5.0] — 2026-04-06 — Frontend Codegen Panel (SC / TidalCycles)
 
 ### Added
@@ -78,23 +106,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.3.0] — 2026-04-02 — Infrastructure & CI Pipeline (Phase 5)
 
 ### Added
-- **pyproject.toml** — single source of truth for project metadata, dependencies (core + dev/ml/monitoring/streamlit extras), and all tool configurations (ruff, mypy, pytest, coverage).
-- **Dockerfile** — multi-stage production build (Python 3.11-slim). Builder stage compiles native extensions; runtime stage runs as unprivileged user with healthcheck. Numba kernels pre-compiled during build. Target: Digital Ocean App Platform.
-- **GitHub Actions CI pipeline** (`.github/workflows/ci.yml`) — gitflow-aware: `develop` runs lint → typecheck → test → Docker build; `main` adds GHCR push; hotfix branches run lint → typecheck → test.
-- **Pre-commit hooks** (`.pre-commit-config.yaml`) — ruff lint+format, mypy, trailing whitespace, gitleaks (secrets detection), commitizen (conventional commits).
-- `.env.example` — environment variable template for onboarding.
-- `.dockerignore` — lean Docker build context.
-- `api/__init__.py` — `__version__` from `importlib.metadata`, reads version from pyproject.toml (CR-16). `__all__` defined (CR-20).
-- `knowledge/__init__.py` — `__all__` with `KnowledgeBase`, `RAGPipeline` exports (CR-20).
-
-### Changed
-- **requirements.txt** — cleaned, synchronised with pyproject.toml. Exists only for Streamlit Cloud deployment.
-- **22 Python files** — ruff lint fixes (import sorting, `raise...from`, unused vars, `contextlib.suppress`) + ruff format applied.
-- **engine/generator.py** — lazy import `matplotlib.pyplot` (moved into `plot_pattern()`). Prevents import failure in environments without matplotlib.
-- **knowledge/qdrant_client.py** — `zip(..., strict=True)` on chunk/embedding pairing. Payload `None` guard on search results.
-- **streamlit_app/app.py** — `contextlib.suppress` replacing try/except/pass in secrets bridge.
-
-### Fixed
+- **pyproject.toml** — single source of truth for project metadata, dependencies, and tool configuration. Replaces scattered `setup.py`, `requirements.txt`, and individual tool configs. Includes: `[project]` metadata, `[tool.ruff]` lint + format rules, `[tool.mypy]` strict config with per-module overrides, `[tool.pytest.ini_options]`.
+- **Dockerfile** — multi-stage build targeting Digital Ocean App Platform. Stage 1: full build with `numba` pre-compilation (AOT cache warm). Stage 2: slim runtime image (`python:3.11-slim`), copies only `__pycache__` for Numba kernels + application code. Exposes port 8000, runs via `uvicorn`.
+- **GitHub Actions CI** (`.github/workflows/ci.yml`) — 4-job pipeline: Lint & Format (ruff), Type Check (mypy strict), Test Suite (pytest 209 cases), Docker Build (multi-stage verify). Runs on push/PR to `develop` and `main`.
+- **Pre-commit hooks** (`.pre-commit-config.yaml`) — ruff lint + format, mypy type check, gitleaks secret scanning, commitizen conventional commit format.
 - **mypy strict** — project-wide strict type checking with pragmatic per-module relaxation for DSP/NumPy code. Third-party stub ignores for numba, scipy, qdrant_client, soundfile, pandas, matplotlib.
 - **pandas** added to core dependencies — required by `engine/generator.py` at import time.
 
