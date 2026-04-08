@@ -200,8 +200,16 @@ def _split_on_h3(lines: list[str], part: str, parent_title: str) -> list[dict[st
 
 
 def _deterministic_id(text: str) -> str:
-    """Generate a deterministic hex ID from chunk text (for idempotent upserts)."""
-    return hashlib.md5(text.encode("utf-8")).hexdigest()
+    """Generate a deterministic point ID from content text via SHA-256.
+
+    SHA-256 is collision-resistant and produces a 64-character hex string.
+    The first 32 characters are used as the Qdrant point ID — sufficient
+    for uniqueness across the knowledge base corpus.
+
+    Note: changing this function invalidates existing point IDs. A full
+    re-ingest is required after any hash function change.
+    """
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()[:32]
 
 
 # ---------------------------------------------------------------------------
@@ -226,10 +234,16 @@ class KnowledgeBase:
     ) -> None:
         load_dotenv()
 
-        self.qdrant = QdrantClient(
-            url=qdrant_url or QDRANT_URL,
-            api_key=os.getenv("QDRANT_API_KEY"),
-        )
+        resolved_url = qdrant_url or os.getenv("QDRANT_URL")
+        if not resolved_url:
+            raise EnvironmentError(
+                "QDRANT_URL not set. Add it to .env or export it. "
+                "Example for local: QDRANT_URL=http://localhost:6333"
+            )
+
+        qdrant_api_key = os.getenv("QDRANT_API_KEY")
+
+        self.qdrant = QdrantClient(url=resolved_url, api_key=qdrant_api_key)
         self.openai = OpenAI()  # Uses OPENAI_API_KEY from env
         self.collection = collection
 

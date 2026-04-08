@@ -30,7 +30,7 @@ load_dotenv()
 import inspect
 import io
 import json
-from typing import Any
+from typing import Any, Union, get_args, get_origin
 
 import numpy as np
 import soundfile as sf
@@ -316,6 +316,30 @@ def _process_through_chain(
     return processed
 
 
+def _format_type_hint(type_hint: type) -> str:
+    """Format a type hint into a human-readable string.
+
+    Handles Optional[X] (Union[X, None]), Union[X, Y], and plain types.
+    Used by _extract_param_schema to produce readable type names for the
+    /effects endpoint response.
+
+    Examples:
+        int                   → "int"
+        Optional[float]       → "float | null"
+        Union[str, int]       → "str | int"
+        list[str]             → "list[str]"
+    """
+    origin = get_origin(type_hint)
+    if origin is Union:
+        args = get_args(type_hint)
+        non_none = [a for a in args if a is not type(None)]
+        if len(non_none) == 1 and type(None) in args:
+            # Optional[X] — display as "X | null"
+            return f"{_format_type_hint(non_none[0])} | null"
+        return " | ".join(_format_type_hint(a) for a in args)
+    return getattr(type_hint, "__name__", str(type_hint))
+
+
 def _extract_param_schema(cls: type) -> dict[str, Any]:
     """
     Extract constructor parameters and their defaults from an effect class.
@@ -339,7 +363,7 @@ def _extract_param_schema(cls: type) -> dict[str, Any]:
 
         type_hint = param.annotation
         type_name = (
-            getattr(type_hint, "__name__", str(type_hint))
+            _format_type_hint(type_hint)
             if type_hint is not inspect.Parameter.empty
             else "any"
         )
@@ -354,6 +378,9 @@ def _extract_param_schema(cls: type) -> dict[str, Any]:
 
 # Valid block keys derived from canonical chain order — single source of truth
 _VALID_CHAIN_KEYS: set[str] = {key for key, _ in CANONICAL_ORDER}
+
+# Maximum file size accepted by /process — enforced before audio decoding
+MAX_UPLOAD_BYTES: int = 50 * 1024 * 1024  # 50 MB
 
 
 def _validate_chain_keys(
@@ -524,6 +551,14 @@ async def process_audio(
     # Read uploaded audio
     try:
         contents = await file.read()
+        if len(contents) > MAX_UPLOAD_BYTES:
+            raise HTTPException(
+                status_code=413,
+                detail=(
+                    f"File too large ({len(contents) / (1024 * 1024):.1f} MB). "
+                    f"Maximum: {MAX_UPLOAD_BYTES // (1024 * 1024)} MB."
+                ),
+            )
         audio_buf = io.BytesIO(contents)
         signal, sr = sf.read(audio_buf, dtype="float64")
     except Exception as e:
