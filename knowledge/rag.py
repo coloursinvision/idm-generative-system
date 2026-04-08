@@ -110,7 +110,7 @@ class RAGPipeline:
 
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
-            raise EnvironmentError(
+            raise OSError(
                 "OPENAI_API_KEY not set. Add it to .env or export it."
             )
 

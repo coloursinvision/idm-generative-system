@@ -236,7 +236,7 @@ class KnowledgeBase:
 
         resolved_url = qdrant_url or os.getenv("QDRANT_URL")
         if not resolved_url:
-            raise EnvironmentError(
+            raise OSError(
                 "QDRANT_URL not set. Add it to .env or export it. "
                 "Example for local: QDRANT_URL=http://localhost:6333"
             )
