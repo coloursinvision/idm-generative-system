@@ -67,3 +67,7 @@ logs/
 .obsidian/
 .env
 frontend/node_modules/
+
+# Playwright
+frontend/playwright-report/
+frontend/test-results/
