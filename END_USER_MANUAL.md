@@ -1,8 +1,8 @@
 # IDM Generative System — End User Manual
 
-**Version:** 1.0
-**Revision date:** March 31, 2026
-**Applicable to:** IDM Generative System V1 (FastAPI v0.2.0, React frontend)
+**Version:** 1.1
+**Revision date:** April 7, 2026
+**Applicable to:** IDM Generative System V1 (FastAPI v0.5.0, React frontend v0.5.0)
 
 ---
 
@@ -19,6 +19,7 @@
    - 5.4 Effects Explorer
    - 5.5 PO-33 Guide
    - 5.6 EP-133 Guide
+   - 5.7 Codegen
 6. Signal Chain Reference
 7. Algorithmic Engine Reference
 8. Knowledge Base Architecture
@@ -357,6 +358,53 @@ An interactive programming interface for the Teenage Engineering EP-133 K.O.II. 
 
 ---
 
+### 5.7 Codegen
+
+**Route:** `/codegen` (docked) + `/codegen-popout` (detached window)
+**API endpoints:** `POST /synthdef`, `POST /tidal`
+**Mode:** Both
+
+The Codegen tab generates runnable SuperCollider (sclang) and TidalCycles (Haskell DSL) code from the current engine configuration. It bridges the IDM Generative System's parameter space with external live-coding environments for hardware synthesis and performance.
+
+**Interface elements:**
+
+- **Target tabs — SC | TIDAL** — toggle between SuperCollider and TidalCycles output. Always visible in the top toolbar.
+- **GENERATE button** — sends the current configuration to `/synthdef` or `/tidal`. The primary action — designed for rapid, repeated use. Always visible.
+- **Code display block** — solarized dark background (`#002b36`) with dual syntax highlighting:
+  - **sclang:** keywords in TE orange (#FF6600), strings in amber (#f59e0b), numbers in cyan (#2aa198), UGens in magenta (#d33682), comments in muted gray (#586e75)
+  - **Haskell/Tidal:** same palette applied to Tidal functions, operators, and pattern syntax
+  - Line numbers in left gutter on darker background (#073642)
+- **Toolbar labels** — precise language identifiers: `SCLANG .SCD` for SuperCollider, `HASKELL / TIDAL .TIDAL` for TidalCycles. These match the actual file extensions and language names.
+- **COPY button** — copies generated code to clipboard. Paste directly into SuperCollider IDE or Atom/VS Code with TidalCycles plugin.
+- **DOWNLOAD button** — saves code as `.scd` (SuperCollider) or `.tidal` (TidalCycles) file.
+- **CONFIG drawer** — collapsible panel (collapsed by default, one-line summary visible). Contains:
+  - Generator selector (glitch_click, noise_burst, fm_blip)
+  - Mode toggle: **Studio** (self-contained script with server boot, full comments, cleanup) or **Live** (minimal boilerplate, hot-swap via Pdef/Ndef)
+  - BPM control
+  - Effects chain block toggles (enable/disable individual blocks)
+- **Popout button (⧉)** — detaches the codegen panel to a separate browser window. Enables dual-monitor workflows: main app on one screen, SuperCollider IDE on the other. State is synchronised between windows via `BroadcastChannel` API.
+
+**Popout window:**
+
+The detached window (`/codegen-popout`) operates in two modes:
+1. **Connected** — receives config and code updates from the main window in real-time. Connection status shown by a green indicator with heartbeat monitoring (2s interval, 5s timeout).
+2. **Standalone** — if the main window is closed, the popout switches to local operation with fallback defaults. All controls (GENERATE, COPY, DOWNLOAD) work independently.
+
+**Codegen workflow:**
+1. Configure generator and effects in CONFIG drawer (or accept defaults)
+2. Select target: SC or TIDAL tab
+3. Click GENERATE
+4. Review code in the solarized dark display
+5. Click COPY or DOWNLOAD
+6. Paste/open in SuperCollider IDE or TidalCycles environment
+7. Evaluate — the generated code is self-contained and runnable
+
+**Studio vs Live mode:**
+- **Studio** generates a complete script: `s.boot`, SynthDef definitions with bus routing and Group ordering, pattern scheduling via Pbind (SC) or full `d1 $` stack (Tidal), and cleanup (`s.freeAll`).
+- **Live** generates minimal code for hot-swapping: Pdef/Ndef wrappers (SC) or bare `d1` patterns (Tidal). Assumes the server and environment are already running.
+
+---
+
 ## 6. Signal Chain Reference
 
 The effects chain processes audio through 10 blocks in fixed sequential order. Each block models a specific piece of hardware from the 1987–1999 era. All blocks inherit from the `BaseEffect` abstract class and implement a consistent `__call__(signal)` interface.
@@ -679,6 +727,28 @@ Aesthetic description to effects chain configuration.
 
 **Response:** JSON with `config` (effects chain parameter object), `reasoning` (GPT-4o explanation), `sources`, and `usage`
 
+### POST /synthdef
+Generates SuperCollider (sclang) code from engine configuration.
+
+**Request body:**
+- `generator`: string — `glitch_click`, `noise_burst`, or `fm_blip`
+- `generator_params`: object — optional generator-specific parameters
+- `effects`: object — per-block parameter overrides and skip list
+- `pattern`: object — optional pattern configuration (euclidean/probabilistic/density)
+- `mode`: string — `studio` (full script) or `live` (hot-swap)
+- `include_pattern`: boolean — include pattern scheduling code
+- `bpm`: integer — tempo (default: 120)
+- `bus_offset`: integer — starting bus number for SynthDef routing
+
+**Response:** JSON with `code` (sclang string), `target`, `mode`, `warnings`, `unmapped_params`, `metadata` (SynthDef names, bus allocation, effects chain), `setup_notes`
+
+### POST /tidal
+Generates TidalCycles (Haskell DSL) code from engine configuration.
+
+**Request body:** Same as `/synthdef`
+
+**Response:** JSON with `code` (Tidal pattern string), `target`, `mode`, `warnings`, `unmapped_params`, `metadata` (sound name, orbit assignments, BPM), `setup_notes`
+
 ---
 
 ## 11. Troubleshooting
@@ -714,7 +784,12 @@ This was resolved in the March 26, 2026 session. The fix (2s tail padding) is in
 conda activate idm
 pytest -v
 ```
-Expected: 23/23 passing in approximately 7 seconds. If tests fail, verify that the conda environment matches `environment.yml` and that no dependency versions have drifted.
+Expected: 318/318 backend (317 passed, 1 skipped) + 48/48 frontend. If tests fail, verify that the conda environment matches `environment.yml` and that no dependency versions have drifted.
+
+**Frontend tests:**
+```bash
+cd frontend && npx vitest run
+```
 
 ---
 
