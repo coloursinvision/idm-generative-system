@@ -6,6 +6,41 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.5.2] — 2026-04-08 — Security Patches + V1 Hardening
+
+### Fixed
+
+- **ComposerPanel reasoning rendering** (`frontend/src/components/composer/ComposerPanel.tsx`) — The Reasoning panel never rendered despite the API returning a valid `reasoning` field. Root cause: condition checked `parsed.reasoning` where `parsed = data.config` (the inner config object containing `generator`, `generator_params`, and `chain_overrides`). The `reasoning` field is a top-level property of `ComposeResponse`. Condition and render expression corrected to `result.reasoning`. Resolves GUI_TEST_SPECIFICATION.md T-03.3.
+
+- **Playwright webkit clipboard skip** (`frontend/e2e/codegen.spec.ts`) — T-08.6 (COPY button clipboard test) skipped on Firefox only. WebKit Playwright context also does not support `grantPermissions(["clipboard-write"])`. Skip condition extended to `browserName === "firefox" || browserName === "webkit"`.
+
+### Added
+
+- **`.gitignore` — Playwright artefact exclusion** — `frontend/playwright-report/` and `frontend/test-results/` added. Both directories are generated on test run and are not tracked.
+
+- **`.env.example`** — Environment variable template at repo root. Documents all required variables (`OPENAI_API_KEY`, `QDRANT_URL`, `QDRANT_API_KEY`) with placeholder values. Safe to commit.
+
+- **`ruff` in `idm` conda environment** — installed via `pip install ruff`. Required for local lint verification before push.
+
+### Security
+
+- **CR-15 — SHA-256 for `_deterministic_id`** (`knowledge/qdrant_client.py`) — `hashlib.md5` replaced with `hashlib.sha256`. Output truncated to 32 hex characters (consistent with prior MD5 output length). MD5 is deprecated for identifier generation in security-conscious contexts. **Re-ingest required:** all existing Qdrant point IDs generated under MD5 are invalid and must be regenerated. Coordinate with Qdrant NULL subsection cleanup — run both in one pass.
+
+- **CR-17 — Union/Optional type hint handling** (`api/main.py`) — `_extract_param_schema()` extended with `_format_type_hint()` helper. Handles `Optional[X]` (rendered as `"X | null"`), `Union[X, Y]`, and plain types. The previous `getattr(__name__)` call produced raw `typing.*` string representations for compound types, rendering the `/effects` self-documentation endpoint response unreadable for Optional parameters.
+
+- **CR-18 — Upload size limit on `/process`** (`api/main.py`) — `MAX_UPLOAD_BYTES: int = 50 * 1024 * 1024` (50 MB) constant added at module level. Enforced in `process_audio()` immediately after `file.read()`, before audio decoding. Returns HTTP 413 with a human-readable detail string (`"File too large (X.X MB). Maximum: 50 MB."`). Prevents unbounded memory allocation from malicious or accidental large file uploads.
+
+- **CR-19 — Explicit environment variable validation** (`knowledge/qdrant_client.py`, `knowledge/rag.py`) — Both modules now raise `OSError` at instantiation time if required environment variables are missing, rather than failing at request time with an obscure connection error.
+  - `KnowledgeBase.__init__`: raises if `QDRANT_URL` is unset. The silent fallback to `http://localhost:6333` is removed — explicit configuration is required in all environments.
+  - `RAGPipeline.__init__`: raises if `OPENAI_API_KEY` is unset. `OpenAI(api_key=api_key)` called with the explicit key rather than relying on the SDK's implicit environment lookup.
+  - `import os` added to `knowledge/rag.py` module-level imports.
+
+### CI
+
+- **CI failures resolved** — First push of CR-15/CR-19 failed on `ruff check` (rule UP024: `EnvironmentError` is an aliased builtin; `OSError` required). Second push failed on `ruff format --check` (`api/main.py`, `knowledge/rag.py` formatting non-conformant after patch). Both resolved. Third push: all jobs green (Lint & Format, Type Check, Test Suite, Docker, E2E).
+
+---
+
 ## [0.5.1] — 2026-04-07 — Playwright E2E Test Suite
 
 ### Added
@@ -30,7 +65,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Firefox responsive tolerance** — scrollbar width varies across browsers; overflow check tolerance increased from 1px to 10px.
 
 ### Discovered
-- **ComposerPanel reasoning bug** — `ComposerPanel.tsx` checks `parsed.reasoning` (inside `data.config` object) instead of `result.reasoning` (top-level response field). Reasoning section never renders. Fix deferred to next session.
+- **ComposerPanel reasoning bug** — `ComposerPanel.tsx` checks `parsed.reasoning` (inside `data.config` object) instead of `result.reasoning` (top-level response field). Reasoning section never renders. Fixed in v0.5.2.
 
 ---
 
@@ -158,22 +193,21 @@ Validation toolchain: pytest 9.0.2 for test execution, FastAPI TestClient for in
 
 ### Changed
 
-- **Parameter validation** across 8 configurable effect blocks (10 string parameters: `noise_type`, `filter_type`, `mode`, `reverb_type`, `tape_age`, `xor_mode`, `vinyl_condition`, `dat_mode`, `hardware_preset`, `mode`). Invalid values now raise `ValueError` with the list of valid options instead of falling back to defaults silently. (CR-05)
+- **Parameter validation** across 8 configurable effect blocks (10 string parameters). Invalid values now raise `ValueError` with the list of valid options instead of falling back to defaults silently. (CR-05)
 - **Chain key validation** — unrecognised `chain_overrides` or `chain_skip` keys in `/generate` and `/process` return HTTP 400 with the valid key set. (CR-11)
-- **RAG pipeline single-search** — `_retrieve_context()` returns both the assembled context string and raw search results in a single call. Eliminates a redundant embedding + Qdrant query per request in `ask()` and `compose()`. (CR-02)
-- **Composer output validation** — `compose()` parses and validates GPT-4o JSON output via `_parse_compose_output()`. Strips markdown code fences, verifies required keys (`generator`, `generator_params`, `chain_overrides`), returns a parsed dict instead of a raw string. (CR-14)
-- **Numba JIT on DSP hot paths** — 5 per-sample Python loops extracted to module-level `@njit(cache=True)` functions, compiled to native LLVM IR via Numba. Targets: reverb comb filter bank (~530k iterations), reverb allpass diffusor chain (~264k iterations), tape delay line (~88k iterations), and compressor envelope followers (single-detector ~88k + dual-detector auto-release ~176k iterations). Iteration counts are for a typical 2.5-second signal at 44.1 kHz. Cache persists to `__pycache__/` to avoid recompilation overhead on subsequent imports. (CR-04)
-- **Compressor RMS envelope** — `_compute_rms_envelope()` per-sample loop replaced with vectorised NumPy index arrays (`np.arange`, `np.maximum`), eliminating Python interpreter overhead without adding a Numba dependency. (CR-04)
+- **RAG pipeline single-search** — `_retrieve_context()` returns both the assembled context string and raw search results in a single call. Eliminates a redundant embedding + Qdrant query per request. (CR-02)
+- **Composer output validation** — `compose()` parses and validates GPT-4o JSON output via `_parse_compose_output()`. Strips markdown code fences, verifies required keys, returns a parsed dict instead of a raw string. (CR-14)
+- **Numba JIT on DSP hot paths** — 5 per-sample Python loops extracted to module-level `@njit(cache=True)` functions. Targets: reverb comb filter bank, reverb allpass diffusor chain, tape delay line, and compressor envelope followers (single + auto-release). (CR-04)
+- **Compressor RMS envelope** — `_compute_rms_envelope()` per-sample loop replaced with vectorised NumPy index arrays. (CR-04)
 
 ### Added
 
-- **DSP effects test suite** (`tests/test_effects.py`) — 166 test cases across 14 classes. Original 9 classes (139 cases): shape preservation, mono integrity, dtype checks, edge cases (all-zeros, single sample), NaN/Inf detection, parameter validation, valid parameter construction, stateful block reset, parameter extremes, hardware presets, EffectChain operations, and seeded reproducibility. Phase 4 added 5 regression test classes (28 cases): Numba kernel output parity versus inline pure-Python reference implementations at `rtol=1e-12` tolerance, and vectorised RMS envelope parity.
-- **RAG endpoint test suite** (`tests/test_rag.py`) — 20 test cases with mocked OpenAI and Qdrant dependencies: `/ask` and `/compose` integration tests, input validation, single-search verification, JSON output validation, empty context handling, and markdown chunking logic.
-- **Test adaptation** — `test_process_bypass_chain_signal_unchanged` updated to verify processed output is longer than bypassed output, confirming tail padding is active.
-- **Retry logic** on all external API calls via `tenacity`. `RAGPipeline._complete()` and `KnowledgeBase.embed()` retry up to 3 times with exponential backoff (1s, 2s, 4s) on `RateLimitError`, `APITimeoutError`, and `APIConnectionError`. (CR-06)
+- **DSP effects test suite** (`tests/test_effects.py`) — 166 test cases across 14 classes.
+- **RAG endpoint test suite** (`tests/test_rag.py`) — 20 test cases with mocked OpenAI and Qdrant dependencies.
+- **Retry logic** on all external API calls via `tenacity`. Retries up to 3 times with exponential backoff on transient errors. (CR-06)
 - `tenacity` added to `requirements.txt` and `environment.yml`.
 - `numba` >=0.59 added to `environment.yml` (conda channel).
-- Total test coverage: **209 cases** (208 passed, 1 skipped) — up from 23 at session start.
+- Total test coverage: **209 cases** (208 passed, 1 skipped).
 
 ---
 
