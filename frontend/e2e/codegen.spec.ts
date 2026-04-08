@@ -68,7 +68,10 @@ test.describe("T-08: Codegen Core Flow", () => {
   });
 
   test("T-08.6 — COPY button copies code to clipboard", async ({ page, context, browserName }) => {
-    test.skip(browserName === "firefox", "Firefox does not support clipboard permissions");
+    test.skip(
+      browserName === "firefox" || browserName === "webkit",
+      "Firefox and WebKit do not support clipboard-write permission grants in Playwright"
+    );
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
 
     await page.locator("button").filter({ hasText: /generate/i }).first().click();
