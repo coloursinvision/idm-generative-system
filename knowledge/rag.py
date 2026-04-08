@@ -24,6 +24,7 @@ Usage:
 from __future__ import annotations
 
 import json
+import os
 import re
 from typing import Any
 
@@ -107,8 +108,14 @@ class RAGPipeline:
     ) -> None:
         load_dotenv()
 
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise EnvironmentError(
+                "OPENAI_API_KEY not set. Add it to .env or export it."
+            )
+
         self.kb = KnowledgeBase(qdrant_url=qdrant_url)
-        self.openai = OpenAI()
+        self.openai = OpenAI(api_key=api_key)
         self.model = model
 
     # ------------------------------------------------------------------
