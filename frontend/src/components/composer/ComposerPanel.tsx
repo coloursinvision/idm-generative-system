@@ -121,11 +121,11 @@ export function ComposerPanel() {
           </div>
 
           {/* Reasoning */}
-          {parsed && typeof parsed.reasoning === "string" && (
+          {result.reasoning && (
             <div className="panel">
               <div className="panel-header">Reasoning</div>
               <p className="text-sm text-text-secondary leading-relaxed">
-                {parsed.reasoning}
+                {result.reasoning}
               </p>
             </div>
           )}
