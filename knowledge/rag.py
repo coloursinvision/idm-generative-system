@@ -110,9 +110,7 @@ class RAGPipeline:
 
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
-            raise OSError(
-                "OPENAI_API_KEY not set. Add it to .env or export it."
-            )
+            raise OSError("OPENAI_API_KEY not set. Add it to .env or export it.")
 
         self.kb = KnowledgeBase(qdrant_url=qdrant_url)
         self.openai = OpenAI(api_key=api_key)

@@ -363,9 +363,7 @@ def _extract_param_schema(cls: type) -> dict[str, Any]:
 
         type_hint = param.annotation
         type_name = (
-            _format_type_hint(type_hint)
-            if type_hint is not inspect.Parameter.empty
-            else "any"
+            _format_type_hint(type_hint) if type_hint is not inspect.Parameter.empty else "any"
         )
 
         params[name] = {
