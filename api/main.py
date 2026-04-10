@@ -8,6 +8,8 @@ Endpoints:
     GET  /effects   — list available effect blocks with parameter schemas
     POST /generate  — generate a sample and process through effects chain
     POST /process   — upload audio, process through effects chain, return WAV
+    POST /synthdef  — generate SuperCollider code from engine configuration
+    POST /tidal     — generate TidalCycles code from engine configuration
     POST /ask       — sound design advisor (RAG: Qdrant + GPT-4o)
     POST /compose   — auto-composer (RAG: Qdrant + GPT-4o)
 
@@ -22,13 +24,13 @@ Run:
 from __future__ import annotations
 
 from dotenv import load_dotenv
+
 load_dotenv()
 
-import io
-import io
 import inspect
+import io
 import json
-from typing import Any
+from typing import Any, Union, get_args, get_origin
 
 import numpy as np
 import soundfile as sf
@@ -37,14 +39,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from engine.sample_maker import glitch_click, noise_burst, fm_blip, SAMPLE_RATE
+from engine.codegen import generate_synthdef, generate_tidal
 from engine.effects import (
     CANONICAL_ORDER,
+    EffectChain,
     build_chain,
-    BaseEffect,
 )
+from engine.sample_maker import SAMPLE_RATE, fm_blip, glitch_click, noise_burst
 from knowledge.rag import RAGPipeline
-
 
 # ---------------------------------------------------------------------------
 # App
@@ -74,8 +76,8 @@ app.add_middleware(
 
 GENERATORS: dict[str, Any] = {
     "glitch_click": glitch_click,
-    "noise_burst":  noise_burst,
-    "fm_blip":      fm_blip,
+    "noise_burst": noise_burst,
+    "fm_blip": fm_blip,
 }
 
 rag = RAGPipeline()
@@ -85,14 +87,14 @@ rag = RAGPipeline()
 # Request / response models
 # ---------------------------------------------------------------------------
 
+
 class GenerateRequest(BaseModel):
     """Request body for /generate."""
 
     generator: str = Field(
         default="glitch_click",
         description=(
-            "Sample generator function. "
-            "Options: 'glitch_click', 'noise_burst', 'fm_blip'."
+            "Sample generator function. Options: 'glitch_click', 'noise_burst', 'fm_blip'."
         ),
     )
     generator_params: dict[str, Any] = Field(
@@ -170,9 +172,83 @@ class ComposeRequest(BaseModel):
     )
 
 
+class CodegenRequest(BaseModel):
+    """Request body for /synthdef and /tidal."""
+
+    generator: str = Field(
+        default="glitch_click",
+        description="Sample generator. Options: 'glitch_click', 'noise_burst', 'fm_blip'.",
+    )
+    generator_params: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Keyword arguments for the generator function.",
+    )
+    effects: dict[str, dict[str, Any]] = Field(
+        default_factory=dict,
+        description=(
+            "Per-block effect parameters. Only blocks present are included in output. "
+            "Keys: 'noise_floor', 'bitcrusher', 'filter', 'saturation', "
+            "'reverb', 'delay', 'spatial', 'glitch', 'compressor', 'vinyl'."
+        ),
+    )
+    pattern: dict[str, Any] | None = Field(
+        default=None,
+        description=(
+            "Pattern configuration. Required key: 'type' (euclidean/probabilistic/density). "
+            "Euclidean: {'type': 'euclidean', 'pulses': {'kick': 5}, 'steps': 16}. "
+            "Density: {'type': 'density', 'density': 0.3, 'steps': 16}."
+        ),
+    )
+    mode: str = Field(
+        default="studio",
+        description="Generation mode: 'studio' (self-contained) or 'live' (hot-swap).",
+    )
+    include_pattern: bool = Field(
+        default=True,
+        description="Include pattern code (Pbind/Pdef for SC, d1/d2 for Tidal).",
+    )
+    bpm: float = Field(
+        default=120.0,
+        ge=20.0,
+        le=300.0,
+        description="Beats per minute — controls pattern timing.",
+    )
+    bus_offset: int = Field(
+        default=16,
+        ge=0,
+        le=128,
+        description="Starting private bus number (SuperCollider only).",
+    )
+
+
+class CodegenResponse(BaseModel):
+    """Response body for /synthdef and /tidal."""
+
+    code: str = Field(description="Generated source code string.")
+    target: str = Field(description="Target language: 'supercollider' or 'tidalcycles'.")
+    mode: str = Field(description="Generation mode used: 'studio' or 'live'.")
+    warnings: list[str] = Field(
+        default_factory=list,
+        description="Mapping approximation warnings.",
+    )
+    unmapped_params: dict[str, list[str]] = Field(
+        default_factory=dict,
+        description="Parameters with no target equivalent (documented, not dropped).",
+    )
+    metadata: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Target-specific metadata (SynthDef names, bus allocation, etc.).",
+    )
+    setup_notes: list[str] = Field(
+        default_factory=list,
+        description="User-facing setup instructions for the generated code.",
+    )
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _signal_to_wav_response(
     signal: np.ndarray,
@@ -198,7 +274,7 @@ def _signal_to_wav_response(
 
 def _process_through_chain(
     signal: np.ndarray,
-    chain: "EffectChain",
+    chain: EffectChain,
     sr: int = SAMPLE_RATE,
     tail_seconds: float = 2.0,
     silence_threshold_db: float = -60.0,
@@ -240,6 +316,30 @@ def _process_through_chain(
     return processed
 
 
+def _format_type_hint(type_hint: type) -> str:
+    """Format a type hint into a human-readable string.
+
+    Handles Optional[X] (Union[X, None]), Union[X, Y], and plain types.
+    Used by _extract_param_schema to produce readable type names for the
+    /effects endpoint response.
+
+    Examples:
+        int                   → "int"
+        Optional[float]       → "float | null"
+        Union[str, int]       → "str | int"
+        list[str]             → "list[str]"
+    """
+    origin = get_origin(type_hint)
+    if origin is Union:
+        args = get_args(type_hint)
+        non_none = [a for a in args if a is not type(None)]
+        if len(non_none) == 1 and type(None) in args:
+            # Optional[X] — display as "X | null"
+            return f"{_format_type_hint(non_none[0])} | null"
+        return " | ".join(_format_type_hint(a) for a in args)
+    return getattr(type_hint, "__name__", str(type_hint))
+
+
 def _extract_param_schema(cls: type) -> dict[str, Any]:
     """
     Extract constructor parameters and their defaults from an effect class.
@@ -253,11 +353,7 @@ def _extract_param_schema(cls: type) -> dict[str, Any]:
         if name == "self":
             continue
 
-        default = (
-            param.default
-            if param.default is not inspect.Parameter.empty
-            else None
-        )
+        default = param.default if param.default is not inspect.Parameter.empty else None
 
         # Convert numpy types to native Python for JSON serialisation
         if isinstance(default, (np.integer,)):
@@ -267,9 +363,7 @@ def _extract_param_schema(cls: type) -> dict[str, Any]:
 
         type_hint = param.annotation
         type_name = (
-            getattr(type_hint, "__name__", str(type_hint))
-            if type_hint is not inspect.Parameter.empty
-            else "any"
+            _format_type_hint(type_hint) if type_hint is not inspect.Parameter.empty else "any"
         )
 
         params[name] = {
@@ -282,6 +376,9 @@ def _extract_param_schema(cls: type) -> dict[str, Any]:
 
 # Valid block keys derived from canonical chain order — single source of truth
 _VALID_CHAIN_KEYS: set[str] = {key for key, _ in CANONICAL_ORDER}
+
+# Maximum file size accepted by /process — enforced before audio decoding
+MAX_UPLOAD_BYTES: int = 50 * 1024 * 1024  # 50 MB
 
 
 def _validate_chain_keys(
@@ -319,6 +416,7 @@ def _validate_chain_keys(
 # Endpoints — DSP
 # ---------------------------------------------------------------------------
 
+
 @app.get("/health")
 async def health() -> dict[str, str]:
     """Liveness check."""
@@ -339,13 +437,15 @@ async def list_effects() -> list[dict[str, Any]]:
     """
     result = []
     for idx, (key, cls) in enumerate(CANONICAL_ORDER):
-        result.append({
-            "position": idx,
-            "key": key,
-            "class_name": cls.__name__,
-            "params": _extract_param_schema(cls),
-            "docstring": (cls.__doc__ or "").strip()[:500],
-        })
+        result.append(
+            {
+                "position": idx,
+                "key": key,
+                "class_name": cls.__name__,
+                "params": _extract_param_schema(cls),
+                "docstring": (cls.__doc__ or "").strip()[:500],
+            }
+        )
     return result
 
 
@@ -363,10 +463,7 @@ async def generate(req: GenerateRequest) -> StreamingResponse:
     if gen_fn is None:
         raise HTTPException(
             status_code=400,
-            detail=(
-                f"Unknown generator '{req.generator}'. "
-                f"Options: {list(GENERATORS.keys())}"
-            ),
+            detail=(f"Unknown generator '{req.generator}'. Options: {list(GENERATORS.keys())}"),
         )
 
     # Generate raw sample — randomise params if none provided
@@ -398,7 +495,7 @@ async def generate(req: GenerateRequest) -> StreamingResponse:
         raise HTTPException(
             status_code=400,
             detail=f"Invalid generator params: {e}",
-        )
+        ) from e
     # Ensure float64 for effects chain
     signal = signal.astype(np.float64)
 
@@ -442,23 +539,31 @@ async def process_audio(
     try:
         overrides = json.loads(chain_overrides)
     except json.JSONDecodeError:
-        raise HTTPException(status_code=400, detail="Invalid chain_overrides JSON.")
+        raise HTTPException(status_code=400, detail="Invalid chain_overrides JSON.") from None
 
     try:
         skip = json.loads(chain_skip)
     except json.JSONDecodeError:
-        raise HTTPException(status_code=400, detail="Invalid chain_skip JSON.")
+        raise HTTPException(status_code=400, detail="Invalid chain_skip JSON.") from None
 
     # Read uploaded audio
     try:
         contents = await file.read()
+        if len(contents) > MAX_UPLOAD_BYTES:
+            raise HTTPException(
+                status_code=413,
+                detail=(
+                    f"File too large ({len(contents) / (1024 * 1024):.1f} MB). "
+                    f"Maximum: {MAX_UPLOAD_BYTES // (1024 * 1024)} MB."
+                ),
+            )
         audio_buf = io.BytesIO(contents)
         signal, sr = sf.read(audio_buf, dtype="float64")
     except Exception as e:
         raise HTTPException(
             status_code=400,
             detail=f"Could not read audio file: {e}",
-        )
+        ) from e
 
     # Handle stereo → mono (effects chain is mono)
     if signal.ndim == 2:
@@ -482,8 +587,98 @@ async def process_audio(
 
 
 # ---------------------------------------------------------------------------
+# Endpoints — Code Generation (SuperCollider / TidalCycles)
+# ---------------------------------------------------------------------------
+
+
+def _codegen_result_to_response(result: Any) -> CodegenResponse:
+    """Convert a CodegenResult dataclass to a Pydantic response model."""
+    return CodegenResponse(
+        code=result.code,
+        target=result.target.value,
+        mode=result.mode.value,
+        warnings=result.warnings,
+        unmapped_params=result.unmapped_params,
+        metadata=result.metadata,
+        setup_notes=result.setup_notes,
+    )
+
+
+@app.post("/synthdef", response_model=CodegenResponse)
+async def synthdef(req: CodegenRequest) -> CodegenResponse:
+    """
+    Generate SuperCollider (.scd) code from engine configuration.
+
+    Produces composable SynthDefs with bus routing, group ordering,
+    and optional Pbind/Pdef pattern code. Supports studio and live modes.
+
+    Returns:
+        code:            Generated SuperCollider source code.
+        target:          'supercollider'.
+        mode:            Generation mode used ('studio' or 'live').
+        warnings:        Mapping approximation warnings.
+        unmapped_params: Parameters with no SC equivalent.
+        metadata:        SynthDef names, bus allocation, effects chain.
+        setup_notes:     User-facing setup instructions.
+    """
+    try:
+        result = generate_synthdef(
+            generator=req.generator,
+            generator_params=req.generator_params,
+            effects=req.effects,
+            pattern=req.pattern,
+            mode=req.mode,
+            include_pattern=req.include_pattern,
+            bpm=req.bpm,
+            bus_offset=req.bus_offset,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Code generation error: {e}") from e
+
+    return _codegen_result_to_response(result)
+
+
+@app.post("/tidal", response_model=CodegenResponse)
+async def tidal(req: CodegenRequest) -> CodegenResponse:
+    """
+    Generate TidalCycles (Haskell DSL) code from engine configuration.
+
+    Produces ready-to-evaluate Tidal patterns with effect chains.
+    Supports studio (full setup) and live (bare patterns) modes.
+
+    Returns:
+        code:            Generated TidalCycles source code.
+        target:          'tidalcycles'.
+        mode:            Generation mode used ('studio' or 'live').
+        warnings:        Mapping approximation warnings.
+        unmapped_params: Parameters with no Tidal equivalent.
+        metadata:        Tidal sound name, orbit assignments, BPM.
+        setup_notes:     User-facing setup instructions.
+    """
+    try:
+        result = generate_tidal(
+            generator=req.generator,
+            generator_params=req.generator_params,
+            effects=req.effects,
+            pattern=req.pattern,
+            mode=req.mode,
+            include_pattern=req.include_pattern,
+            bpm=req.bpm,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Code generation error: {e}") from e
+
+    return _codegen_result_to_response(result)
+
+
+# ---------------------------------------------------------------------------
 # Endpoints — RAG (Knowledge Base + GPT-4o)
 # ---------------------------------------------------------------------------
+
 
 @app.post("/ask")
 async def ask(req: AskRequest) -> dict:
@@ -506,7 +701,7 @@ async def ask(req: AskRequest) -> dict:
             part_filter=req.part_filter,
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"RAG pipeline error: {e}")
+        raise HTTPException(status_code=500, detail=f"RAG pipeline error: {e}") from e
 
     return result
 
@@ -532,6 +727,6 @@ async def compose(req: ComposeRequest) -> dict:
             limit=req.limit,
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"RAG pipeline error: {e}")
+        raise HTTPException(status_code=500, detail=f"RAG pipeline error: {e}") from e
 
     return result

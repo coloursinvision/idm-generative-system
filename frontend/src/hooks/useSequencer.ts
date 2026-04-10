@@ -61,12 +61,15 @@ export function useSequencer({ numSteps, defaultBpm = 120 }: UseSequencerOptions
 
   /* ---- Init tracks ---- */
   const initTracks = useCallback(
-    (trackDefs: { name: string; generator: string }[]) => {
+    (
+      trackDefs: { name: string; generator: string }[],
+      initialSteps?: boolean[][]
+    ) => {
       setTracks(
-        trackDefs.map((def) => ({
+        trackDefs.map((def, i) => ({
           name: def.name,
           generator: def.generator,
-          steps: Array(numSteps).fill(false),
+          steps: initialSteps?.[i] ?? Array(numSteps).fill(false),
           buffer: null,
           loading: false,
         }))

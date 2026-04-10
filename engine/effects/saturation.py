@@ -36,6 +36,7 @@ Signal position: ResonantFilter → [Block 4] → Reverb → ...
 from __future__ import annotations
 
 import numpy as np
+
 from engine.effects.base import BaseEffect
 
 
@@ -67,14 +68,14 @@ class Saturation(BaseEffect):
                       Default: 1.0.
 
     Example:
-        >>> sat = Saturation(drive=2.0, mode='asymmetric')
+        >>> sat = Saturation(drive=2.0, mode="asymmetric")
         >>> output = sat(signal)
 
         >>> # Subtle Mackie bus warmth
-        >>> sat = Saturation(drive=1.2, mode='asymmetric', mix=0.4)
+        >>> sat = Saturation(drive=1.2, mode="asymmetric", mix=0.4)
 
         >>> # Extreme Hague-style full-chain saturation
-        >>> sat = Saturation(drive=6.0, mode='wavefold', mix=1.0)
+        >>> sat = Saturation(drive=6.0, mode="wavefold", mix=1.0)
     """
 
     _VALID_MODES = {"asymmetric", "symmetric", "tanh", "wavefold"}
@@ -87,10 +88,7 @@ class Saturation(BaseEffect):
         output_gain: float = 1.0,
     ) -> None:
         if mode not in self._VALID_MODES:
-            raise ValueError(
-                f"Invalid mode '{mode}'. "
-                f"Options: {sorted(self._VALID_MODES)}"
-            )
+            raise ValueError(f"Invalid mode '{mode}'. Options: {sorted(self._VALID_MODES)}")
 
         self.drive = drive
         self.mode = mode
@@ -117,7 +115,6 @@ class Saturation(BaseEffect):
 
     def reset(self) -> None:
         """Stateless effect — nothing to reset."""
-        pass
 
     # ------------------------------------------------------------------
     # Private helpers
@@ -128,14 +125,13 @@ class Saturation(BaseEffect):
 
         if self.mode == "asymmetric":
             return self._asymmetric(x)
-        elif self.mode == "symmetric":
+        if self.mode == "symmetric":
             return self._symmetric(x)
-        elif self.mode == "tanh":
+        if self.mode == "tanh":
             return self._tanh_normalised(x)
-        elif self.mode == "wavefold":
+        if self.mode == "wavefold":
             return self._wavefold(x)
-        else:
-            return x
+        return x
 
     def _asymmetric(self, x: np.ndarray) -> np.ndarray:
         """
@@ -196,8 +192,6 @@ class Saturation(BaseEffect):
         threshold = 1.0 / self.drive
         folded = x.copy()
         mask = np.abs(x) > threshold
-        folded[mask] = (
-            (2 * threshold - np.abs(x[mask])) * np.sign(x[mask])
-        )
+        folded[mask] = (2 * threshold - np.abs(x[mask])) * np.sign(x[mask])
         # Apply a secondary soft-clip to the folded signal
         return np.tanh(folded * self.drive * 0.5)

@@ -27,7 +27,6 @@ all internal state before each render to prevent bleed between patterns.
 
 from __future__ import annotations
 
-from typing import List
 import numpy as np
 
 from engine.effects.base import BaseEffect
@@ -59,8 +58,8 @@ class EffectChain:
         >>> chain.remove(0)
     """
 
-    def __init__(self, effects: List[BaseEffect] | None = None) -> None:
-        self.effects: List[BaseEffect] = effects or []
+    def __init__(self, effects: list[BaseEffect] | None = None) -> None:
+        self.effects: list[BaseEffect] = effects or []
         self.bypass: bool = False
 
     def __call__(self, signal: np.ndarray) -> np.ndarray:
@@ -115,7 +114,5 @@ class EffectChain:
         return len(self.effects)
 
     def __repr__(self) -> str:
-        chain_str = "\n  ".join(
-            f"[{i}] {effect!r}" for i, effect in enumerate(self.effects)
-        )
+        chain_str = "\n  ".join(f"[{i}] {effect!r}" for i, effect in enumerate(self.effects))
         return f"EffectChain(\n  {chain_str}\n)"

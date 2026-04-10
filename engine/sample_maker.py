@@ -15,10 +15,10 @@ Use save_sample() to export to WAV, or pass directly into the effects chain.
 
 from __future__ import annotations
 
-import numpy as np
-import soundfile as sf
 from pathlib import Path
 
+import numpy as np
+import soundfile as sf
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -30,6 +30,7 @@ SAMPLE_RATE: int = 44100
 # ---------------------------------------------------------------------------
 # Utilities
 # ---------------------------------------------------------------------------
+
 
 def normalize(x: np.ndarray) -> np.ndarray:
     """
@@ -50,6 +51,7 @@ def normalize(x: np.ndarray) -> np.ndarray:
 # ---------------------------------------------------------------------------
 # Sample generators
 # ---------------------------------------------------------------------------
+
 
 def glitch_click(
     length_ms: float = 200.0,
@@ -159,6 +161,7 @@ def fm_blip(
 # ---------------------------------------------------------------------------
 # Export
 # ---------------------------------------------------------------------------
+
 
 def save_sample(
     x: np.ndarray,

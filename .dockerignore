@@ -1,0 +1,69 @@
+# =============================================================================
+# IDM Generative System — Docker build context exclusions
+# =============================================================================
+
+# Version control
+.git
+.gitignore
+
+# Documentation / Obsidian
+00-Project/
+*.md
+!README.md
+
+# Frontend (separate deployment)
+frontend/
+node_modules/
+
+# Streamlit (separate deployment)
+streamlit_app/
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual envs
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.cursor/
+.idea/
+*.swp
+*.swo
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Conda
+environment.yml
+
+# Testing artifacts
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Experiments / scratch
+acid_*.py
+AcidSynthEngine.cpp
+notebooks/

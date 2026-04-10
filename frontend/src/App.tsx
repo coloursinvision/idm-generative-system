@@ -6,6 +6,8 @@ import { EffectsExplorer } from "./components/effects/EffectsExplorer";
 import { GeneratorPanel } from "./components/generator/GeneratorPanel";
 import { PO33Guide } from "./components/guide/PO33Guide";
 import { EP133Guide } from "./components/guide/EP133Guide";
+import { CodegenPanel } from "./components/codegen";
+import { CodegenPopout } from "./components/codegen";
 
 export default function App() {
   return (
@@ -17,6 +19,8 @@ export default function App() {
         <Route path="/generator" element={<GeneratorPanel />} />
         <Route path="/guide/po33" element={<PO33Guide />} />
         <Route path="/guide/ep133" element={<EP133Guide />} />
+        <Route path="/codegen" element={<CodegenPanel />} />
+        <Route path="/codegen-popout" element={<CodegenPopout />} />
         <Route path="*" element={<Navigate to="/advisor" replace />} />
       </Routes>
     </AppShell>

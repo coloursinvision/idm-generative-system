@@ -51,15 +51,15 @@ from __future__ import annotations
 import numpy as np
 from numba import njit
 from scipy import signal as scipy_signal
-from engine.effects.base import BaseEffect
 
+from engine.effects.base import BaseEffect
 
 # ---------------------------------------------------------------------------
 # Tape age HF cutoff frequencies (Hz)
 # ---------------------------------------------------------------------------
 
 TAPE_AGE_CUTOFF: dict[str, int] = {
-    "new":  14000,
+    "new": 14000,
     "used": 8000,
     "worn": 4500,
 }
@@ -72,6 +72,7 @@ TAPE_AGE_CUTOFF: dict[str, int] = {
 # feedback path, and write-back. LLVM-compiled — eliminates ~88k Python
 # iterations for a typical 2s signal at 44.1 kHz.
 # ---------------------------------------------------------------------------
+
 
 @njit(cache=True)
 def _delay_line_kernel(
@@ -158,14 +159,14 @@ class TapeDelay(BaseEffect):
         sr:             Sample rate in Hz. Default: 44100.
 
     Example:
-        >>> td = TapeDelay(delay_ms=375, feedback=0.5, tape_age='used')
+        >>> td = TapeDelay(delay_ms=375, feedback=0.5, tape_age="used")
         >>> output = td(signal)
 
         >>> # Self-oscillation drone (dub-style)
         >>> td = TapeDelay(delay_ms=500, feedback=0.96, tape_saturation=0.7)
 
         >>> # Clean short slapback
-        >>> td = TapeDelay(delay_ms=80, feedback=0.2, tape_age='new', mix=0.2)
+        >>> td = TapeDelay(delay_ms=80, feedback=0.2, tape_age="new", mix=0.2)
     """
 
     def __init__(
@@ -181,8 +182,7 @@ class TapeDelay(BaseEffect):
     ) -> None:
         if tape_age not in TAPE_AGE_CUTOFF:
             raise ValueError(
-                f"Invalid tape_age '{tape_age}'. "
-                f"Options: {sorted(TAPE_AGE_CUTOFF.keys())}"
+                f"Invalid tape_age '{tape_age}'. Options: {sorted(TAPE_AGE_CUTOFF.keys())}"
             )
 
         self.delay_ms = delay_ms
@@ -222,9 +222,15 @@ class TapeDelay(BaseEffect):
 
         # Delay line processing (Numba-compiled kernel)
         wet = _delay_line_kernel(
-            signal, modulation, buf,
-            delay_samples, float(self.feedback), self.tape_saturation,
-            self.sr, n, buf_len,
+            signal,
+            modulation,
+            buf,
+            delay_samples,
+            float(self.feedback),
+            self.tape_saturation,
+            self.sr,
+            n,
+            buf_len,
         )
 
         # Apply tape frequency response (HF rolloff)
@@ -234,7 +240,6 @@ class TapeDelay(BaseEffect):
 
     def reset(self) -> None:
         """Stateless effect — nothing to reset."""
-        pass
 
     # ------------------------------------------------------------------
     # Private helpers
@@ -250,11 +255,7 @@ class TapeDelay(BaseEffect):
         """
         t = np.arange(n) / self.sr
         wow = np.sin(2.0 * np.pi * self.wow_flutter_hz * t) * self.wow_depth
-        flutter = (
-            np.sin(2.0 * np.pi * (self.wow_flutter_hz * 7.3) * t)
-            * self.wow_depth
-            * 0.3
-        )
+        flutter = np.sin(2.0 * np.pi * (self.wow_flutter_hz * 7.3) * t) * self.wow_depth * 0.3
         return wow + flutter
 
     def _build_tape_filter(self) -> np.ndarray:

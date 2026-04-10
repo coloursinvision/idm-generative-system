@@ -73,17 +73,17 @@ from __future__ import annotations
 
 import numpy as np
 from scipy import signal as scipy_signal
-from engine.effects.base import BaseEffect
 
+from engine.effects.base import BaseEffect
 
 # ---------------------------------------------------------------------------
 # RIAA time constants (seconds) — 1954 standard
 # ---------------------------------------------------------------------------
 
 RIAA_TAU: dict[str, float] = {
-    "tau1": 3180e-6,   # 50.05 Hz  — bass shelf
-    "tau2": 318e-6,    # 500.5 Hz  — midrange turnover
-    "tau3": 75e-6,     # 2122 Hz   — treble boost/cut
+    "tau1": 3180e-6,  # 50.05 Hz  — bass shelf
+    "tau2": 318e-6,  # 500.5 Hz  — midrange turnover
+    "tau3": 75e-6,  # 2122 Hz   — treble boost/cut
 }
 
 
@@ -93,23 +93,23 @@ RIAA_TAU: dict[str, float] = {
 
 VINYL_CONDITION: dict[str, dict[str, float]] = {
     "mint": {
-        "hiss_level":    0.0003,   # barely audible surface noise
-        "crackle_rate":  0.0001,   # rare pops
+        "hiss_level": 0.0003,  # barely audible surface noise
+        "crackle_rate": 0.0001,  # rare pops
         "crackle_level": 0.005,
     },
     "good": {
-        "hiss_level":    0.0008,   # light continuous hiss
-        "crackle_rate":  0.0005,   # occasional pops
+        "hiss_level": 0.0008,  # light continuous hiss
+        "crackle_rate": 0.0005,  # occasional pops
         "crackle_level": 0.015,
     },
     "worn": {
-        "hiss_level":    0.002,    # prominent surface noise
-        "crackle_rate":  0.002,    # frequent crackle
+        "hiss_level": 0.002,  # prominent surface noise
+        "crackle_rate": 0.002,  # frequent crackle
         "crackle_level": 0.04,
     },
     "trashed": {
-        "hiss_level":    0.005,    # heavy noise floor
-        "crackle_rate":  0.008,    # dense crackle texture
+        "hiss_level": 0.005,  # heavy noise floor
+        "crackle_rate": 0.008,  # dense crackle texture
         "crackle_level": 0.08,
     },
 }
@@ -120,10 +120,10 @@ VINYL_CONDITION: dict[str, dict[str, float]] = {
 # ---------------------------------------------------------------------------
 
 DAT_BANDWIDTH: dict[str, int] = {
-    "dat_lp":    16000,   # DAT long-play 32 kHz mode — 16 kHz ceiling
-    "dat_sp":    20000,   # DAT standard-play 48 kHz mode — 20 kHz ceiling
-    "cd":        22050,   # CD 44.1 kHz — Nyquist limit
-    "none":      0,       # bypass bandwidth limiting
+    "dat_lp": 16000,  # DAT long-play 32 kHz mode — 16 kHz ceiling
+    "dat_sp": 20000,  # DAT standard-play 48 kHz mode — 20 kHz ceiling
+    "cd": 22050,  # CD 44.1 kHz — Nyquist limit
+    "none": 0,  # bypass bandwidth limiting
 }
 
 
@@ -165,20 +165,21 @@ class VinylMastering(BaseEffect):
 
     Example:
         >>> # Standard IDM vinyl mastering
-        >>> vm = VinylMastering(riaa_intensity=0.3, dat_mode='dat_lp')
+        >>> vm = VinylMastering(riaa_intensity=0.3, dat_mode="dat_lp")
         >>> output = vm(signal)
 
         >>> # Heavy vinyl character (worn record through DAT)
-        >>> vm = VinylMastering(riaa_intensity=0.6, vinyl_condition='worn',
-        ...                     noise_mix=0.3, dat_mode='dat_lp')
+        >>> vm = VinylMastering(
+        ...     riaa_intensity=0.6, vinyl_condition="worn", noise_mix=0.3, dat_mode="dat_lp"
+        ... )
 
         >>> # Clean digital master (bypass vinyl, DAT ceiling only)
-        >>> vm = VinylMastering(riaa_intensity=0.0, noise_mix=0.0,
-        ...                     dat_mode='dat_sp')
+        >>> vm = VinylMastering(riaa_intensity=0.0, noise_mix=0.0, dat_mode="dat_sp")
 
         >>> # Maximum degradation (trashed vinyl aesthetic)
-        >>> vm = VinylMastering(riaa_intensity=0.8, vinyl_condition='trashed',
-        ...                     noise_mix=0.5, dat_mode='dat_lp')
+        >>> vm = VinylMastering(
+        ...     riaa_intensity=0.8, vinyl_condition="trashed", noise_mix=0.5, dat_mode="dat_lp"
+        ... )
     """
 
     def __init__(
@@ -195,8 +196,7 @@ class VinylMastering(BaseEffect):
     ) -> None:
         if dat_mode not in DAT_BANDWIDTH:
             raise ValueError(
-                f"Invalid dat_mode '{dat_mode}'. "
-                f"Options: {sorted(DAT_BANDWIDTH.keys())}"
+                f"Invalid dat_mode '{dat_mode}'. Options: {sorted(DAT_BANDWIDTH.keys())}"
             )
         if vinyl_condition not in VINYL_CONDITION:
             raise ValueError(
@@ -254,7 +254,6 @@ class VinylMastering(BaseEffect):
 
     def reset(self) -> None:
         """Stateless effect — nothing to reset."""
-        pass
 
     # ------------------------------------------------------------------
     # Stage 1 — RIAA pre-emphasis
@@ -276,21 +275,17 @@ class VinylMastering(BaseEffect):
             - Treble boost above 2122 Hz (τ₃ = 75 µs)
         """
         # Derive RIAA corner frequencies from time constants
-        f1 = 1.0 / (2.0 * np.pi * RIAA_TAU["tau1"])   # ~50.05 Hz
-        f3 = 1.0 / (2.0 * np.pi * RIAA_TAU["tau3"])   # ~2122 Hz
+        f1 = 1.0 / (2.0 * np.pi * RIAA_TAU["tau1"])  # ~50.05 Hz
+        f3 = 1.0 / (2.0 * np.pi * RIAA_TAU["tau3"])  # ~2122 Hz
         nyquist = self.sr / 2.0
 
         # Bass shelf — attenuate below f1 (RIAA bass roll-off)
         f1_norm = np.clip(f1 / nyquist, 0.001, 0.999)
-        sos_bass = scipy_signal.butter(
-            1, f1_norm, btype="high", output="sos"
-        )
+        sos_bass = scipy_signal.butter(1, f1_norm, btype="high", output="sos")
 
         # Treble shelf — boost above f3 (RIAA treble pre-emphasis)
         f3_norm = np.clip(f3 / nyquist, 0.001, 0.999)
-        sos_treble = scipy_signal.butter(
-            1, f3_norm, btype="high", output="sos"
-        )
+        sos_treble = scipy_signal.butter(1, f3_norm, btype="high", output="sos")
 
         # Apply RIAA filters
         riaa_signal = scipy_signal.sosfilt(sos_bass, signal)
@@ -341,9 +336,7 @@ class VinylMastering(BaseEffect):
     # Stage 3 — Vinyl surface noise
     # ------------------------------------------------------------------
 
-    def _apply_surface_noise(
-        self, signal: np.ndarray, rng: np.random.Generator
-    ) -> np.ndarray:
+    def _apply_surface_noise(self, signal: np.ndarray, rng: np.random.Generator) -> np.ndarray:
         """
         Add vinyl surface noise — continuous hiss and sporadic crackle.
 
@@ -356,9 +349,7 @@ class VinylMastering(BaseEffect):
         Crackle timing is stochastic (Poisson-like distribution).
         """
         n = len(signal)
-        condition = VINYL_CONDITION.get(
-            self.vinyl_condition, VINYL_CONDITION["good"]
-        )
+        condition = VINYL_CONDITION.get(self.vinyl_condition, VINYL_CONDITION["good"])
 
         noise = np.zeros(n)
 
@@ -373,9 +364,7 @@ class VinylMastering(BaseEffect):
             high_norm = np.clip(8000.0 / nyquist, 0.001, 0.999)
 
             if low_norm < high_norm:
-                sos_hiss = scipy_signal.butter(
-                    2, [low_norm, high_norm], btype="band", output="sos"
-                )
+                sos_hiss = scipy_signal.butter(2, [low_norm, high_norm], btype="band", output="sos")
                 raw_hiss = scipy_signal.sosfilt(sos_hiss, raw_hiss)
 
             noise += raw_hiss
@@ -398,10 +387,7 @@ class VinylMastering(BaseEffect):
                 end = min(pos + decay_samples, n)
                 length = end - pos
 
-                decay_env = np.exp(
-                    -np.arange(length, dtype=np.float64)
-                    / (decay_samples * 0.2)
-                )
+                decay_env = np.exp(-np.arange(length, dtype=np.float64) / (decay_samples * 0.2))
                 noise[pos:end] += polarity * amplitude * decay_env
 
         # Mix noise into signal
@@ -422,9 +408,7 @@ class VinylMastering(BaseEffect):
         This is the absolute last stage before output — nothing should
         follow it in the signal chain.
         """
-        ceiling_linear = float(
-            np.power(10.0, self.limiter_ceiling_db / 20.0)
-        )
+        ceiling_linear = float(np.power(10.0, self.limiter_ceiling_db / 20.0))
 
         # Scale signal so ceiling maps to tanh(1.0) ≈ 0.7616
         # Then rescale output to actual ceiling level
