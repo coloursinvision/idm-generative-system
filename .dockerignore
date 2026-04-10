@@ -12,7 +12,6 @@
 !README.md
 
 # Frontend (separate deployment)
-frontend/
 node_modules/
 
 # Streamlit (separate deployment)

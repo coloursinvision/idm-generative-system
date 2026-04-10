@@ -30,13 +30,15 @@ load_dotenv()
 import inspect
 import io
 import json
+from pathlib import Path
 from typing import Any, Union, get_args, get_origin
 
 import numpy as np
 import soundfile as sf
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from engine.codegen import generate_synthdef, generate_tidal
@@ -730,3 +732,29 @@ async def compose(req: ComposeRequest) -> dict:
         raise HTTPException(status_code=500, detail=f"RAG pipeline error: {e}") from e
 
     return result
+
+
+# ---------------------------------------------------------------------------
+# Static frontend serving (production only — Vite bundle in /app/static)
+# ---------------------------------------------------------------------------
+
+
+STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
+
+if STATIC_DIR.is_dir():
+    # Serve Vite hashed assets (/assets/index-XXXXX.js, /assets/index-XXXXX.css).
+    app.mount("/assets", StaticFiles(directory=STATIC_DIR / "assets"), name="assets")
+
+    # Serve files in static root (favicon.ico, manifest.json, etc.).
+    app.mount("/static-root", StaticFiles(directory=STATIC_DIR), name="static-root")
+
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str) -> FileResponse:
+        """SPA catch-all — return index.html for any unmatched GET request.
+
+        FastAPI evaluates routes in registration order. All API routes are
+        registered before this catch-all, so /health, /generate, etc. take
+        priority. Only genuinely unmatched paths (/, /advisor, /codegen, etc.)
+        reach this handler.
+        """
+        return FileResponse(STATIC_DIR / "index.html")
