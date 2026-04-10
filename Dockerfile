@@ -1,19 +1,45 @@
 # =============================================================================
 # IDM Generative System — Production Dockerfile
-# Target: Digital Ocean App Platform (or any OCI-compliant runtime)
-# Entrypoint: FastAPI + uvicorn
+# Target: Self-hosted Docker Compose (DO droplet) with Nginx reverse proxy
+# Entrypoint: FastAPI + uvicorn (serves API + static frontend bundle)
+#
+# Three-stage build:
+#   1. frontend-builder — Node.js: npm ci && npm run build → dist/
+#   2. python-builder   — Python: pip install into isolated venv
+#   3. runtime          — Slim image with venv + dist/ + application code
+#
+# Frontend source location: frontend/ subdirectory
 # =============================================================================
 # Build: docker build -t idm-api:latest .
 # Run:   docker run -p 8000:8000 --env-file .env idm-api:latest
 # =============================================================================
 
 # ---------------------------------------------------------------------------
-# Stage 1 — Builder
+# Stage 1 — Frontend Builder
+# Install Node deps and produce Vite production bundle.
+# ---------------------------------------------------------------------------
+FROM node:22-slim AS frontend-builder
+
+WORKDIR /build
+
+# Install deps first (cache layer — only rebuilds when lockfile changes).
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci --ignore-scripts
+
+# Copy frontend source and build.
+COPY frontend/index.html frontend/tsconfig*.json frontend/vite.config.ts ./
+COPY frontend/postcss.config.js frontend/tailwind.config.ts ./
+COPY frontend/src/ ./src/
+COPY frontend/public/ ./public/
+
+RUN npm run build
+
+# ---------------------------------------------------------------------------
+# Stage 2 — Python Builder
 # Install Python deps into a virtual-env so we can COPY only the venv later.
 # ---------------------------------------------------------------------------
-FROM python:3.11-slim AS builder
+FROM python:3.11-slim AS python-builder
 
-# Prevent .pyc files and enable unbuffered stdout (crash-safe logging).
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
@@ -38,8 +64,8 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
     pip install --no-cache-dir ".[dev]"
 
 # ---------------------------------------------------------------------------
-# Stage 2 — Runtime
-# Slim image with only the venv + application code.
+# Stage 3 — Runtime
+# Slim image with only the venv + frontend bundle + application code.
 # ---------------------------------------------------------------------------
 FROM python:3.11-slim AS runtime
 
@@ -57,18 +83,19 @@ RUN groupadd --gid 1000 appuser && \
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PATH="/opt/venv/bin:$PATH" \
-    # Numba: disable JIT cache writes (read-only filesystem).
     NUMBA_DISABLE_JIT_CACHE=1 \
-    # Uvicorn config via env (overridable at runtime).
     UVICORN_HOST=0.0.0.0 \
     UVICORN_PORT=8000 \
-    UVICORN_WORKERS=2 \
+    UVICORN_WORKERS=1 \
     UVICORN_LOG_LEVEL=info
 
-# Copy venv from builder.
-COPY --from=builder /opt/venv /opt/venv
+# Copy venv from python-builder.
+COPY --from=python-builder /opt/venv /opt/venv
 
 WORKDIR /app
+
+# Copy frontend production bundle from frontend-builder.
+COPY --from=frontend-builder /build/dist ./static
 
 # Copy application code — order matters for cache efficiency.
 COPY engine/ ./engine/
@@ -77,7 +104,6 @@ COPY knowledge/ ./knowledge/
 COPY pyproject.toml README.md ./
 
 # Pre-compile Numba kernels during build (avoids cold-start latency).
-# If this fails, the container still starts — JIT compiles on first call.
 RUN python -c "\
 from engine.effects.reverb import _comb_filter_kernel, _allpass_kernel; \
 from engine.effects.delay import _delay_line_kernel; \
@@ -94,11 +120,10 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
 # Production entrypoint: uvicorn with configurable workers.
-# DO App Platform sets PORT env var — uvicorn reads UVICORN_PORT.
 CMD ["python", "-m", "uvicorn", "api.main:app", \
      "--host", "0.0.0.0", \
      "--port", "8000", \
-     "--workers", "2", \
+     "--workers", "1", \
      "--access-log", \
      "--proxy-headers", \
      "--forwarded-allow-ips", "*"]
