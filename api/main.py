@@ -30,16 +30,15 @@ load_dotenv()
 import inspect
 import io
 import json
+from pathlib import Path
 from typing import Any, Union, get_args, get_origin
 
 import numpy as np
 import soundfile as sf
-from pathlib import Path
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from engine.codegen import generate_synthdef, generate_tidal
