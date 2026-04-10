@@ -24,16 +24,15 @@ Usage:
 from __future__ import annotations
 
 import json
-import re
 import os
+import re
 from typing import Any
 
 from dotenv import load_dotenv
-from openai import OpenAI, RateLimitError, APITimeoutError, APIConnectionError
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from openai import APIConnectionError, APITimeoutError, OpenAI, RateLimitError
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from knowledge.qdrant_client import KnowledgeBase
-
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -91,6 +90,7 @@ Rules:
 # RAG Pipeline
 # ---------------------------------------------------------------------------
 
+
 class RAGPipeline:
     """
     Retrieval-Augmented Generation pipeline.
@@ -108,8 +108,12 @@ class RAGPipeline:
     ) -> None:
         load_dotenv()
 
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise OSError("OPENAI_API_KEY not set. Add it to .env or export it.")
+
         self.kb = KnowledgeBase(qdrant_url=qdrant_url)
-        self.openai = OpenAI()
+        self.openai = OpenAI(api_key=api_key)
         self.model = model
 
     # ------------------------------------------------------------------
@@ -119,9 +123,7 @@ class RAGPipeline:
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=1, max=10),
-        retry=retry_if_exception_type(
-            (RateLimitError, APITimeoutError, APIConnectionError)
-        ),
+        retry=retry_if_exception_type((RateLimitError, APITimeoutError, APIConnectionError)),
     )
     def _complete(
         self,
@@ -227,10 +229,7 @@ class RAGPipeline:
             part_filter=part_filter,
         )
 
-        user_message = (
-            f"CONTEXT:\n{context}\n\n"
-            f"QUESTION:\n{question}"
-        )
+        user_message = f"CONTEXT:\n{context}\n\nQUESTION:\n{question}"
 
         response = self._complete(
             system_prompt=SYSTEM_PROMPT_ADVISOR,
@@ -241,8 +240,7 @@ class RAGPipeline:
         choice = response.choices[0]
 
         source_titles = [
-            {"title": s["title"], "part": s["part"], "score": s["score"]}
-            for s in results
+            {"title": s["title"], "part": s["part"], "score": s["score"]} for s in results
         ]
 
         return {
@@ -277,10 +275,7 @@ class RAGPipeline:
         """
         context, results = self._retrieve_context(query=description, limit=limit)
 
-        user_message = (
-            f"CONTEXT:\n{context}\n\n"
-            f"AESTHETIC DESCRIPTION:\n{description}"
-        )
+        user_message = f"CONTEXT:\n{context}\n\nAESTHETIC DESCRIPTION:\n{description}"
 
         response = self._complete(
             system_prompt=SYSTEM_PROMPT_COMPOSER,
@@ -294,8 +289,7 @@ class RAGPipeline:
         config = self._parse_compose_output(choice.message.content)
 
         source_titles = [
-            {"title": s["title"], "part": s["part"], "score": s["score"]}
-            for s in results
+            {"title": s["title"], "part": s["part"], "score": s["score"]} for s in results
         ]
 
         return {
@@ -309,7 +303,7 @@ class RAGPipeline:
             },
         }
 
- # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # Output validation
     # ------------------------------------------------------------------
 
@@ -318,7 +312,6 @@ class RAGPipeline:
         text = raw.strip()
 
         # Extract JSON from markdown code fence (handles preamble before fence)
-        import re
         fence_match = re.search(r"```(?:json)?\s*\n(.*?)```", text, re.DOTALL)
         if fence_match:
             text = fence_match.group(1).strip()
@@ -333,20 +326,15 @@ class RAGPipeline:
             config = json.loads(text)
         except json.JSONDecodeError as e:
             raise ValueError(
-                f"GPT-4o returned invalid JSON: {e}. "
-                f"Raw output (first 500 chars): {raw[:500]}"
-            )
+                f"GPT-4o returned invalid JSON: {e}. Raw output (first 500 chars): {raw[:500]}"
+            ) from e
 
         if not isinstance(config, dict):
-            raise ValueError(
-                f"GPT-4o returned {type(config).__name__}, expected dict."
-            )
+            raise ValueError(f"GPT-4o returned {type(config).__name__}, expected dict.")
 
         required = {"generator", "generator_params", "chain_overrides"}
         missing = required - config.keys()
         if missing:
-            raise ValueError(
-                f"GPT-4o config missing required keys: {sorted(missing)}"
-            )
+            raise ValueError(f"GPT-4o config missing required keys: {sorted(missing)}")
 
         return config

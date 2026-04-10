@@ -63,8 +63,8 @@ Signal position: SpatialProcessor → [Block 8] → Compressor → ...
 from __future__ import annotations
 
 import numpy as np
-from engine.effects.base import BaseEffect
 
+from engine.effects.base import BaseEffect
 
 # ---------------------------------------------------------------------------
 # XOR mask patterns — each produces a distinct corruption character
@@ -72,10 +72,10 @@ from engine.effects.base import BaseEffect
 # ---------------------------------------------------------------------------
 
 XOR_MASKS: dict[str, int] = {
-    "subtle":   0x000F,   # 4 LSBs — gentle noise-floor corruption
-    "moderate": 0x00FF,   # 8 LSBs — audible digital artefacts
-    "heavy":    0x0FFF,   # 12 LSBs — severe data corruption
-    "destroy":  0x7FFF,   # 15 bits — near-total signal destruction
+    "subtle": 0x000F,  # 4 LSBs — gentle noise-floor corruption
+    "moderate": 0x00FF,  # 8 LSBs — audible digital artefacts
+    "heavy": 0x0FFF,  # 12 LSBs — severe data corruption
+    "destroy": 0x7FFF,  # 15 bits — near-total signal destruction
 }
 
 
@@ -143,12 +143,14 @@ class GlitchEngine(BaseEffect):
         >>> output = ge(signal)
 
         >>> # Aggressive braindance stutter (Squarepusher — Hard Normal Daddy)
-        >>> ge = GlitchEngine(stutter_density=0.4, stutter_max_repeats=16,
-        ...                   xor_mode='moderate', xor_density=0.05)
+        >>> ge = GlitchEngine(
+        ...     stutter_density=0.4, stutter_max_repeats=16, xor_mode="moderate", xor_density=0.05
+        ... )
 
         >>> # Pure data corruption (Oval — Systemisch)
-        >>> ge = GlitchEngine(stutter_density=0.0, loop_mod_depth=0.0,
-        ...                   xor_mode='heavy', xor_density=0.3, mix=0.7)
+        >>> ge = GlitchEngine(
+        ...     stutter_density=0.0, loop_mod_depth=0.0, xor_mode="heavy", xor_density=0.3, mix=0.7
+        ... )
 
         >>> # Reproducible pattern for A/B testing
         >>> ge = GlitchEngine(seed=42)
@@ -174,10 +176,7 @@ class GlitchEngine(BaseEffect):
         sr: int = 44100,
     ) -> None:
         if xor_mode not in XOR_MASKS:
-            raise ValueError(
-                f"Invalid xor_mode '{xor_mode}'. "
-                f"Options: {sorted(XOR_MASKS.keys())}"
-            )
+            raise ValueError(f"Invalid xor_mode '{xor_mode}'. Options: {sorted(XOR_MASKS.keys())}")
 
         self.stutter_density = np.clip(stutter_density, 0.0, 1.0)
         self.stutter_min_ms = max(stutter_min_ms, 1.0)
@@ -229,15 +228,12 @@ class GlitchEngine(BaseEffect):
 
     def reset(self) -> None:
         """Stateless effect — nothing to reset."""
-        pass
 
     # ------------------------------------------------------------------
     # Stage 1 — Braindance stutter
     # ------------------------------------------------------------------
 
-    def _apply_stutter(
-        self, signal: np.ndarray, rng: np.random.Generator
-    ) -> np.ndarray:
+    def _apply_stutter(self, signal: np.ndarray, rng: np.random.Generator) -> np.ndarray:
         """
         Probabilistic micro-repeat stutter.
 
@@ -322,9 +318,7 @@ class GlitchEngine(BaseEffect):
     # Stage 3 — XOR bit mangle
     # ------------------------------------------------------------------
 
-    def _apply_xor_mangle(
-        self, signal: np.ndarray, rng: np.random.Generator
-    ) -> np.ndarray:
+    def _apply_xor_mangle(self, signal: np.ndarray, rng: np.random.Generator) -> np.ndarray:
         """
         Bitwise XOR corruption on raw PCM values.
 

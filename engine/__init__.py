@@ -16,32 +16,29 @@ Block classes are available via the effects subpackage:
     from engine.effects import NoiseFloor, Bitcrusher, GlitchEngine, ...
 """
 
+import engine.effects as effects
+from engine.effects import CANONICAL_ORDER, build_chain
 from engine.generator import (
+    DEFAULT_PROBABILITIES,
+    DEFAULT_STEPS,
+    DEFAULT_TRACKS,
     euclidean_rhythm,
+    generate_euclidean_pattern,
     generate_pattern,
     generate_pattern_density,
-    generate_euclidean_pattern,
-    mutate_pattern,
     markov_evolve,
+    mutate_pattern,
     plot_pattern,
-    DEFAULT_TRACKS,
-    DEFAULT_STEPS,
-    DEFAULT_PROBABILITIES,
 )
-
 from engine.sample_maker import (
+    SAMPLE_RATE,
+    batch_export,
+    fm_blip,
     glitch_click,
     noise_burst,
-    fm_blip,
     normalize,
     save_sample,
-    batch_export,
-    SAMPLE_RATE,
 )
-
-from engine.effects import build_chain, CANONICAL_ORDER
-import engine.effects as effects  # noqa: F401  — re-exported subpackage
-
 
 __all__ = [
     # generator

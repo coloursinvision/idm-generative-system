@@ -7,6 +7,7 @@ const TABS = [
   { to: "/generator", label: "GENERATOR" },
   { to: "/guide/po33", label: "PO-33" },
   { to: "/guide/ep133", label: "EP-133" },
+  { to: "/codegen", label: "CODEGEN" },
 ] as const;
 
 export function NavBar() {

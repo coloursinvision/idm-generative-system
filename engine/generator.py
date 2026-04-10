@@ -16,18 +16,15 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-from typing import Dict, List, Optional
-
 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 
-DEFAULT_TRACKS: List[str] = ["kick", "snare", "hat", "glitch"]
+DEFAULT_TRACKS: list[str] = ["kick", "snare", "hat", "glitch"]
 DEFAULT_STEPS: int = 16
 
-DEFAULT_PROBABILITIES: Dict[str, float] = {
+DEFAULT_PROBABILITIES: dict[str, float] = {
     "kick": 0.25,
     "snare": 0.15,
     "hat": 0.60,
@@ -39,7 +36,8 @@ DEFAULT_PROBABILITIES: Dict[str, float] = {
 # Euclidean rhythm
 # ---------------------------------------------------------------------------
 
-def euclidean_rhythm(k: int, n: int) -> List[int]:
+
+def euclidean_rhythm(k: int, n: int) -> list[int]:
     """
     Generate a Euclidean rhythm (Bjorklund algorithm).
 
@@ -56,7 +54,7 @@ def euclidean_rhythm(k: int, n: int) -> List[int]:
     Examples:
         >>> euclidean_rhythm(5, 16)  # classic IDM kick pattern
         [1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0]
-        >>> euclidean_rhythm(3, 8)   # standard clave
+        >>> euclidean_rhythm(3, 8)  # standard clave
         [1, 0, 0, 1, 0, 0, 1, 0]
     """
     if k <= 0:
@@ -64,9 +62,9 @@ def euclidean_rhythm(k: int, n: int) -> List[int]:
     if k >= n:
         return [1] * n
 
-    pattern: List[int] = []
-    counts: List[int] = []
-    remainders: List[int] = []
+    pattern: list[int] = []
+    counts: list[int] = []
+    remainders: list[int] = []
 
     divisor = n - k
     remainders.append(k)
@@ -104,9 +102,10 @@ def euclidean_rhythm(k: int, n: int) -> List[int]:
 # Pattern generators
 # ---------------------------------------------------------------------------
 
+
 def generate_pattern(
     steps: int,
-    probabilities: Dict[str, float],
+    probabilities: dict[str, float],
 ) -> pd.DataFrame:
     """
     Generate a rhythmic pattern using per-track trigger probabilities.
@@ -119,16 +118,13 @@ def generate_pattern(
         pd.DataFrame with tracks as rows and steps as columns (int 0/1).
     """
     tracks = list(probabilities.keys())
-    data = [
-        (np.random.rand(steps) < probabilities[track]).astype(int)
-        for track in tracks
-    ]
+    data = [(np.random.rand(steps) < probabilities[track]).astype(int) for track in tracks]
     return pd.DataFrame(data, index=tracks, columns=range(steps))
 
 
 def generate_pattern_density(
     steps: int,
-    tracks: Optional[List[str]] = None,
+    tracks: list[str] | None = None,
     density: float = 0.3,
 ) -> pd.DataFrame:
     """
@@ -150,7 +146,7 @@ def generate_pattern_density(
 
 
 def generate_euclidean_pattern(
-    pulses: Optional[Dict[str, int]] = None,
+    pulses: dict[str, int] | None = None,
     steps: int = DEFAULT_STEPS,
 ) -> pd.DataFrame:
     """
@@ -172,18 +168,14 @@ def generate_euclidean_pattern(
             "glitch": 2,
         }
 
-    data = {
-        track: euclidean_rhythm(k, steps)
-        for track, k in pulses.items()
-    }
-    return pd.DataFrame(data).T.rename(
-        columns={i: i for i in range(steps)}
-    )
+    data = {track: euclidean_rhythm(k, steps) for track, k in pulses.items()}
+    return pd.DataFrame(data).T.rename(columns={i: i for i in range(steps)})
 
 
 # ---------------------------------------------------------------------------
 # Pattern evolution
 # ---------------------------------------------------------------------------
+
 
 def mutate_pattern(
     pattern: pd.DataFrame,
@@ -242,17 +234,19 @@ def markov_evolve(
 # Visualisation
 # ---------------------------------------------------------------------------
 
+
 def plot_pattern(
     df: pd.DataFrame,
     title: str = "Rhythm Matrix",
 ) -> None:
     """
     Render a rhythm matrix as a heatmap.
-
     Args:
         df: pd.DataFrame (tracks × steps, int 0/1).
         title: Plot title.
     """
+    import matplotlib.pyplot as plt
+
     plt.figure(figsize=(10, 3))
     plt.imshow(df, aspect="auto", interpolation="nearest")
     plt.yticks(range(len(df)), df.index)

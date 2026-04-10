@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import numpy as np
 from scipy import signal as scipy_signal
+
 from engine.effects.base import BaseEffect
 
 
@@ -100,12 +101,10 @@ class SpatialProcessor(BaseEffect):
         Returns:
             Left channel of the processed stereo pair.
         """
-        left, right = self.process_mono(signal)
+        left, _right = self.process_mono(signal)
         return left
 
-    def process_mono(
-        self, signal: np.ndarray
-    ) -> tuple[np.ndarray, np.ndarray]:
+    def process_mono(self, signal: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         """
         Convert mono signal to stereo and apply spatial processing.
 
@@ -141,7 +140,7 @@ class SpatialProcessor(BaseEffect):
             (left, right) processed stereo tuple.
         """
         # Mid/Side decomposition
-        mid  = (signal_l + signal_r) * 0.5
+        mid = (signal_l + signal_r) * 0.5
         side = (signal_l - signal_r) * 0.5
 
         # Apply stereo width to side channel
@@ -155,7 +154,7 @@ class SpatialProcessor(BaseEffect):
             4, self.bass_mono_hz / (self.sr / 2.0), btype="high", output="sos"
         )
 
-        mid_bass = scipy_signal.sosfilt(sos_lp, mid)    # mono below cutoff
+        mid_bass = scipy_signal.sosfilt(sos_lp, mid)  # mono below cutoff
         mid_high = scipy_signal.sosfilt(sos_hp, mid)
         side_high = scipy_signal.sosfilt(sos_hp, side_wide)
 
@@ -165,7 +164,7 @@ class SpatialProcessor(BaseEffect):
 
         # Mid/Side reconstruction
         # Bass is fully mono (side_bass = 0), highs retain width
-        left  = mid_bass + mid_high + side_high
+        left = mid_bass + mid_high + side_high
         right = mid_bass + mid_high - side_high
 
         # Constant-power pan law (-3dB at centre)
@@ -176,7 +175,6 @@ class SpatialProcessor(BaseEffect):
 
     def reset(self) -> None:
         """Stateless effect — nothing to reset."""
-        pass
 
     # ------------------------------------------------------------------
     # Private helpers
@@ -201,7 +199,4 @@ class SpatialProcessor(BaseEffect):
         side_delayed = np.zeros(n)
         side_delayed[delay_samples:] = side[: n - delay_samples]
 
-        return (
-            side * (1.0 - self.decorrelation)
-            + side_delayed * self.decorrelation
-        )
+        return side * (1.0 - self.decorrelation) + side_delayed * self.decorrelation

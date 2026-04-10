@@ -52,6 +52,7 @@ export interface ComposeRequest {
 
 export interface ComposeResponse {
   config: Record<string, unknown>;
+  reasoning?: string;
   sources: SourceRef[];
   model: string;
   usage: TokenUsage;
@@ -64,3 +65,5 @@ export interface GenerateRequest {
   chain_skip?: string[];
   bypass_chain?: boolean;
 }
+
+export * from "./codegen";

@@ -30,8 +30,8 @@ Signal position: NoiseFloor → [Block 2] → ResonantFilter → ...
 from __future__ import annotations
 
 import numpy as np
-from engine.effects.base import BaseEffect
 
+from engine.effects.base import BaseEffect
 
 # ---------------------------------------------------------------------------
 # Hardware presets
@@ -45,7 +45,7 @@ HARDWARE_PRESETS: dict[str, dict] = {
     },
     "s950": {
         "bit_depth": 12,
-        "target_sr": None,   # variable SR — no downsampling applied
+        "target_sr": None,  # variable SR — no downsampling applied
         "description": "Akai S950 — 12-bit, variable-bandwidth LPF character",
     },
     "rz1": {
@@ -87,7 +87,7 @@ class Bitcrusher(BaseEffect):
         sr:                   Sample rate in Hz. Default: 44100.
 
     Example:
-        >>> bc = Bitcrusher(hardware_preset='sp1200')
+        >>> bc = Bitcrusher(hardware_preset="sp1200")
         >>> output = bc(signal)
 
         >>> bc = Bitcrusher(bit_depth=8, dither=False)
@@ -106,10 +106,7 @@ class Bitcrusher(BaseEffect):
         sr: int = 44100,
     ) -> None:
         if mode not in self._VALID_MODES:
-            raise ValueError(
-                f"Invalid mode '{mode}'. "
-                f"Options: {sorted(self._VALID_MODES)}"
-            )
+            raise ValueError(f"Invalid mode '{mode}'. Options: {sorted(self._VALID_MODES)}")
         if hardware_preset is not None and hardware_preset not in HARDWARE_PRESETS:
             raise ValueError(
                 f"Invalid hardware_preset '{hardware_preset}'. "
@@ -126,9 +123,7 @@ class Bitcrusher(BaseEffect):
             preset = HARDWARE_PRESETS[hardware_preset]
             self.bit_depth = preset["bit_depth"]
             target_sr = preset["target_sr"]
-            self.sample_rate_reduction = (
-                max(1, int(sr / target_sr)) if target_sr else 1
-            )
+            self.sample_rate_reduction = max(1, int(sr / target_sr)) if target_sr else 1
         else:
             self.bit_depth = bit_depth
             self.sample_rate_reduction = sample_rate_reduction
@@ -153,15 +148,13 @@ class Bitcrusher(BaseEffect):
             )[: len(signal)]
 
         # --- Bit depth reduction ---
-        levels = 2 ** self.bit_depth
+        levels = 2**self.bit_depth
         half_levels = levels / 2.0
 
         if self.dither:
             # Triangular probability density dither (TPDF)
             # Reduces quantisation distortion without adding correlated noise
-            tpdf = (
-                np.random.rand(len(x)) - np.random.rand(len(x))
-            ) / levels
+            tpdf = (np.random.rand(len(x)) - np.random.rand(len(x))) / levels
             x = x + tpdf
 
         if self.mode == "round":
@@ -177,4 +170,3 @@ class Bitcrusher(BaseEffect):
 
     def reset(self) -> None:
         """Stateless effect — nothing to reset."""
-        pass
