@@ -83,8 +83,8 @@ export function useSequencer({ numSteps, defaultBpm = 120 }: UseSequencerOptions
           name: def.name,
           generator: def.generator,
           steps:
-            initialSteps?.[i]?.length > 0
-              ? initialSteps[i]
+            (initialSteps?.[i]?.length ?? 0) > 0
+              ? initialSteps![i]
               : Array(numSteps).fill(false),
           buffer: initialBuffers?.[i] ?? null,
           loading: false,
