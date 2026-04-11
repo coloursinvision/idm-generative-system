@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useSequencer } from "../../hooks/useSequencer";
 
 /* ------------------------------------------------------------------ */
@@ -23,6 +23,8 @@ const STEPS_PER_TIMING: Record<TimingMode, number> = {
   "1/16": 16,
   "1/32": 32,
 };
+
+const DEFAULT_TIMING: TimingMode = "1/16";
 
 const GROUP_TRACKS: Record<Group, { name: string; generator: string }[]> = {
   A: [
@@ -64,12 +66,45 @@ const EP133_FX = [
 ];
 
 /* ------------------------------------------------------------------ */
+/* Per-group state shape                                               */
+/* ------------------------------------------------------------------ */
+
+interface GroupState {
+  /** Step pattern — one boolean[] per track. */
+  steps: boolean[][];
+  /** Decoded AudioBuffer references — one per track, null if not yet loaded. */
+  buffers: (AudioBuffer | null)[];
+  /** Timing resolution active for this group. */
+  timing: TimingMode;
+}
+
+/**
+ * Builds the initial (empty) GroupState for a given group, pre-sized to the
+ * default timing resolution so that `initTracks` always receives valid
+ * initialSteps regardless of the active timing when a group is first visited.
+ */
+function makeInitialGroupState(group: Group): GroupState {
+  const numSteps = STEPS_PER_TIMING[DEFAULT_TIMING];
+  return {
+    steps: GROUP_TRACKS[group].map(() => Array(numSteps).fill(false)),
+    buffers: GROUP_TRACKS[group].map(() => null),
+    timing: DEFAULT_TIMING,
+  };
+}
+
+/* ------------------------------------------------------------------ */
 /* Component                                                           */
 /* ------------------------------------------------------------------ */
 
 export function EP133Guide() {
   const [activeGroup, setActiveGroup] = useState<Group>("A");
-  const [timing, setTiming] = useState<TimingMode>("1/16");
+
+  /*
+   * Per-group timing is kept in local React state so the sequencer grid
+   * re-renders when the user changes it. The canonical value for each group
+   * is also mirrored into groupStates so it survives group switches.
+   */
+  const [timing, setTiming] = useState<TimingMode>(DEFAULT_TIMING);
 
   const numSteps = STEPS_PER_TIMING[timing];
 
@@ -88,18 +123,76 @@ export function EP133Guide() {
     clearPattern,
   } = useSequencer({ numSteps, defaultBpm: 130 });
 
-  // Re-init tracks when group changes
+  /*
+   * Persistent store for all four group states (steps, buffers, timing).
+   * A ref is used intentionally: mutations must not trigger re-renders,
+   * and the data is only read during group switches (not during rendering).
+   */
+  const groupStates = useRef<Record<Group, GroupState>>({
+    A: makeInitialGroupState("A"),
+    B: makeInitialGroupState("B"),
+    C: makeInitialGroupState("C"),
+    D: makeInitialGroupState("D"),
+  });
+
+  /*
+   * A ref that always holds the latest tracks + timing values.
+   * Used inside switchGroup to snapshot the departing group's state without
+   * creating a stale-closure dependency on rapidly-changing `tracks`.
+   */
+  const liveDataRef = useRef({ tracks, timing });
+  useEffect(() => {
+    liveDataRef.current = { tracks, timing };
+  }, [tracks, timing]);
+
+  /* ---- Group switch ---- */
   const switchGroup = useCallback(
     (group: Group) => {
+      if (group === activeGroup) return;
       if (isPlaying) stop();
+
+      // Snapshot the departing group's current state into the persistent store.
+      const { tracks: currentTracks, timing: currentTiming } = liveDataRef.current;
+      groupStates.current[activeGroup] = {
+        steps: currentTracks.map((t) => [...t.steps]),
+        buffers: currentTracks.map((t) => t.buffer),
+        timing: currentTiming,
+      };
+
       setActiveGroup(group);
     },
-    [isPlaying, stop]
+    [activeGroup, isPlaying, stop]
   );
 
+  /*
+   * Restore the incoming group's state whenever activeGroup changes.
+   *
+   * Intentional omission of `initTracks` from the dependency array: its
+   * identity changes when `numSteps` changes (i.e. when the user adjusts
+   * timing), which must NOT re-fire this effect and wipe the current pattern.
+   * `initTracks` and `setTiming` are both stable references (useCallback /
+   * useState setter) so this is safe.
+   *
+   * React 18 automatic batching ensures that the two state updates below
+   * (`setTiming` + `setTracks` inside `initTracks`) are committed in a single
+   * render, preventing any intermediate inconsistent state.
+   */
   useEffect(() => {
-    initTracks(GROUP_TRACKS[activeGroup]);
-  }, [activeGroup, initTracks]);
+    const saved = groupStates.current[activeGroup];
+    // Restore timing first so numSteps is consistent with the restored steps.
+    setTiming(saved.timing);
+    // Restore tracks — passes existing steps and buffers so neither is lost.
+    initTracks(GROUP_TRACKS[activeGroup], saved.steps, saved.buffers);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeGroup]);
+
+  /* ---- Timing change for the active group ---- */
+  const handleTimingChange = useCallback((t: TimingMode) => {
+    setTiming(t);
+    // Mirror the new timing into the persistent store immediately so that
+    // switching away and back reflects the user's choice.
+    groupStates.current[activeGroup].timing = t;
+  }, [activeGroup]);
 
   const hasBuffers = tracks.some((t) => t.buffer !== null);
   const hasPattern = tracks.some((t) => t.steps.some(Boolean));
@@ -162,7 +255,7 @@ export function EP133Guide() {
             {TIMING_MODES.map((t) => (
               <button
                 key={t}
-                onClick={() => setTiming(t)}
+                onClick={() => handleTimingChange(t)}
                 className={`py-2 text-[10px] border transition-colors duration-100 ${
                   timing === t
                     ? "bg-accent-amber/10 text-accent-amber border-accent-amber"

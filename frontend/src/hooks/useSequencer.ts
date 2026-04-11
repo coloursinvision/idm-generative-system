@@ -33,7 +33,7 @@ export function useSequencer({ numSteps, defaultBpm = 120 }: UseSequencerOptions
   const tracksRef = useRef<SequencerTrack[]>([]);
   const bpmRef = useRef(defaultBpm);
 
-  // Keep ref in sync
+  // Keep refs in sync
   useEffect(() => {
     tracksRef.current = tracks;
   }, [tracks]);
@@ -60,17 +60,33 @@ export function useSequencer({ numSteps, defaultBpm = 120 }: UseSequencerOptions
   }, []);
 
   /* ---- Init tracks ---- */
+  /**
+   * (Re-)initialises the track list.
+   *
+   * @param trackDefs      - Track name/generator definitions.
+   * @param initialSteps   - Optional per-track step arrays (restored from saved
+   *                         group state). When provided the array must be
+   *                         non-empty; otherwise the fallback empty pattern of
+   *                         length `numSteps` is used.
+   * @param initialBuffers - Optional per-track AudioBuffer references (restored
+   *                         from saved group state). Allows sample buffers to
+   *                         survive group switches without re-fetching.
+   */
   const initTracks = useCallback(
     (
       trackDefs: { name: string; generator: string }[],
-      initialSteps?: boolean[][]
+      initialSteps?: boolean[][],
+      initialBuffers?: (AudioBuffer | null)[]
     ) => {
       setTracks(
         trackDefs.map((def, i) => ({
           name: def.name,
           generator: def.generator,
-          steps: initialSteps?.[i] ?? Array(numSteps).fill(false),
-          buffer: null,
+          steps:
+            initialSteps?.[i]?.length > 0
+              ? initialSteps[i]
+              : Array(numSteps).fill(false),
+          buffer: initialBuffers?.[i] ?? null,
           loading: false,
         }))
       );
@@ -154,28 +170,25 @@ export function useSequencer({ numSteps, defaultBpm = 120 }: UseSequencerOptions
   }, [getAudioContext]);
 
   /* ---- Schedule & play ---- */
-  const scheduleNote = useCallback(
-    (step: number, time: number) => {
-      const ctx = audioCtxRef.current;
-      if (!ctx) return;
+  const scheduleNote = useCallback((step: number, time: number) => {
+    const ctx = audioCtxRef.current;
+    if (!ctx) return;
 
-      for (const track of tracksRef.current) {
-        if (track.steps[step] && track.buffer) {
-          const source = ctx.createBufferSource();
-          source.buffer = track.buffer;
-          source.connect(ctx.destination);
-          source.start(time);
-        }
+    for (const track of tracksRef.current) {
+      if (track.steps[step] && track.buffer) {
+        const source = ctx.createBufferSource();
+        source.buffer = track.buffer;
+        source.connect(ctx.destination);
+        source.start(time);
       }
-    },
-    []
-  );
+    }
+  }, []);
 
   const scheduler = useCallback(() => {
     const ctx = audioCtxRef.current;
     if (!ctx) return;
 
-    const secondsPerStep = 60.0 / bpmRef.current / 4; // 16th notes
+    const secondsPerStep = 60.0 / bpmRef.current / 4; // 16th-note base grid
     const lookahead = 0.1; // seconds
 
     while (nextNoteTimeRef.current < ctx.currentTime + lookahead) {
@@ -191,7 +204,6 @@ export function useSequencer({ numSteps, defaultBpm = 120 }: UseSequencerOptions
 
   /* ---- Play / Stop ---- */
   const play = useCallback(() => {
-    // Check if any samples loaded
     const hasBuffers = tracksRef.current.some((t) => t.buffer !== null);
     if (!hasBuffers) return;
 
@@ -201,7 +213,6 @@ export function useSequencer({ numSteps, defaultBpm = 120 }: UseSequencerOptions
     setIsPlaying(true);
     setCurrentStep(0);
 
-    // Start scheduler
     timerRef.current = requestAnimationFrame(scheduler);
   }, [getAudioContext, scheduler]);
 
