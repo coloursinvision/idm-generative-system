@@ -11,7 +11,7 @@ build-backend = "hatchling.build"
 # ---------------------------------------------------------------------------
 [project]
 name = "idm-generative-system"
-version = "0.2.2"
+version = "0.6.1"
 description = "Generative audio engine for experimental IDM production — DSP modeling, algorithmic composition, and RAG-augmented sound design."
 readme = "README.md"
 license = "AGPL-3.0-or-later"
@@ -53,6 +53,9 @@ dependencies = [
 
     # Data (engine/generator.py — pattern DataFrames)
     "pandas>=2.0.0",
+    # Knowledge layer (engine/ml — profile spoke parsing)
+    "python-frontmatter>=1.1.0",
+    "PyYAML>=6.0.0",
 ]
 
 [project.optional-dependencies]

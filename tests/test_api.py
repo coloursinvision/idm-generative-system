@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import io
 import json
+from importlib.metadata import version as pkg_version
 
 import numpy as np
 import pytest
@@ -75,7 +76,7 @@ class TestHealth:
     def test_health_response_body(self, client: TestClient) -> None:
         data = client.get("/health").json()
         assert data["status"] == "ok"
-        assert data["version"] == "0.2.0"
+        assert data["version"] == pkg_version("idm-generative-system")
 
 
 # ---------------------------------------------------------------------------
