@@ -414,7 +414,8 @@ class TestJapanTokyoOsaka:
         assert tokyo.filter_type == osaka.filter_type
         assert tokyo.velocity_curves == osaka.velocity_curves
         # And Noise differs only on the two swapped fields.
-        assert tokyo.noise is not None and osaka.noise is not None
+        assert tokyo.noise is not None
+        assert osaka.noise is not None
         assert tokyo.noise.sub_bass_level == osaka.noise.sub_bass_level
         assert tokyo.noise.noise_floor_db == osaka.noise.noise_floor_db
         assert tokyo.noise.mid_range_boost_hz == osaka.noise.mid_range_boost_hz
@@ -554,7 +555,8 @@ class TestCaching:
             profiles_dir=synthetic_profiles_dir,
         )
         assert tokyo is not osaka
-        assert tokyo.noise is not None and osaka.noise is not None
+        assert tokyo.noise is not None
+        assert osaka.noise is not None
         assert tokyo.noise.sub_bass_hz != osaka.noise.sub_bass_hz
 
     def test_cache_clear_invalidates(self, synthetic_profiles_dir: Path) -> None:
@@ -609,6 +611,7 @@ class TestRealVaultIntegration:
         """Real JAPAN_IDM spoke produces 50 Hz default and 60 Hz for Osaka."""
         tokyo = load_profile("JAPAN_IDM", sub_region="TOKYO")
         osaka = load_profile("JAPAN_IDM", sub_region="OSAKA")
-        assert tokyo.noise is not None and osaka.noise is not None
+        assert tokyo.noise is not None
+        assert osaka.noise is not None
         assert tokyo.noise.sub_bass_hz == 50
         assert osaka.noise.sub_bass_hz == 60
