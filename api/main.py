@@ -30,6 +30,7 @@ load_dotenv()
 import inspect
 import io
 import json
+from importlib.metadata import version as pkg_version
 from pathlib import Path
 from typing import Any, Union, get_args, get_origin
 
@@ -56,7 +57,7 @@ from knowledge.rag import RAGPipeline
 
 app = FastAPI(
     title="IDM Generative System",
-    version="0.2.0",
+    version=pkg_version("idm-generative-system"),
     description=(
         "Generative IDM audio engine — algorithmic sample generation, "
         "a 10-block hardware-sourced DSP effects chain, and RAG-powered "
