@@ -43,7 +43,7 @@ import logging
 import os
 import re
 from dataclasses import dataclass
-from functools import lru_cache
+from functools import cache
 from pathlib import Path
 from typing import Literal
 
@@ -564,7 +564,7 @@ def _model_to_profile(
 # ---------------------------------------------------------------------------
 
 
-@lru_cache(maxsize=None)
+@cache
 def load_profile(
     region: RegionCode,
     sub_region: SubRegion | None = None,

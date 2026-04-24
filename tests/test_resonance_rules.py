@@ -114,7 +114,7 @@ class TestSchumann:
         assert schumann_mode(1) == 7.83
 
     @pytest.mark.parametrize(
-        "n, expected",
+        ("n", "expected"),
         [(1, 7.83), (2, 14.30), (3, 20.80), (4, 27.30), (5, 33.80)],
     )
     def test_all_5_modes(self, n: int, expected: float) -> None:
@@ -210,7 +210,7 @@ class TestMainsHum:
         }
 
     @pytest.mark.parametrize(
-        "region, expected_fundamental",
+        ("region", "expected_fundamental"),
         [("UK", 50.0), ("JP_TOKYO", 50.0), ("US", 60.0), ("JP_OSAKA", 60.0)],
     )
     def test_fundamentals_per_region(self, region: str, expected_fundamental: float) -> None:
@@ -331,7 +331,7 @@ class TestSolfeggio:
         }
 
     @pytest.mark.parametrize(
-        "profile, expected_hz",
+        ("profile", "expected_hz"),
         [
             ("DETROIT_UR", 396.0),
             ("JAPAN_IDM", 528.0),
@@ -353,7 +353,8 @@ class TestSolfeggio:
     def test_positive_offset_raises_frequency(self) -> None:
         base = solfeggio_cutoff_seed("UK_IDM", offset_cents=0.0)
         shifted = solfeggio_cutoff_seed("UK_IDM", offset_cents=100.0)
-        assert base is not None and shifted is not None
+        assert base is not None
+        assert shifted is not None
         assert shifted > base
         # 100 cents = one semitone = factor 2^(1/12)
         assert shifted == pytest.approx(base * math.pow(2.0, 1.0 / 12.0), abs=1e-9)
@@ -361,14 +362,16 @@ class TestSolfeggio:
     def test_negative_offset_lowers_frequency(self) -> None:
         base = solfeggio_cutoff_seed("DREXCIYA", offset_cents=0.0)
         shifted = solfeggio_cutoff_seed("DREXCIYA", offset_cents=-100.0)
-        assert base is not None and shifted is not None
+        assert base is not None
+        assert shifted is not None
         assert shifted < base
 
     def test_octave_offset_doubles_frequency(self) -> None:
         """+1200 cents = one octave = exact factor of 2."""
         base = solfeggio_cutoff_seed("JAPAN_IDM", offset_cents=0.0)
         octaved = solfeggio_cutoff_seed("JAPAN_IDM", offset_cents=1200.0)
-        assert base is not None and octaved is not None
+        assert base is not None
+        assert octaved is not None
         assert octaved == pytest.approx(base * 2.0, abs=1e-9)
 
     def test_none_result_not_affected_by_offset(self) -> None:
