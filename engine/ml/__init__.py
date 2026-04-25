@@ -1,11 +1,11 @@
-"""engine.ml — Layer 3 of the IDM Generative System pipeline.
+"""engine.ml — Layers 3–4 of the IDM Generative System pipeline.
 
-Pipeline layer: 3
+Pipeline layer: 3–4
 Consumes:       02-Knowledge/supporting/profiles/*.md (6 regional profile spokes)
                 02-Knowledge/supporting/resonance/*.md (5 resonance rule spokes)
-Consumed by:    Layer 4 (Gaussian noise injection), Layer 5 (synthetic dataset
-                generation), Layer 6 (XGBoost training + /tuning endpoint)
-Status:         draft
+Consumed by:    Layer 5 (synthetic dataset generation),
+                Layer 6 (XGBoost training + /tuning endpoint)
+Status:         working (Layer 3 complete, Layer 4 scaffold)
 
 Exposes Layer 2 specifications (regional profile spokes and resonance rule
 spokes) from ``02-Knowledge/supporting/`` as typed, loadable objects and pure
@@ -48,10 +48,14 @@ Public API — resonance rules (aesthetic — 1):
     SOLFEGGIO_HZ             — full Solfeggio frequency table by label
     REGIONAL_SOLFEGGIO_SEED  — per-region seed assignment
 
-Public API — deterministic mapper (stub; body lands in S4):
+Public API — deterministic mapper (Layer 3 — complete S5):
     deterministic_map        — scene + track → tuning + resonant stack
     DeterministicMapping     — structured mapper output
     ResonantPoint            — one resonant frequency + provenance tag
+
+Public API — Gaussian noise injection (Layer 4 — scaffold S5):
+    GaussianNoiseInjector    — calibrated perturbation around mapper output
+    PerturbationConfig       — per-parameter sigma configuration
 """
 
 from __future__ import annotations
@@ -60,6 +64,10 @@ from engine.ml.deterministic_mapper import (
     DeterministicMapping,
     ResonantPoint,
     deterministic_map,
+)
+from engine.ml.gaussian_noise import (
+    GaussianNoiseInjector,
+    PerturbationConfig,
 )
 from engine.ml.regional_profiles import (
     HarmonicContentSpec,
@@ -126,8 +134,11 @@ __all__ = [
     "solfeggio_cutoff_seed",
     "SOLFEGGIO_HZ",
     "REGIONAL_SOLFEGGIO_SEED",
-    # --- Deterministic mapper ----------------------------------------------
+    # --- Deterministic mapper (Layer 3) ------------------------------------
     "deterministic_map",
     "DeterministicMapping",
     "ResonantPoint",
+    # --- Gaussian noise injection (Layer 4) --------------------------------
+    "GaussianNoiseInjector",
+    "PerturbationConfig",
 ]
