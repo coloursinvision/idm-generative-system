@@ -77,7 +77,18 @@ from engine.ml.resonance_rules import (
 # ---------------------------------------------------------------------------
 
 _NOTE_NAMES: tuple[str, ...] = (
-    "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B",
+    "C",
+    "C#",
+    "D",
+    "D#",
+    "E",
+    "F",
+    "F#",
+    "G",
+    "G#",
+    "A",
+    "A#",
+    "B",
 )
 
 _REGION_TO_GRID: dict[RegionCode, GridRegion] = {
@@ -202,11 +213,13 @@ def _build_mains_points(
             n_harmonics=_MAINS_N_HARMONICS,
             tuning_hz=tuning_hz,
         )
-        points.append(ResonantPoint(
-            frequency_hz=mains.fundamental_hz,
-            source="mains_fundamental",
-            nearest_note=mains.harmonics[0].nearest_note,
-        ))
+        points.append(
+            ResonantPoint(
+                frequency_hz=mains.fundamental_hz,
+                source="mains_fundamental",
+                nearest_note=mains.harmonics[0].nearest_note,
+            )
+        )
         points.extend(
             ResonantPoint(
                 frequency_hz=h.frequency_hz,
@@ -222,11 +235,13 @@ def _build_mains_points(
             n_harmonics=_MAINS_N_HARMONICS,
             tuning_hz=tuning_hz,
         )
-        points.append(ResonantPoint(
-            frequency_hz=uk_mains.fundamental_hz,
-            source="mains_ref_fundamental",
-            nearest_note=uk_mains.harmonics[0].nearest_note,
-        ))
+        points.append(
+            ResonantPoint(
+                frequency_hz=uk_mains.fundamental_hz,
+                source="mains_ref_fundamental",
+                nearest_note=uk_mains.harmonics[0].nearest_note,
+            )
+        )
         points.extend(
             ResonantPoint(
                 frequency_hz=h.frequency_hz,
@@ -241,11 +256,13 @@ def _build_mains_points(
             n_harmonics=_MAINS_N_HARMONICS,
             tuning_hz=tuning_hz,
         )
-        points.append(ResonantPoint(
-            frequency_hz=regional_mains.fundamental_hz,
-            source="mains_fundamental",
-            nearest_note=regional_mains.harmonics[0].nearest_note,
-        ))
+        points.append(
+            ResonantPoint(
+                frequency_hz=regional_mains.fundamental_hz,
+                source="mains_fundamental",
+                nearest_note=regional_mains.harmonics[0].nearest_note,
+            )
+        )
         points.extend(
             ResonantPoint(
                 frequency_hz=h.frequency_hz,
@@ -284,7 +301,8 @@ def _apply_effects_filter(
 
     if "notch_mains" in effects_set:
         points = [
-            p for p in points
+            p
+            for p in points
             if not (p.source.startswith("mains_") or p.source.startswith("mains_ref_"))
         ]
 
@@ -431,11 +449,13 @@ def deterministic_map(
 
     # --- Step 3: BPM audible harmonic ---------------------------------------
     bpm_harm = bpm_to_hz(bpm, tuning_hz=tuning_hz)
-    points.append(ResonantPoint(
-        frequency_hz=bpm_harm.frequency_hz,
-        source="bpm_harmonic",
-        nearest_note=bpm_harm.nearest_note,
-    ))
+    points.append(
+        ResonantPoint(
+            frequency_hz=bpm_harm.frequency_hz,
+            source="bpm_harmonic",
+            nearest_note=bpm_harm.nearest_note,
+        )
+    )
 
     # --- Step 4: Mains-hum stacks (dual-stack for non-UK, D-S5-01) ----------
     points.extend(_build_mains_points(region, sub_region, tuning_hz))
@@ -443,30 +463,36 @@ def deterministic_map(
     # --- Step 5: Solfeggio aesthetic seed -----------------------------------
     seed_hz = solfeggio_cutoff_seed(region)
     if seed_hz is not None:
-        points.append(ResonantPoint(
-            frequency_hz=seed_hz,
-            source="solfeggio_seed",
-            nearest_note=_nearest_note(seed_hz, tuning_hz),
-        ))
+        points.append(
+            ResonantPoint(
+                frequency_hz=seed_hz,
+                source="solfeggio_seed",
+                nearest_note=_nearest_note(seed_hz, tuning_hz),
+            )
+        )
 
     # --- Step 6: Schumann BPM anchor ---------------------------------------
     anchor_bpm = schumann_bpm_anchor(mode=1, subharmonic_divisor=4)
     if abs(bpm - anchor_bpm) <= _SCHUMANN_BPM_TOLERANCE:
         mode1_hz = schumann_mode(1)
-        points.append(ResonantPoint(
-            frequency_hz=mode1_hz,
-            source="schumann_bpm_anchor",
-            nearest_note=_nearest_note(mode1_hz, tuning_hz),
-        ))
+        points.append(
+            ResonantPoint(
+                frequency_hz=mode1_hz,
+                source="schumann_bpm_anchor",
+                nearest_note=_nearest_note(mode1_hz, tuning_hz),
+            )
+        )
 
     # --- Step 6b: Sub-bass from profile -------------------------------------
     if profile.noise is not None:
         sub_hz = float(profile.noise.sub_bass_hz)
-        points.append(ResonantPoint(
-            frequency_hz=sub_hz,
-            source="sub_bass",
-            nearest_note=_nearest_note(sub_hz, tuning_hz),
-        ))
+        points.append(
+            ResonantPoint(
+                frequency_hz=sub_hz,
+                source="sub_bass",
+                nearest_note=_nearest_note(sub_hz, tuning_hz),
+            )
+        )
 
     # --- Step 7: Effects-driven stack filtering -----------------------------
     points = _apply_effects_filter(points, effects)

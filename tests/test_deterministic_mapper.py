@@ -73,13 +73,16 @@ PROFILES: dict[str, RegionalProfile] = {
     "UK_IDM": _make_profile("UK_IDM"),
     "UK_BRAINDANCE": _make_profile("UK_BRAINDANCE", noise=None),
     "DETROIT_FIRST_WAVE": _make_profile(
-        "DETROIT_FIRST_WAVE", noise=_NOISE_60HZ,
+        "DETROIT_FIRST_WAVE",
+        noise=_NOISE_60HZ,
     ),
     "DETROIT_UR": _make_profile("DETROIT_UR", noise=_NOISE_60HZ),
     "DREXCIYA": _make_profile("DREXCIYA", noise=_NOISE_60HZ),
     "JAPAN_IDM": _make_profile("JAPAN_IDM"),
     "JAPAN_IDM_OSAKA": _make_profile(
-        "JAPAN_IDM", sub_region="OSAKA", noise=_NOISE_60HZ,
+        "JAPAN_IDM",
+        sub_region="OSAKA",
+        noise=_NOISE_60HZ,
     ),
 }
 
@@ -104,10 +107,7 @@ def _points_by_source(
     prefix: str,
 ) -> list[ResonantPoint]:
     """Filter resonant points whose source starts with prefix."""
-    return [
-        p for p in mapping.resonant_points
-        if p.source.startswith(prefix)
-    ]
+    return [p for p in mapping.resonant_points if p.source.startswith(prefix)]
 
 
 # ---------------------------------------------------------------------------
@@ -122,7 +122,11 @@ class TestInputValidation:
         profile = PROFILES["UK_IDM"]
         with pytest.raises(ValueError, match="bpm must be positive"):
             deterministic_map(
-                -1.0, _PITCH_MIDI, None, "UK_IDM", _EFFECTS,
+                -1.0,
+                _PITCH_MIDI,
+                None,
+                "UK_IDM",
+                _EFFECTS,
                 profile=profile,
             )
 
@@ -130,7 +134,11 @@ class TestInputValidation:
         profile = PROFILES["UK_IDM"]
         with pytest.raises(ValueError, match="bpm must be positive"):
             deterministic_map(
-                0.0, _PITCH_MIDI, None, "UK_IDM", _EFFECTS,
+                0.0,
+                _PITCH_MIDI,
+                None,
+                "UK_IDM",
+                _EFFECTS,
                 profile=profile,
             )
 
@@ -138,7 +146,11 @@ class TestInputValidation:
         profile = PROFILES["UK_IDM"]
         with pytest.raises(ValueError, match="pitch_midi"):
             deterministic_map(
-                _BPM, 128.0, None, "UK_IDM", _EFFECTS,
+                _BPM,
+                128.0,
+                None,
+                "UK_IDM",
+                _EFFECTS,
                 profile=profile,
             )
 
@@ -146,14 +158,22 @@ class TestInputValidation:
         profile = PROFILES["UK_IDM"]
         with pytest.raises(ValueError, match="pitch_midi"):
             deterministic_map(
-                _BPM, -1.0, None, "UK_IDM", _EFFECTS,
+                _BPM,
+                -1.0,
+                None,
+                "UK_IDM",
+                _EFFECTS,
                 profile=profile,
             )
 
     def test_pitch_midi_boundary_zero_ok(self) -> None:
         profile = PROFILES["UK_IDM"]
         result = deterministic_map(
-            _BPM, 0.0, None, "UK_IDM", _EFFECTS,
+            _BPM,
+            0.0,
+            None,
+            "UK_IDM",
+            _EFFECTS,
             profile=profile,
         )
         assert isinstance(result, DeterministicMapping)
@@ -161,7 +181,11 @@ class TestInputValidation:
     def test_pitch_midi_boundary_127_ok(self) -> None:
         profile = PROFILES["UK_IDM"]
         result = deterministic_map(
-            _BPM, 127.0, None, "UK_IDM", _EFFECTS,
+            _BPM,
+            127.0,
+            None,
+            "UK_IDM",
+            _EFFECTS,
             profile=profile,
         )
         assert isinstance(result, DeterministicMapping)
@@ -177,44 +201,66 @@ class TestReturnStructure:
 
     def test_returns_deterministic_mapping(self) -> None:
         result = deterministic_map(
-            _BPM, _PITCH_MIDI, None, "UK_IDM", _EFFECTS,
+            _BPM,
+            _PITCH_MIDI,
+            None,
+            "UK_IDM",
+            _EFFECTS,
             profile=PROFILES["UK_IDM"],
         )
         assert isinstance(result, DeterministicMapping)
 
     def test_tuning_hz_is_440(self) -> None:
         result = deterministic_map(
-            _BPM, _PITCH_MIDI, None, "UK_IDM", _EFFECTS,
+            _BPM,
+            _PITCH_MIDI,
+            None,
+            "UK_IDM",
+            _EFFECTS,
             profile=PROFILES["UK_IDM"],
         )
         assert result.tuning_hz == 440.0
 
     def test_resonant_points_is_tuple(self) -> None:
         result = deterministic_map(
-            _BPM, _PITCH_MIDI, None, "UK_IDM", _EFFECTS,
+            _BPM,
+            _PITCH_MIDI,
+            None,
+            "UK_IDM",
+            _EFFECTS,
             profile=PROFILES["UK_IDM"],
         )
         assert isinstance(result.resonant_points, tuple)
 
     def test_all_points_are_resonant_point(self) -> None:
         result = deterministic_map(
-            _BPM, _PITCH_MIDI, None, "UK_IDM", _EFFECTS,
+            _BPM,
+            _PITCH_MIDI,
+            None,
+            "UK_IDM",
+            _EFFECTS,
             profile=PROFILES["UK_IDM"],
         )
-        assert all(
-            isinstance(p, ResonantPoint) for p in result.resonant_points
-        )
+        assert all(isinstance(p, ResonantPoint) for p in result.resonant_points)
 
     def test_all_points_have_positive_frequency(self) -> None:
         result = deterministic_map(
-            _BPM, _PITCH_MIDI, None, "UK_IDM", _EFFECTS,
+            _BPM,
+            _PITCH_MIDI,
+            None,
+            "UK_IDM",
+            _EFFECTS,
             profile=PROFILES["UK_IDM"],
         )
         assert all(p.frequency_hz > 0 for p in result.resonant_points)
 
     def test_all_points_have_nonempty_source(self) -> None:
         result = deterministic_map(
-            _BPM, _PITCH_MIDI, None, "UK_IDM", _EFFECTS,
+            _BPM,
+            _PITCH_MIDI,
+            None,
+            "UK_IDM",
+            _EFFECTS,
             profile=PROFILES["UK_IDM"],
         )
         assert all(p.source for p in result.resonant_points)
@@ -230,14 +276,22 @@ class TestPitchRef:
 
     def test_pitch_ref_present(self) -> None:
         result = deterministic_map(
-            _BPM, _PITCH_MIDI, None, "UK_IDM", _EFFECTS,
+            _BPM,
+            _PITCH_MIDI,
+            None,
+            "UK_IDM",
+            _EFFECTS,
             profile=PROFILES["UK_IDM"],
         )
         assert "pitch_ref" in _sources_set(result)
 
     def test_pitch_ref_frequency_matches_midi_to_hz(self) -> None:
         result = deterministic_map(
-            _BPM, _PITCH_MIDI, None, "UK_IDM", _EFFECTS,
+            _BPM,
+            _PITCH_MIDI,
+            None,
+            "UK_IDM",
+            _EFFECTS,
             profile=PROFILES["UK_IDM"],
         )
         pitch_pt = _points_by_source(result, "pitch_ref")[0]
@@ -246,7 +300,11 @@ class TestPitchRef:
 
     def test_pitch_ref_a4_is_440(self) -> None:
         result = deterministic_map(
-            _BPM, 69.0, None, "UK_IDM", _EFFECTS,
+            _BPM,
+            69.0,
+            None,
+            "UK_IDM",
+            _EFFECTS,
             profile=PROFILES["UK_IDM"],
         )
         pitch_pt = _points_by_source(result, "pitch_ref")[0]
@@ -255,14 +313,22 @@ class TestPitchRef:
 
     def test_pitch_ref_is_first_point(self) -> None:
         result = deterministic_map(
-            _BPM, _PITCH_MIDI, None, "UK_IDM", _EFFECTS,
+            _BPM,
+            _PITCH_MIDI,
+            None,
+            "UK_IDM",
+            _EFFECTS,
             profile=PROFILES["UK_IDM"],
         )
         assert result.resonant_points[0].source == "pitch_ref"
 
     def test_fractional_midi_accepted(self) -> None:
         result = deterministic_map(
-            _BPM, 69.5, None, "UK_IDM", _EFFECTS,
+            _BPM,
+            69.5,
+            None,
+            "UK_IDM",
+            _EFFECTS,
             profile=PROFILES["UK_IDM"],
         )
         pitch_pt = _points_by_source(result, "pitch_ref")[0]
@@ -280,14 +346,22 @@ class TestBpmHarmonic:
 
     def test_bpm_harmonic_present(self) -> None:
         result = deterministic_map(
-            _BPM, _PITCH_MIDI, None, "UK_IDM", _EFFECTS,
+            _BPM,
+            _PITCH_MIDI,
+            None,
+            "UK_IDM",
+            _EFFECTS,
             profile=PROFILES["UK_IDM"],
         )
         assert "bpm_harmonic" in _sources_set(result)
 
     def test_bpm_harmonic_frequency(self) -> None:
         result = deterministic_map(
-            128.0, _PITCH_MIDI, None, "UK_IDM", _EFFECTS,
+            128.0,
+            _PITCH_MIDI,
+            None,
+            "UK_IDM",
+            _EFFECTS,
             profile=PROFILES["UK_IDM"],
         )
         bpm_pt = _points_by_source(result, "bpm_harmonic")[0]
@@ -296,7 +370,11 @@ class TestBpmHarmonic:
 
     def test_bpm_harmonic_is_second_point(self) -> None:
         result = deterministic_map(
-            _BPM, _PITCH_MIDI, None, "UK_IDM", _EFFECTS,
+            _BPM,
+            _PITCH_MIDI,
+            None,
+            "UK_IDM",
+            _EFFECTS,
             profile=PROFILES["UK_IDM"],
         )
         assert result.resonant_points[1].source == "bpm_harmonic"
@@ -313,7 +391,11 @@ class TestMainsStackUK:
     @pytest.mark.parametrize("region", ["UK_IDM", "UK_BRAINDANCE"])
     def test_uk_single_stack_no_ref_tags(self, region: str) -> None:
         result = deterministic_map(
-            _BPM, _PITCH_MIDI, None, region, _EFFECTS,
+            _BPM,
+            _PITCH_MIDI,
+            None,
+            region,
+            _EFFECTS,
             profile=PROFILES[region],
         )
         ref_pts = _points_by_source(result, "mains_ref_")
@@ -322,7 +404,11 @@ class TestMainsStackUK:
     @pytest.mark.parametrize("region", ["UK_IDM", "UK_BRAINDANCE"])
     def test_uk_fundamental_is_50hz(self, region: str) -> None:
         result = deterministic_map(
-            _BPM, _PITCH_MIDI, None, region, _EFFECTS,
+            _BPM,
+            _PITCH_MIDI,
+            None,
+            region,
+            _EFFECTS,
             profile=PROFILES[region],
         )
         fund = _points_by_source(result, "mains_fundamental")[0]
@@ -330,7 +416,11 @@ class TestMainsStackUK:
 
     def test_uk_5_mains_points(self) -> None:
         result = deterministic_map(
-            _BPM, _PITCH_MIDI, None, "UK_IDM", _EFFECTS,
+            _BPM,
+            _PITCH_MIDI,
+            None,
+            "UK_IDM",
+            _EFFECTS,
             profile=PROFILES["UK_IDM"],
         )
         mains_pts = _points_by_source(result, "mains_")
@@ -338,7 +428,11 @@ class TestMainsStackUK:
 
     def test_uk_harmonic_frequencies(self) -> None:
         result = deterministic_map(
-            _BPM, _PITCH_MIDI, None, "UK_IDM", _EFFECTS,
+            _BPM,
+            _PITCH_MIDI,
+            None,
+            "UK_IDM",
+            _EFFECTS,
             profile=PROFILES["UK_IDM"],
         )
         mains_pts = _points_by_source(result, "mains_")
@@ -365,7 +459,11 @@ class TestMainsStackNonUK:
         expected_regional_hz: float,
     ) -> None:
         result = deterministic_map(
-            _BPM, _PITCH_MIDI, None, region, _EFFECTS,
+            _BPM,
+            _PITCH_MIDI,
+            None,
+            region,
+            _EFFECTS,
             profile=PROFILES[region],
         )
         ref_pts = _points_by_source(result, "mains_ref_")
@@ -378,25 +476,27 @@ class TestMainsStackNonUK:
 
     def test_detroit_ref_stack_is_50hz(self) -> None:
         result = deterministic_map(
-            _BPM, _PITCH_MIDI, None, "DETROIT_UR", _EFFECTS,
+            _BPM,
+            _PITCH_MIDI,
+            None,
+            "DETROIT_UR",
+            _EFFECTS,
             profile=PROFILES["DETROIT_UR"],
         )
-        ref_fund = [
-            p for p in result.resonant_points
-            if p.source == "mains_ref_fundamental"
-        ]
+        ref_fund = [p for p in result.resonant_points if p.source == "mains_ref_fundamental"]
         assert len(ref_fund) == 1
         assert ref_fund[0].frequency_hz == pytest.approx(50.0)
 
     def test_detroit_total_mains_points_is_10(self) -> None:
         result = deterministic_map(
-            _BPM, _PITCH_MIDI, None, "DETROIT_UR", _EFFECTS,
+            _BPM,
+            _PITCH_MIDI,
+            None,
+            "DETROIT_UR",
+            _EFFECTS,
             profile=PROFILES["DETROIT_UR"],
         )
-        all_mains = [
-            p for p in result.resonant_points
-            if p.source.startswith("mains_")
-        ]
+        all_mains = [p for p in result.resonant_points if p.source.startswith("mains_")]
         assert len(all_mains) == 10
 
 
@@ -405,30 +505,36 @@ class TestMainsStackJapan:
 
     def test_japan_tokyo_regional_is_50hz(self) -> None:
         result = deterministic_map(
-            _BPM, _PITCH_MIDI, None, "JAPAN_IDM", _EFFECTS,
+            _BPM,
+            _PITCH_MIDI,
+            None,
+            "JAPAN_IDM",
+            _EFFECTS,
             profile=PROFILES["JAPAN_IDM"],
         )
-        regional_fund = [
-            p for p in result.resonant_points
-            if p.source == "mains_fundamental"
-        ]
+        regional_fund = [p for p in result.resonant_points if p.source == "mains_fundamental"]
         assert regional_fund[0].frequency_hz == pytest.approx(50.0)
 
     def test_japan_osaka_regional_is_60hz(self) -> None:
         result = deterministic_map(
-            _BPM, _PITCH_MIDI, None, "JAPAN_IDM", _EFFECTS,
+            _BPM,
+            _PITCH_MIDI,
+            None,
+            "JAPAN_IDM",
+            _EFFECTS,
             sub_region="OSAKA",
             profile=PROFILES["JAPAN_IDM_OSAKA"],
         )
-        regional_fund = [
-            p for p in result.resonant_points
-            if p.source == "mains_fundamental"
-        ]
+        regional_fund = [p for p in result.resonant_points if p.source == "mains_fundamental"]
         assert regional_fund[0].frequency_hz == pytest.approx(60.0)
 
     def test_japan_has_uk_ref_stack(self) -> None:
         result = deterministic_map(
-            _BPM, _PITCH_MIDI, None, "JAPAN_IDM", _EFFECTS,
+            _BPM,
+            _PITCH_MIDI,
+            None,
+            "JAPAN_IDM",
+            _EFFECTS,
             profile=PROFILES["JAPAN_IDM"],
         )
         ref_pts = _points_by_source(result, "mains_ref_")
@@ -458,7 +564,11 @@ class TestSolfeggioSeed:
         expected_hz: float,
     ) -> None:
         result = deterministic_map(
-            _BPM, _PITCH_MIDI, None, region, _EFFECTS,
+            _BPM,
+            _PITCH_MIDI,
+            None,
+            region,
+            _EFFECTS,
             profile=PROFILES[region],
         )
         seed_pts = _points_by_source(result, "solfeggio_seed")
@@ -471,7 +581,11 @@ class TestSolfeggioSeed:
     )
     def test_solfeggio_seed_absent(self, region: str) -> None:
         result = deterministic_map(
-            _BPM, _PITCH_MIDI, None, region, _EFFECTS,
+            _BPM,
+            _PITCH_MIDI,
+            None,
+            region,
+            _EFFECTS,
             profile=PROFILES[region],
         )
         seed_pts = _points_by_source(result, "solfeggio_seed")
@@ -489,7 +603,11 @@ class TestSchumannAnchor:
     def test_anchor_present_at_117bpm(self) -> None:
         anchor = schumann_bpm_anchor(1, 4)  # ~117.45
         result = deterministic_map(
-            anchor, _PITCH_MIDI, None, "UK_IDM", _EFFECTS,
+            anchor,
+            _PITCH_MIDI,
+            None,
+            "UK_IDM",
+            _EFFECTS,
             profile=PROFILES["UK_IDM"],
         )
         assert "schumann_bpm_anchor" in _sources_set(result)
@@ -497,7 +615,11 @@ class TestSchumannAnchor:
     def test_anchor_present_within_tolerance(self) -> None:
         anchor = schumann_bpm_anchor(1, 4)
         result = deterministic_map(
-            anchor + 1.5, _PITCH_MIDI, None, "UK_IDM", _EFFECTS,
+            anchor + 1.5,
+            _PITCH_MIDI,
+            None,
+            "UK_IDM",
+            _EFFECTS,
             profile=PROFILES["UK_IDM"],
         )
         assert "schumann_bpm_anchor" in _sources_set(result)
@@ -505,14 +627,22 @@ class TestSchumannAnchor:
     def test_anchor_absent_outside_tolerance(self) -> None:
         anchor = schumann_bpm_anchor(1, 4)
         result = deterministic_map(
-            anchor + 5.0, _PITCH_MIDI, None, "UK_IDM", _EFFECTS,
+            anchor + 5.0,
+            _PITCH_MIDI,
+            None,
+            "UK_IDM",
+            _EFFECTS,
             profile=PROFILES["UK_IDM"],
         )
         assert "schumann_bpm_anchor" not in _sources_set(result)
 
     def test_anchor_absent_at_128bpm(self) -> None:
         result = deterministic_map(
-            128.0, _PITCH_MIDI, None, "UK_IDM", _EFFECTS,
+            128.0,
+            _PITCH_MIDI,
+            None,
+            "UK_IDM",
+            _EFFECTS,
             profile=PROFILES["UK_IDM"],
         )
         assert "schumann_bpm_anchor" not in _sources_set(result)
@@ -520,7 +650,11 @@ class TestSchumannAnchor:
     def test_anchor_frequency_is_schumann_mode1(self) -> None:
         anchor = schumann_bpm_anchor(1, 4)
         result = deterministic_map(
-            anchor, _PITCH_MIDI, None, "UK_IDM", _EFFECTS,
+            anchor,
+            _PITCH_MIDI,
+            None,
+            "UK_IDM",
+            _EFFECTS,
             profile=PROFILES["UK_IDM"],
         )
         sch_pts = _points_by_source(result, "schumann_bpm_anchor")
@@ -537,14 +671,22 @@ class TestSubBass:
 
     def test_sub_bass_present_when_noise_spec_exists(self) -> None:
         result = deterministic_map(
-            _BPM, _PITCH_MIDI, None, "UK_IDM", _EFFECTS,
+            _BPM,
+            _PITCH_MIDI,
+            None,
+            "UK_IDM",
+            _EFFECTS,
             profile=PROFILES["UK_IDM"],
         )
         assert "sub_bass" in _sources_set(result)
 
     def test_sub_bass_frequency_matches_profile(self) -> None:
         result = deterministic_map(
-            _BPM, _PITCH_MIDI, None, "UK_IDM", _EFFECTS,
+            _BPM,
+            _PITCH_MIDI,
+            None,
+            "UK_IDM",
+            _EFFECTS,
             profile=PROFILES["UK_IDM"],
         )
         sub_pts = _points_by_source(result, "sub_bass")
@@ -552,14 +694,22 @@ class TestSubBass:
 
     def test_sub_bass_absent_when_no_noise_spec(self) -> None:
         result = deterministic_map(
-            _BPM, _PITCH_MIDI, None, "UK_BRAINDANCE", _EFFECTS,
+            _BPM,
+            _PITCH_MIDI,
+            None,
+            "UK_BRAINDANCE",
+            _EFFECTS,
             profile=PROFILES["UK_BRAINDANCE"],
         )
         assert "sub_bass" not in _sources_set(result)
 
     def test_detroit_sub_bass_is_60hz(self) -> None:
         result = deterministic_map(
-            _BPM, _PITCH_MIDI, None, "DETROIT_UR", _EFFECTS,
+            _BPM,
+            _PITCH_MIDI,
+            None,
+            "DETROIT_UR",
+            _EFFECTS,
             profile=PROFILES["DETROIT_UR"],
         )
         sub_pts = _points_by_source(result, "sub_bass")
@@ -576,19 +726,22 @@ class TestEffectsFiltering:
 
     def test_notch_mains_removes_all_mains(self) -> None:
         result = deterministic_map(
-            _BPM, _PITCH_MIDI, None, "DETROIT_UR",
+            _BPM,
+            _PITCH_MIDI,
+            None,
+            "DETROIT_UR",
             ["notch_mains"],
             profile=PROFILES["DETROIT_UR"],
         )
-        mains_pts = [
-            p for p in result.resonant_points
-            if p.source.startswith("mains_")
-        ]
+        mains_pts = [p for p in result.resonant_points if p.source.startswith("mains_")]
         assert len(mains_pts) == 0
 
     def test_notch_mains_preserves_non_mains(self) -> None:
         result = deterministic_map(
-            _BPM, _PITCH_MIDI, None, "DETROIT_UR",
+            _BPM,
+            _PITCH_MIDI,
+            None,
+            "DETROIT_UR",
             ["notch_mains"],
             profile=PROFILES["DETROIT_UR"],
         )
@@ -598,7 +751,11 @@ class TestEffectsFiltering:
 
     def test_empty_effects_no_filtering(self) -> None:
         result = deterministic_map(
-            _BPM, _PITCH_MIDI, None, "UK_IDM", _EFFECTS,
+            _BPM,
+            _PITCH_MIDI,
+            None,
+            "UK_IDM",
+            _EFFECTS,
             profile=PROFILES["UK_IDM"],
         )
         mains_pts = _points_by_source(result, "mains_")
@@ -606,12 +763,19 @@ class TestEffectsFiltering:
 
     def test_unknown_effect_passes_through(self) -> None:
         result_with = deterministic_map(
-            _BPM, _PITCH_MIDI, None, "UK_IDM",
+            _BPM,
+            _PITCH_MIDI,
+            None,
+            "UK_IDM",
             ["reverb", "delay", "compression"],
             profile=PROFILES["UK_IDM"],
         )
         result_without = deterministic_map(
-            _BPM, _PITCH_MIDI, None, "UK_IDM", _EFFECTS,
+            _BPM,
+            _PITCH_MIDI,
+            None,
+            "UK_IDM",
+            _EFFECTS,
             profile=PROFILES["UK_IDM"],
         )
         assert len(result_with.resonant_points) == len(
@@ -636,7 +800,11 @@ class TestDeterminism:
 
     def test_ordering_stable(self) -> None:
         result = deterministic_map(
-            _BPM, _PITCH_MIDI, None, "UK_IDM", _EFFECTS,
+            _BPM,
+            _PITCH_MIDI,
+            None,
+            "UK_IDM",
+            _EFFECTS,
             profile=PROFILES["UK_IDM"],
         )
         tags = _source_tags(result)
@@ -662,11 +830,19 @@ class TestSwingPassThrough:
         swing: float | str | None,
     ) -> None:
         result = deterministic_map(
-            _BPM, _PITCH_MIDI, swing, "UK_IDM", _EFFECTS,
+            _BPM,
+            _PITCH_MIDI,
+            swing,
+            "UK_IDM",
+            _EFFECTS,
             profile=PROFILES["UK_IDM"],
         )
         baseline = deterministic_map(
-            _BPM, _PITCH_MIDI, None, "UK_IDM", _EFFECTS,
+            _BPM,
+            _PITCH_MIDI,
+            None,
+            "UK_IDM",
+            _EFFECTS,
             profile=PROFILES["UK_IDM"],
         )
         assert result == baseline
@@ -693,7 +869,11 @@ class TestAllRegionsSmoke:
     )
     def test_region_produces_valid_mapping(self, region: str) -> None:
         result = deterministic_map(
-            _BPM, _PITCH_MIDI, None, region, _EFFECTS,
+            _BPM,
+            _PITCH_MIDI,
+            None,
+            region,
+            _EFFECTS,
             profile=PROFILES[region],
         )
         assert isinstance(result, DeterministicMapping)
@@ -704,7 +884,11 @@ class TestAllRegionsSmoke:
 
     def test_japan_osaka_produces_valid_mapping(self) -> None:
         result = deterministic_map(
-            _BPM, _PITCH_MIDI, None, "JAPAN_IDM", _EFFECTS,
+            _BPM,
+            _PITCH_MIDI,
+            None,
+            "JAPAN_IDM",
+            _EFFECTS,
             sub_region="OSAKA",
             profile=PROFILES["JAPAN_IDM_OSAKA"],
         )

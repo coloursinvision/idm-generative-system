@@ -45,10 +45,12 @@ from engine.ml.regional_profiles import RegionalProfile
 # Constants
 # ---------------------------------------------------------------------------
 
-_FIXED_SOURCES: frozenset[str] = frozenset({
-    "mains_fundamental",
-    "mains_ref_fundamental",
-})
+_FIXED_SOURCES: frozenset[str] = frozenset(
+    {
+        "mains_fundamental",
+        "mains_ref_fundamental",
+    }
+)
 """Source tags whose resonant points are never perturbed.
 
 Mains fundamentals are physical invariants of the electrical grid.
