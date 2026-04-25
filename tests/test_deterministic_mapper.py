@@ -12,6 +12,7 @@ in-memory.
 from __future__ import annotations
 
 import pytest
+
 from engine.ml.deterministic_mapper import (
     DeterministicMapping,
     ResonantPoint,
