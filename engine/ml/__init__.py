@@ -64,6 +64,10 @@ Public API — synthetic dataset generation (Layer 5 — complete S6):
 
 from __future__ import annotations
 
+from engine.ml.dataset_generator import (
+    SyntheticDatasetGenerator,
+    TrackSpec,
+)
 from engine.ml.deterministic_mapper import (
     DeterministicMapping,
     ResonantPoint,
@@ -72,10 +76,6 @@ from engine.ml.deterministic_mapper import (
 from engine.ml.gaussian_noise import (
     GaussianNoiseInjector,
     PerturbationConfig,
-)
-from engine.ml.dataset_generator import (
-    SyntheticDatasetGenerator,
-    TrackSpec,
 )
 from engine.ml.regional_profiles import (
     HarmonicContentSpec,

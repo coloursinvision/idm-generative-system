@@ -71,7 +71,6 @@ from engine.ml.regional_profiles import (
     load_profile,
 )
 
-
 # ---------------------------------------------------------------------------
 # Public dataclasses
 # ---------------------------------------------------------------------------
@@ -119,10 +118,7 @@ def _flatten_mapping(
         Dict with keys like ``freq_pitch_ref``, ``freq_mains_harmonic_2``,
         etc. Values are frequencies in Hz.
     """
-    return {
-        f"freq_{point.source}": point.frequency_hz
-        for point in mapping.resonant_points
-    }
+    return {f"freq_{point.source}": point.frequency_hz for point in mapping.resonant_points}
 
 
 def _flatten_profile_dsp(
@@ -146,9 +142,7 @@ def _flatten_profile_dsp(
 
     # Swing
     row["swing_amount"] = (
-        profile.swing.swing_amount
-        if isinstance(profile.swing.swing_amount, float)
-        else None
+        profile.swing.swing_amount if isinstance(profile.swing.swing_amount, float) else None
     )
 
     # Reverb
