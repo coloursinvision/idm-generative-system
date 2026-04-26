@@ -264,6 +264,38 @@ def hz_to_midi(
     return 69.0 + 12.0 * math.log2(frequency_hz / tuning_hz)
 
 
+def hz_to_nearest_note(
+    frequency_hz: float,
+    tuning_hz: TuningReference = 440.0,
+) -> str:
+    """Resolve a frequency to its nearest 12-TET note in scientific pitch notation.
+
+    Thin public wrapper around :func:`_hz_to_note_and_cents` that discards
+    the cents component. Used by Layer 3 (deterministic mapper) and Layer 4
+    (Gaussian noise injector) to label resonant points with human-readable
+    note names.
+
+    Args:
+        frequency_hz: Positive frequency in Hz.
+        tuning_hz: Reference frequency for A4.
+
+    Returns:
+        Note name string in scientific pitch notation (e.g. ``"G1"``,
+        ``"F#3"``).
+
+    Raises:
+        ValueError: If ``frequency_hz`` is not positive.
+
+    Example:
+        >>> hz_to_nearest_note(440.0)
+        'A4'
+        >>> hz_to_nearest_note(50.0)
+        'G1'
+    """
+    note, _ = _hz_to_note_and_cents(frequency_hz, tuning_hz)
+    return note
+
+
 def tuning_difference_hz(a: TuningReference, b: TuningReference) -> float:
     """Return the arithmetic difference ``a - b`` between two tuning references.
 

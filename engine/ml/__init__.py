@@ -1,11 +1,10 @@
-"""engine.ml — Layers 3–4 of the IDM Generative System pipeline.
+"""engine.ml — Layers 3–5 of the IDM Generative System pipeline.
 
-Pipeline layer: 3–4
+Pipeline layer: 3–5
 Consumes:       02-Knowledge/supporting/profiles/*.md (6 regional profile spokes)
                 02-Knowledge/supporting/resonance/*.md (5 resonance rule spokes)
-Consumed by:    Layer 5 (synthetic dataset generation),
-                Layer 6 (XGBoost training + /tuning endpoint)
-Status:         working (Layer 3 complete, Layer 4 scaffold)
+Consumed by:    Layer 6 (XGBoost training + /tuning endpoint)
+Status:         working (Layer 3 complete, Layer 4 complete S6, Layer 5 complete S6)
 
 Exposes Layer 2 specifications (regional profile spokes and resonance rule
 spokes) from ``02-Knowledge/supporting/`` as typed, loadable objects and pure
@@ -35,6 +34,7 @@ Public API — resonance rules (physical — 4):
     schumann_bpm_anchor      — Schumann mode → BPM anchor
     SCHUMANN_MODES_HZ        — canonical mode frequencies
     midi_to_hz, hz_to_midi   — 12-TET conversions with tuning override
+    hz_to_nearest_note       — Hz → nearest 12-TET note (scientific pitch)
     tuning_difference_hz     — A4 reference delta (e.g. 432 vs 440)
     TuningReference          — Literal[432.0, 440.0]
     mains_hum_profile        — regional mains-hum harmonic stack
@@ -53,9 +53,13 @@ Public API — deterministic mapper (Layer 3 — complete S5):
     DeterministicMapping     — structured mapper output
     ResonantPoint            — one resonant frequency + provenance tag
 
-Public API — Gaussian noise injection (Layer 4 — scaffold S5):
+Public API — Gaussian noise injection (Layer 4 — complete S6):
     GaussianNoiseInjector    — calibrated perturbation around mapper output
     PerturbationConfig       — per-parameter sigma configuration
+
+Public API — synthetic dataset generation (Layer 5 — complete S6):
+    SyntheticDatasetGenerator — composes Layers 3+4 → pd.DataFrame
+    TrackSpec                — frozen input spec for one track/scene
 """
 
 from __future__ import annotations
@@ -68,6 +72,10 @@ from engine.ml.deterministic_mapper import (
 from engine.ml.gaussian_noise import (
     GaussianNoiseInjector,
     PerturbationConfig,
+)
+from engine.ml.dataset_generator import (
+    SyntheticDatasetGenerator,
+    TrackSpec,
 )
 from engine.ml.regional_profiles import (
     HarmonicContentSpec,
@@ -94,6 +102,7 @@ from engine.ml.resonance_rules import (
     TuningReference,
     bpm_to_hz,
     hz_to_midi,
+    hz_to_nearest_note,
     mains_hum_profile,
     midi_to_hz,
     schumann_bpm_anchor,
@@ -123,6 +132,7 @@ __all__ = [
     "SCHUMANN_MODES_HZ",
     "midi_to_hz",
     "hz_to_midi",
+    "hz_to_nearest_note",
     "tuning_difference_hz",
     "TuningReference",
     "mains_hum_profile",
@@ -141,4 +151,7 @@ __all__ = [
     # --- Gaussian noise injection (Layer 4) --------------------------------
     "GaussianNoiseInjector",
     "PerturbationConfig",
+    # --- Synthetic dataset generation (Layer 5) ----------------------------
+    "SyntheticDatasetGenerator",
+    "TrackSpec",
 ]
