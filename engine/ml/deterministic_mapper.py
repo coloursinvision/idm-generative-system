@@ -3,7 +3,7 @@
 Pipeline layer: 3
 Consumes:       regional_profiles (RegionalProfile, RegionCode,
                     SubRegion, load_profile)
-                resonance_rules (bpm_to_hz, midi_to_hz, hz_to_midi,
+                resonance_rules (bpm_to_hz, midi_to_hz, hz_to_nearest_note,
                     mains_hum_profile, solfeggio_cutoff_seed,
                     schumann_mode, schumann_bpm_anchor)
 Consumed by:    Layer 4 dataset generator (gaussian_noise.py)
@@ -64,7 +64,7 @@ from engine.ml.regional_profiles import (
 from engine.ml.resonance_rules import (
     GridRegion,
     bpm_to_hz,
-    hz_to_midi,
+    hz_to_nearest_note,
     mains_hum_profile,
     midi_to_hz,
     schumann_bpm_anchor,
@@ -75,21 +75,6 @@ from engine.ml.resonance_rules import (
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
-
-_NOTE_NAMES: tuple[str, ...] = (
-    "C",
-    "C#",
-    "D",
-    "D#",
-    "E",
-    "F",
-    "F#",
-    "G",
-    "G#",
-    "A",
-    "A#",
-    "B",
-)
 
 _REGION_TO_GRID: dict[RegionCode, GridRegion] = {
     "DETROIT_FIRST_WAVE": "US",
@@ -127,23 +112,6 @@ _MIDI_MAX: float = 127.0
 # ---------------------------------------------------------------------------
 # Private helpers
 # ---------------------------------------------------------------------------
-
-
-def _nearest_note(frequency_hz: float, tuning_hz: float = 440.0) -> str:
-    """Resolve a frequency to its nearest 12-TET note in scientific pitch notation.
-
-    Args:
-        frequency_hz: Positive frequency in Hz.
-        tuning_hz: A4 reference frequency.
-
-    Returns:
-        Note name string (e.g. ``"G1"``, ``"F#3"``).
-    """
-    midi_exact = hz_to_midi(frequency_hz, tuning_hz)
-    midi_rounded = round(midi_exact)
-    pitch_class = midi_rounded % 12
-    octave = (midi_rounded // 12) - 1
-    return f"{_NOTE_NAMES[pitch_class]}{octave}"
 
 
 def _select_tuning_hz(profile: RegionalProfile) -> float:
@@ -443,7 +411,7 @@ def deterministic_map(
         ResonantPoint(
             frequency_hz=pitch_hz,
             source="pitch_ref",
-            nearest_note=_nearest_note(pitch_hz, tuning_hz),
+            nearest_note=hz_to_nearest_note(pitch_hz, tuning_hz),
         ),
     ]
 
@@ -467,7 +435,7 @@ def deterministic_map(
             ResonantPoint(
                 frequency_hz=seed_hz,
                 source="solfeggio_seed",
-                nearest_note=_nearest_note(seed_hz, tuning_hz),
+                nearest_note=hz_to_nearest_note(seed_hz, tuning_hz),
             )
         )
 
@@ -479,7 +447,7 @@ def deterministic_map(
             ResonantPoint(
                 frequency_hz=mode1_hz,
                 source="schumann_bpm_anchor",
-                nearest_note=_nearest_note(mode1_hz, tuning_hz),
+                nearest_note=hz_to_nearest_note(mode1_hz, tuning_hz),
             )
         )
 
@@ -490,7 +458,7 @@ def deterministic_map(
             ResonantPoint(
                 frequency_hz=sub_hz,
                 source="sub_bass",
-                nearest_note=_nearest_note(sub_hz, tuning_hz),
+                nearest_note=hz_to_nearest_note(sub_hz, tuning_hz),
             )
         )
 
