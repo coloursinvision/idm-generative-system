@@ -19,9 +19,9 @@ import pytest
 
 from engine.ml.deterministic_mapper import DeterministicMapping, ResonantPoint
 from engine.ml.gaussian_noise import (
+    _FIXED_SOURCES,
     GaussianNoiseInjector,
     PerturbationConfig,
-    _FIXED_SOURCES,
 )
 from engine.ml.regional_profiles import (
     HarmonicContentSpec,
@@ -32,13 +32,12 @@ from engine.ml.regional_profiles import (
     SwingSpec,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
 
 
-@pytest.fixture()
+@pytest.fixture
 def swing_spec() -> SwingSpec:
     """SwingSpec with a numeric swing_amount for perturbation testing."""
     return SwingSpec(
@@ -49,7 +48,7 @@ def swing_spec() -> SwingSpec:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def reverb_spec() -> ReverbSpec:
     """ReverbSpec with numeric decay and diffusion fields."""
     return ReverbSpec(
@@ -61,7 +60,7 @@ def reverb_spec() -> ReverbSpec:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def noise_spec() -> NoiseSpec:
     """NoiseSpec with all numeric fields populated."""
     return NoiseSpec(
@@ -72,7 +71,7 @@ def noise_spec() -> NoiseSpec:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def profile(
     swing_spec: SwingSpec,
     reverb_spec: ReverbSpec,
@@ -90,7 +89,7 @@ def profile(
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def profile_no_reverb_no_noise(swing_spec: SwingSpec) -> RegionalProfile:
     """Profile with reverb=None and noise=None (UK_BRAINDANCE-like)."""
     return RegionalProfile(
@@ -104,7 +103,7 @@ def profile_no_reverb_no_noise(swing_spec: SwingSpec) -> RegionalProfile:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def mapping() -> DeterministicMapping:
     """DeterministicMapping with a mix of fixed and perturbable source tags."""
     return DeterministicMapping(
@@ -122,7 +121,7 @@ def mapping() -> DeterministicMapping:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def active_config() -> PerturbationConfig:
     """PerturbationConfig with all sigmas active."""
     return PerturbationConfig(
@@ -135,7 +134,7 @@ def active_config() -> PerturbationConfig:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def zero_config() -> PerturbationConfig:
     """PerturbationConfig with all sigmas at zero (no perturbation)."""
     return PerturbationConfig()
@@ -502,14 +501,10 @@ class TestPerturbMappingFixedSources:
         config = PerturbationConfig(mapper_sigma=50.0)
         injector = GaussianNoiseInjector(config, seed=42)
         result = injector.perturb_mapping(mapping, profile)
-        original_mains = [
-            p for p in mapping.resonant_points if p.source == "mains_fundamental"
-        ]
-        result_mains = [
-            p for p in result.resonant_points if p.source == "mains_fundamental"
-        ]
+        original_mains = [p for p in mapping.resonant_points if p.source == "mains_fundamental"]
+        result_mains = [p for p in result.resonant_points if p.source == "mains_fundamental"]
         assert len(original_mains) == len(result_mains)
-        for orig, res in zip(original_mains, result_mains):
+        for orig, res in zip(original_mains, result_mains, strict=True):
             assert res.frequency_hz == orig.frequency_hz
             assert res.nearest_note == orig.nearest_note
 
@@ -521,20 +516,16 @@ class TestPerturbMappingFixedSources:
         config = PerturbationConfig(mapper_sigma=50.0)
         injector = GaussianNoiseInjector(config, seed=42)
         result = injector.perturb_mapping(mapping, profile)
-        original_ref = [
-            p for p in mapping.resonant_points if p.source == "mains_ref_fundamental"
-        ]
-        result_ref = [
-            p for p in result.resonant_points if p.source == "mains_ref_fundamental"
-        ]
+        original_ref = [p for p in mapping.resonant_points if p.source == "mains_ref_fundamental"]
+        result_ref = [p for p in result.resonant_points if p.source == "mains_ref_fundamental"]
         assert len(original_ref) == len(result_ref)
-        for orig, res in zip(original_ref, result_ref):
+        for orig, res in zip(original_ref, result_ref, strict=True):
             assert res.frequency_hz == orig.frequency_hz
             assert res.nearest_note == orig.nearest_note
 
     def test_fixed_sources_constant_exhaustive(self) -> None:
         """_FIXED_SOURCES must contain exactly the documented set."""
-        assert _FIXED_SOURCES == {"mains_fundamental", "mains_ref_fundamental"}
+        assert {"mains_fundamental", "mains_ref_fundamental"} == _FIXED_SOURCES
 
 
 # ---------------------------------------------------------------------------
@@ -578,12 +569,8 @@ class TestPerturbMappingPerturbableSources:
         config = PerturbationConfig(mapper_sigma=5.0)
         injector = GaussianNoiseInjector(config, seed=42)
         result = injector.perturb_mapping(mapping, profile)
-        orig = next(
-            p for p in mapping.resonant_points if p.source == "mains_harmonic_2"
-        )
-        res = next(
-            p for p in result.resonant_points if p.source == "mains_harmonic_2"
-        )
+        orig = next(p for p in mapping.resonant_points if p.source == "mains_harmonic_2")
+        res = next(p for p in result.resonant_points if p.source == "mains_harmonic_2")
         assert res.frequency_hz != orig.frequency_hz
 
     def test_mains_ref_harmonic_perturbed(
@@ -595,12 +582,8 @@ class TestPerturbMappingPerturbableSources:
         config = PerturbationConfig(mapper_sigma=5.0)
         injector = GaussianNoiseInjector(config, seed=42)
         result = injector.perturb_mapping(mapping, profile)
-        orig = next(
-            p for p in mapping.resonant_points if p.source == "mains_ref_harmonic_2"
-        )
-        res = next(
-            p for p in result.resonant_points if p.source == "mains_ref_harmonic_2"
-        )
+        orig = next(p for p in mapping.resonant_points if p.source == "mains_ref_harmonic_2")
+        res = next(p for p in result.resonant_points if p.source == "mains_ref_harmonic_2")
         assert res.frequency_hz != orig.frequency_hz
 
     def test_nearest_note_recalculated(
@@ -707,7 +690,7 @@ class TestPerturbMappingStructure:
         """Ordering of resonant points must not change."""
         injector = GaussianNoiseInjector(active_config, seed=42)
         result = injector.perturb_mapping(mapping, profile)
-        for orig, res in zip(mapping.resonant_points, result.resonant_points):
+        for orig, res in zip(mapping.resonant_points, result.resonant_points, strict=True):
             assert res.source == orig.source
 
     def test_input_mapping_not_mutated(

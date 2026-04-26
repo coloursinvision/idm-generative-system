@@ -341,15 +341,9 @@ class GaussianNoiseInjector:
         Returns:
             A new :class:`RegionalProfile` with perturbed DSP fields.
         """
-        new_swing = _perturb_swing(
-            profile.swing, self._rng, self._config.swing_sigma
-        )
-        new_reverb = _perturb_reverb(
-            profile.reverb, self._rng, self._config.reverb_sigma
-        )
-        new_noise = _perturb_noise(
-            profile.noise, self._rng, self._config.noise_sigma
-        )
+        new_swing = _perturb_swing(profile.swing, self._rng, self._config.swing_sigma)
+        new_reverb = _perturb_reverb(profile.reverb, self._rng, self._config.reverb_sigma)
+        new_noise = _perturb_noise(profile.noise, self._rng, self._config.noise_sigma)
 
         return replace(
             profile,

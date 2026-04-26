@@ -33,13 +33,12 @@ from engine.ml.regional_profiles import (
     SwingSpec,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
 
 
-@pytest.fixture()
+@pytest.fixture
 def uk_profile() -> RegionalProfile:
     """UK_IDM profile with all perturbable fields populated."""
     return RegionalProfile(
@@ -68,7 +67,7 @@ def uk_profile() -> RegionalProfile:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def uk_spec() -> TrackSpec:
     """TrackSpec for UK_IDM at BPM far from Schumann anchor."""
     return TrackSpec(
@@ -80,7 +79,7 @@ def uk_spec() -> TrackSpec:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def detroit_spec() -> TrackSpec:
     """TrackSpec for DETROIT_UR — triggers dual-stack mains."""
     return TrackSpec(
@@ -92,7 +91,7 @@ def detroit_spec() -> TrackSpec:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def active_config() -> PerturbationConfig:
     """PerturbationConfig with all sigmas active."""
     return PerturbationConfig(
@@ -105,7 +104,7 @@ def active_config() -> PerturbationConfig:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def zero_config() -> PerturbationConfig:
     """PerturbationConfig with all sigmas at zero."""
     return PerturbationConfig()
@@ -406,12 +405,8 @@ class TestGenerateDataset:
         zero_config: PerturbationConfig,
     ) -> None:
         """Baseline row (idx=0) should match zero-sigma generator output."""
-        gen_active = SyntheticDatasetGenerator(
-            active_config, n_perturbations=3, master_seed=42
-        )
-        gen_zero = SyntheticDatasetGenerator(
-            zero_config, n_perturbations=0, master_seed=99
-        )
+        gen_active = SyntheticDatasetGenerator(active_config, n_perturbations=3, master_seed=42)
+        gen_zero = SyntheticDatasetGenerator(zero_config, n_perturbations=0, master_seed=99)
         df_active = gen_active.generate_dataset([uk_spec], profile=uk_profile)
         df_zero = gen_zero.generate_dataset([uk_spec], profile=uk_profile)
         baseline = df_active[df_active["perturbation_idx"] == 0].iloc[0]
