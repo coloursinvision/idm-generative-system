@@ -82,9 +82,6 @@ from engine.ml.dataset_generator import (
     SyntheticDatasetGenerator,
     TrackSpec,
 )
-from engine.ml.dataset_schema import (
-    DATASET_SCHEMA,
-)
 from engine.ml.deterministic_mapper import (
     DeterministicMapping,
     ResonantPoint,
@@ -94,16 +91,28 @@ from engine.ml.gaussian_noise import (
     GaussianNoiseInjector,
     PerturbationConfig,
 )
-from engine.ml.model_training import (
-    OptunaConfig,
-    TrainingConfig,
-    build_pipeline,
-    build_preprocessor,
-    extract_feature_target_columns,
-    prepare_data,
-    run_optuna_study,
-    train,
-)
+
+# Layer 6 modules require [ml] extras (pandera, sklearn, xgboost, mlflow,
+# optuna). Import conditionally so engine.ml remains importable in CI and
+# production environments that install only core + [dev] deps.
+try:
+    from engine.ml.dataset_schema import (
+        DATASET_SCHEMA,
+    )
+    from engine.ml.model_training import (
+        OptunaConfig,
+        TrainingConfig,
+        build_pipeline,
+        build_preprocessor,
+        extract_feature_target_columns,
+        prepare_data,
+        run_optuna_study,
+        train,
+    )
+
+    _HAS_ML_EXTRAS = True
+except ImportError:
+    _HAS_ML_EXTRAS = False
 from engine.ml.regional_profiles import (
     HarmonicContentSpec,
     NoiseSpec,
@@ -181,15 +190,20 @@ __all__ = [
     # --- Synthetic dataset generation (Layer 5) ----------------------------
     "SyntheticDatasetGenerator",
     "TrackSpec",
-    # --- Dataset schema validation (Layer 5–6 boundary) --------------------
-    "DATASET_SCHEMA",
-    # --- Model training (Layer 6) ------------------------------------------
-    "TrainingConfig",
-    "OptunaConfig",
-    "build_pipeline",
-    "build_preprocessor",
-    "extract_feature_target_columns",
-    "prepare_data",
-    "train",
-    "run_optuna_study",
 ]
+
+# Layer 6 symbols — available only when [ml] extras are installed.
+if _HAS_ML_EXTRAS:
+    __all__ += [
+        # --- Dataset schema validation (Layer 5–6 boundary) ----------------
+        "DATASET_SCHEMA",
+        # --- Model training (Layer 6) --------------------------------------
+        "TrainingConfig",
+        "OptunaConfig",
+        "build_pipeline",
+        "build_preprocessor",
+        "extract_feature_target_columns",
+        "prepare_data",
+        "train",
+        "run_optuna_study",
+    ]
