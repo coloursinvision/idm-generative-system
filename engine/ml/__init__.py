@@ -1,10 +1,11 @@
-"""engine.ml — Layers 3–5 of the IDM Generative System pipeline.
+"""engine.ml — Layers 3–6 of the IDM Generative System pipeline.
 
-Pipeline layer: 3–5
+Pipeline layer: 3–6
 Consumes:       02-Knowledge/supporting/profiles/*.md (6 regional profile spokes)
                 02-Knowledge/supporting/resonance/*.md (5 resonance rule spokes)
-Consumed by:    Layer 6 (XGBoost training + /tuning endpoint)
-Status:         working (Layer 3 complete, Layer 4 complete S6, Layer 5 complete S6)
+Consumed by:    scripts/ (DVC pipeline entry points)
+                V2.3 model serving (/tuning endpoint)
+Status:         working (Layers 3–5 complete, Layer 6 complete S7)
 
 Exposes Layer 2 specifications (regional profile spokes and resonance rule
 spokes) from ``02-Knowledge/supporting/`` as typed, loadable objects and pure
@@ -60,6 +61,19 @@ Public API — Gaussian noise injection (Layer 4 — complete S6):
 Public API — synthetic dataset generation (Layer 5 — complete S6):
     SyntheticDatasetGenerator — composes Layers 3+4 → pd.DataFrame
     TrackSpec                — frozen input spec for one track/scene
+
+Public API — dataset schema validation (Layer 5–6 boundary — complete S7):
+    DATASET_SCHEMA           — pandera DataFrameSchema for synthetic DataFrame
+
+Public API — model training (Layer 6 — complete S7):
+    TrainingConfig           — single training run configuration
+    OptunaConfig             — Optuna HPO configuration
+    build_pipeline           — scikit-learn Pipeline construction
+    build_preprocessor       — ColumnTransformer construction
+    extract_feature_target_columns — feature/target column identification
+    prepare_data             — NaN imputation + matrix preparation
+    train                    — single training run with MLflow tracking
+    run_optuna_study         — Optuna HPO with best-model retraining
 """
 
 from __future__ import annotations
@@ -67,6 +81,9 @@ from __future__ import annotations
 from engine.ml.dataset_generator import (
     SyntheticDatasetGenerator,
     TrackSpec,
+)
+from engine.ml.dataset_schema import (
+    DATASET_SCHEMA,
 )
 from engine.ml.deterministic_mapper import (
     DeterministicMapping,
@@ -76,6 +93,16 @@ from engine.ml.deterministic_mapper import (
 from engine.ml.gaussian_noise import (
     GaussianNoiseInjector,
     PerturbationConfig,
+)
+from engine.ml.model_training import (
+    OptunaConfig,
+    TrainingConfig,
+    build_pipeline,
+    build_preprocessor,
+    extract_feature_target_columns,
+    prepare_data,
+    run_optuna_study,
+    train,
 )
 from engine.ml.regional_profiles import (
     HarmonicContentSpec,
@@ -154,4 +181,15 @@ __all__ = [
     # --- Synthetic dataset generation (Layer 5) ----------------------------
     "SyntheticDatasetGenerator",
     "TrackSpec",
+    # --- Dataset schema validation (Layer 5–6 boundary) --------------------
+    "DATASET_SCHEMA",
+    # --- Model training (Layer 6) ------------------------------------------
+    "TrainingConfig",
+    "OptunaConfig",
+    "build_pipeline",
+    "build_preprocessor",
+    "extract_feature_target_columns",
+    "prepare_data",
+    "train",
+    "run_optuna_study",
 ]
