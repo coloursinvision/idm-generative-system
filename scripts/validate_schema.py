@@ -88,9 +88,7 @@ def main() -> None:
                     "column": str(row.get("column", "")),
                     "check": str(row.get("check", "")),
                     "check_number": (
-                        int(row["check_number"])
-                        if pd.notna(row.get("check_number"))
-                        else None
+                        int(row["check_number"]) if pd.notna(row.get("check_number")) else None
                     ),
                     "failure_case": str(row.get("failure_case", "")),
                     "index": str(row.get("index", "")),

@@ -52,8 +52,7 @@ def _make_training_df(n_rows: int = 100) -> pd.DataFrame:
 
     region_choices = rng.choice(regions, size=n_rows)
     sub_regions: list[str | None] = [
-        rng.choice(["TOKYO", "OSAKA"]) if r == "JAPAN_IDM" else None
-        for r in region_choices
+        rng.choice(["TOKYO", "OSAKA"]) if r == "JAPAN_IDM" else None for r in region_choices
     ]
 
     return pd.DataFrame(
@@ -61,8 +60,7 @@ def _make_training_df(n_rows: int = 100) -> pd.DataFrame:
             "bpm": rng.uniform(60, 200, n_rows),
             "pitch_midi": rng.uniform(36, 96, n_rows),
             "swing": [
-                float(rng.uniform(0, 1)) if rng.random() > 0.1 else None
-                for _ in range(n_rows)
+                float(rng.uniform(0, 1)) if rng.random() > 0.1 else None for _ in range(n_rows)
             ],
             "region": region_choices.tolist(),
             "sub_region": sub_regions,
@@ -223,9 +221,7 @@ class TestTrain:
 
         from sklearn.model_selection import train_test_split
 
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.2, random_state=42
-        )
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
         config = TrainingConfig(
             test_size=0.2,
@@ -260,9 +256,7 @@ class TestTrain:
 
         from sklearn.model_selection import train_test_split
 
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.2, random_state=42
-        )
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
         config = TrainingConfig(
             test_size=0.2,
@@ -308,9 +302,7 @@ class TestOptunaStudy:
 
         from sklearn.model_selection import train_test_split
 
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.2, random_state=42
-        )
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
         training_config = TrainingConfig(
             test_size=0.2,
