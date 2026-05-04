@@ -1,0 +1,82 @@
+# params.yaml — IDM Generative System V2 pipeline parameters
+#
+# Single source of truth for all DVC pipeline configuration.
+# Consumed by: scripts/generate_dataset.py, scripts/train_model.py
+# Versioned by: DVC (parameter tracking + cache invalidation)
+
+# ---------------------------------------------------------------------------
+# Dataset generation (scripts/generate_dataset.py)
+# ---------------------------------------------------------------------------
+generate:
+  # Number of perturbed variants per TrackSpec. Each spec produces
+  # 1 + n_perturbations rows (1 deterministic baseline + n perturbed).
+  n_perturbations: 10
+
+  # Master seed for reproducibility. Given the same (master_seed, config,
+  # specifications) triple, output is bit-identical.
+  master_seed: 42
+
+  # Number of TrackSpec combinations to generate per region.
+  # Total rows ≈ specs_per_region × 6 regions × (1 + n_perturbations).
+  # Default: 150 × 6 × 11 = 9,900 rows (~10k target from V2_ROADMAP).
+  specs_per_region: 150
+
+  # Output path (must match dvc.yaml outs).
+  output_path: data/synthetic/dataset.parquet
+
+  # BPM sampling range for TrackSpec generation.
+  bpm_min: 60.0
+  bpm_max: 200.0
+
+  # MIDI note range for pitch_midi sampling.
+  pitch_midi_min: 36
+  pitch_midi_max: 96
+
+  # Per-parameter Gaussian noise sigmas (PerturbationConfig).
+  # sigma = 0.0 disables perturbation for that parameter.
+  perturbation:
+    swing_sigma: 0.05
+    reverb_sigma: 50.0
+    saturation_sigma: 0.0
+    harmonic_sigma: 0.0
+    noise_sigma: 5.0
+    mapper_sigma: 3.0
+
+# ---------------------------------------------------------------------------
+# Model training (scripts/train_model.py)
+# ---------------------------------------------------------------------------
+train:
+  # Train / test split ratio.
+  test_size: 0.2
+  random_state: 42
+
+  # MLflow experiment name.
+  experiment_name: tuning-estimator
+
+  # MLflow model registry name.
+  registry_name: TuningEstimator
+
+  # Optuna hyperparameter optimisation.
+  optuna:
+    n_trials: 50
+    timeout_seconds: 1800
+    sampler_seed: 42
+
+  # XGBoost hyperparameter search space (Optuna suggest ranges).
+  xgboost:
+    n_estimators_min: 100
+    n_estimators_max: 1000
+    max_depth_min: 3
+    max_depth_max: 10
+    learning_rate_min: 0.01
+    learning_rate_max: 0.3
+    subsample_min: 0.6
+    subsample_max: 1.0
+    colsample_bytree_min: 0.6
+    colsample_bytree_max: 1.0
+    min_child_weight_min: 1
+    min_child_weight_max: 10
+    reg_alpha_min: 0.0
+    reg_alpha_max: 1.0
+    reg_lambda_min: 0.0
+    reg_lambda_max: 1.0

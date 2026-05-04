@@ -1,0 +1,57 @@
+# DVC Pipeline — IDM Generative System V2
+#
+# Reproducible pipeline: dataset generation → schema validation → model training.
+# All stage parameters are externalised in params.yaml (single source of truth).
+#
+# Usage:
+#   dvc repro              — run full pipeline
+#   dvc repro generate     — run only dataset generation
+#   dvc repro validate     — run generation + validation
+#   dvc repro train        — run full pipeline including training
+#
+# Prerequisites:
+#   pip install -e ".[ml]"
+#   Spoke documents in 02-Knowledge/supporting/ (Layer 2 source of truth)
+
+stages:
+  generate:
+    cmd: python scripts/generate_dataset.py
+    params:
+      - generate
+    deps:
+      - engine/ml/dataset_generator.py
+      - engine/ml/deterministic_mapper.py
+      - engine/ml/gaussian_noise.py
+      - engine/ml/regional_profiles.py
+      - engine/ml/resonance_rules.py
+      - scripts/generate_dataset.py
+    outs:
+      - data/synthetic/dataset.parquet
+
+  validate:
+    cmd: python scripts/validate_schema.py
+    deps:
+      - data/synthetic/dataset.parquet
+      - engine/ml/dataset_schema.py
+      - scripts/validate_schema.py
+    metrics:
+      - data/synthetic/validation_report.json:
+          cache: false
+
+  train:
+    cmd: python scripts/train_model.py
+    params:
+      - train
+    deps:
+      - data/synthetic/dataset.parquet
+      - engine/ml/model_training.py
+      - scripts/train_model.py
+    outs:
+      - models/tuning_estimator:
+          persist: true
+    metrics:
+      - models/metrics.json:
+          cache: false
+    plots:
+      - models/feature_importance.json:
+          cache: false
