@@ -66,8 +66,7 @@ DATASET_SCHEMA: pa.DataFrameSchema = pa.DataFrameSchema(
             nullable=True,
             coerce=True,
             description=(
-                "Swing ratio in [0.0, 1.0]. NaN when swing is "
-                "'variable' or None in TrackSpec."
+                "Swing ratio in [0.0, 1.0]. NaN when swing is 'variable' or None in TrackSpec."
             ),
         ),
         "region": pa.Column(
@@ -78,10 +77,7 @@ DATASET_SCHEMA: pa.DataFrameSchema = pa.DataFrameSchema(
         "sub_region": pa.Column(
             checks=pa.Check.isin(list(_VALID_SUB_REGIONS)),
             nullable=True,
-            description=(
-                "Sub-region discriminator. Non-NaN only for JAPAN_IDM "
-                "(TOKYO or OSAKA)."
-            ),
+            description=("Sub-region discriminator. Non-NaN only for JAPAN_IDM (TOKYO or OSAKA)."),
         ),
         # --- Tuning ---
         "tuning_hz": pa.Column(
@@ -166,19 +162,12 @@ DATASET_SCHEMA: pa.DataFrameSchema = pa.DataFrameSchema(
         # Cross-column check: is_perturbed must equal (perturbation_idx > 0).
         pa.Check(
             lambda df: (df["is_perturbed"] == (df["perturbation_idx"] > 0)).all(),
-            error=(
-                "Metadata inconsistency: is_perturbed must be True iff "
-                "perturbation_idx > 0."
-            ),
+            error=("Metadata inconsistency: is_perturbed must be True iff perturbation_idx > 0."),
         ),
         # Cross-column check: sub_region non-NaN only for JAPAN_IDM.
         pa.Check(
-            lambda df: df.loc[
-                df["sub_region"].notna() & (df["region"] != "JAPAN_IDM")
-            ].empty,
-            error=(
-                "sub_region must be NaN for all regions except JAPAN_IDM."
-            ),
+            lambda df: df.loc[df["sub_region"].notna() & (df["region"] != "JAPAN_IDM")].empty,
+            error=("sub_region must be NaN for all regions except JAPAN_IDM."),
         ),
     ],
     description=(
@@ -187,4 +176,3 @@ DATASET_SCHEMA: pa.DataFrameSchema = pa.DataFrameSchema(
         "types, value ranges, nullability, and cross-column consistency."
     ),
 )
-

@@ -100,10 +100,7 @@ def _extract_feature_importance(
         # Fallback: use numeric indices.
         feature_names = [f"feature_{i}" for i in range(len(importances))]
 
-    return {
-        name: float(imp)
-        for name, imp in zip(feature_names, importances, strict=False)
-    }
+    return {name: float(imp) for name, imp in zip(feature_names, importances, strict=False)}
 
 
 def _get_preprocessed_feature_names(pipeline: object) -> list[str]:
@@ -228,9 +225,7 @@ def main() -> None:
     feature_names = _get_preprocessed_feature_names(best_pipeline)
     importance = _extract_feature_importance(best_pipeline, feature_names)
     if importance:
-        importance_sorted = dict(
-            sorted(importance.items(), key=lambda x: x[1], reverse=True)
-        )
+        importance_sorted = dict(sorted(importance.items(), key=lambda x: x[1], reverse=True))
         with _IMPORTANCE_PATH.open("w") as f:
             json.dump(importance_sorted, f, indent=2)
         logger.info("Feature importance written to %s", _IMPORTANCE_PATH)

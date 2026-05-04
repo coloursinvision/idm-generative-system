@@ -138,9 +138,7 @@ def extract_feature_target_columns(
         Tuple of (feature_column_names, target_column_names).
     """
     feature_cols = _CATEGORICAL_FEATURES + _NUMERIC_FEATURES
-    target_cols = ["tuning_hz", *sorted(
-        c for c in df.columns if c.startswith("freq_")
-    )]
+    target_cols = ["tuning_hz", *sorted(c for c in df.columns if c.startswith("freq_"))]
 
     # Validate presence.
     missing_features = [c for c in feature_cols if c not in df.columns]
@@ -334,9 +332,7 @@ def train(
 
         # Per-target RMSE.
         for i, col in enumerate(y_test.columns):
-            rmse = float(
-                np.sqrt(np.mean((y_test_arr[:, i] - y_pred[:, i]) ** 2))
-            )
+            rmse = float(np.sqrt(np.mean((y_test_arr[:, i] - y_pred[:, i]) ** 2)))
             metrics[f"rmse_{col}"] = rmse
 
         # Aggregate RMSE (mean across targets).
@@ -345,9 +341,7 @@ def train(
         # R² score.
         from sklearn.metrics import r2_score
 
-        metrics["r2_mean"] = float(
-            r2_score(y_test_arr, y_pred, multioutput="uniform_average")
-        )
+        metrics["r2_mean"] = float(r2_score(y_test_arr, y_pred, multioutput="uniform_average"))
 
         # --- Log to MLflow ---
         mlflow.log_params(
@@ -358,10 +352,7 @@ def train(
                 "n_train_rows": len(X_train),
                 "n_test_rows": len(X_test),
                 "target_columns": ",".join(y_test.columns),
-                **{
-                    f"xgb_{k}": v
-                    for k, v in (config.xgboost_params or {}).items()
-                },
+                **{f"xgb_{k}": v for k, v in (config.xgboost_params or {}).items()},
             }
         )
         mlflow.log_metrics(metrics)
@@ -467,9 +458,7 @@ def run_optuna_study(
             y_pred = y_pred.reshape(-1, 1)
 
         # Minimise mean RMSE across all targets.
-        rmse_per_target = np.sqrt(
-            np.mean((y_test.values - y_pred) ** 2, axis=0)
-        )
+        rmse_per_target = np.sqrt(np.mean((y_test.values - y_pred) ** 2, axis=0))
         return float(np.mean(rmse_per_target))
 
     # --- Run study ---
@@ -508,8 +497,6 @@ def run_optuna_study(
         registry_name=training_config.registry_name,
         xgboost_params=study.best_trial.params,
     )
-    best_pipeline, best_metrics = train(
-        X_train, y_train, X_test, y_test, best_config
-    )
+    best_pipeline, best_metrics = train(X_train, y_train, X_test, y_test, best_config)
 
     return best_pipeline, best_metrics, study
