@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-sklearn = pytest.importorskip("sklearn")
+pytest.importorskip("mlflow")
 
 from engine.ml.model_training import (
     OptunaConfig,
