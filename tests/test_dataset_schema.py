@@ -13,8 +13,10 @@ from __future__ import annotations
 from typing import Any, get_args
 
 import pandas as pd
-import pandera.errors
 import pytest
+
+pa = pytest.importorskip("pandera")
+import pandera.errors
 
 from engine.ml.dataset_schema import (
     _VALID_REGIONS,

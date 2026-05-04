@@ -18,6 +18,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
+sklearn = pytest.importorskip("sklearn")
+
 from engine.ml.model_training import (
     OptunaConfig,
     TrainingConfig,
