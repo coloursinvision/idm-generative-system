@@ -1,0 +1,32 @@
+{
+  "rmse_tuning_hz": 0.0,
+  "rmse_freq_bpm_harmonic": 2.983577417051384,
+  "rmse_freq_mains_fundamental": 0.0050929951453568606,
+  "rmse_freq_mains_harmonic_2": 2.920541436397766,
+  "rmse_freq_mains_harmonic_3": 2.9926742706477794,
+  "rmse_freq_mains_harmonic_4": 2.948270715489583,
+  "rmse_freq_mains_harmonic_5": 2.960318943156865,
+  "rmse_freq_mains_ref_fundamental": 0.01952058199365777,
+  "rmse_freq_mains_ref_harmonic_2": 2.306801666139114,
+  "rmse_freq_mains_ref_harmonic_3": 2.414604938121585,
+  "rmse_freq_mains_ref_harmonic_4": 2.3492634880077916,
+  "rmse_freq_mains_ref_harmonic_5": 2.3857201984358216,
+  "rmse_freq_pitch_ref": 3.1961276969785235,
+  "rmse_freq_schumann_bpm_anchor": 0.5796614941958375,
+  "rmse_freq_solfeggio_seed": 2.440788080916565,
+  "rmse_freq_sub_bass": 2.673136453604481,
+  "rmse_mean": 2.0735062735176317,
+  "r2_mean": 0.9764961315344303,
+  "best_trial_number": 23,
+  "best_trial_params": {
+    "n_estimators": 866,
+    "max_depth": 3,
+    "learning_rate": 0.08656919806850383,
+    "subsample": 0.6445220686323185,
+    "colsample_bytree": 0.8743493385302462,
+    "min_child_weight": 4,
+    "reg_alpha": 0.8886894629730265,
+    "reg_lambda": 0.84590769252419
+  },
+  "n_trials_completed": 50
+}

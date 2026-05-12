@@ -41,6 +41,7 @@ import mlflow
 import numpy as np
 import optuna
 import pandas as pd
+from mlflow.tracking import MlflowClient
 from sklearn.compose import ColumnTransformer
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.pipeline import Pipeline
@@ -356,10 +357,34 @@ def train(
             }
         )
         mlflow.log_metrics(metrics)
+
+        # --- Log artifact, register, transition to Staging ---
+        # Split log/register/transition for deterministic version handle. The
+        # combined log_model(..., registered_model_name=...) call leaves the
+        # new version at default stage "None"; V2_ROADMAP §V2.2 AC#3 requires
+        # the post-train state to be stage="Staging". Promotion to "Production"
+        # remains a manual gate (human review of Staging metrics).
         mlflow.sklearn.log_model(
             pipeline,
             artifact_path="model",
-            registered_model_name=config.registry_name,
+        )
+        model_uri = f"runs:/{run.info.run_id}/model"
+        model_version = mlflow.register_model(
+            model_uri=model_uri,
+            name=config.registry_name,
+        )
+        client = MlflowClient()
+        client.transition_model_version_stage(
+            name=config.registry_name,
+            version=model_version.version,
+            stage="Staging",
+            archive_existing_versions=False,
+        )
+        logger.info(
+            "Registered %s v%s @ Staging (run_id=%s)",
+            config.registry_name,
+            model_version.version,
+            run.info.run_id,
         )
 
         logger.info("Metrics: %s", metrics)
