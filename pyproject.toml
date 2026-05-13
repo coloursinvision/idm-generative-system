@@ -213,6 +213,8 @@ module = [
     "mlflow.*",
     "pandera",
     "pandera.*",
+    "langfuse",
+    "langfuse.*",
 ]
 ignore_missing_imports = true
 
