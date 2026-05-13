@@ -30,17 +30,22 @@ load_dotenv()
 import inspect
 import io
 import json
+import logging
+import time
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from importlib.metadata import version as pkg_version
 from pathlib import Path
 from typing import Any, Union, get_args, get_origin
 
 import numpy as np
+import pandas as pd
 import soundfile as sf
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from engine.codegen import generate_synthdef, generate_tidal
 from engine.effects import (
@@ -48,8 +53,212 @@ from engine.effects import (
     EffectChain,
     build_chain,
 )
+from engine.ml.regional_profiles import RegionCode, SubRegion
 from engine.sample_maker import SAMPLE_RATE, fm_blip, glitch_click, noise_burst
 from knowledge.rag import RAGPipeline
+
+# ---------------------------------------------------------------------------
+# Logger (used by V2.3 lifespan and elsewhere)
+# ---------------------------------------------------------------------------
+
+logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# V2.3 — Model Serving lifespan (model loaded once at startup)
+#
+# Per V2_ROADMAP §V2.3 + DECISIONS.md (S12 Fix A: TuningEstimator v1
+# manually promoted Staging → Production before this lifespan can succeed).
+#
+# Architecture (industrial-PRO substitutions over spec example):
+#   - Modern `lifespan` async context manager replaces deprecated
+#     @app.on_event("startup") shown in V2_ROADMAP §V2.3 example.
+#   - Fail-soft on model load failure: V1 endpoints continue to serve.
+#     app.state.tuning_model = None signals to the /tuning handler
+#     (Sub-stage D) to return HTTP 503.
+#   - mlflow imported conditionally — CI installs [dev] only, not [ml]
+#     extras (D-S7-01, Gotcha #17). Lifespan runs always; no-ops gracefully
+#     when mlflow unavailable.
+#   - Model metadata (run_id, dataset_dvc_hash) extracted at startup from
+#     MLflow Model Registry; cached in app.state.tuning_model_metadata.
+#     Single source of truth — no per-request registry calls.
+#   - dataset_dvc_hash sourced from MLflow run tag "dvc_dataset_hash";
+#     placeholder "unknown" with WARNING log when the tag is absent (the
+#     S12 v1 baseline run predates training-side tag logging — see
+#     TODO-S13-E for retroactive fix to engine.ml.model_training.train()).
+# ---------------------------------------------------------------------------
+
+try:
+    import mlflow
+    import pandera as pa
+    from mlflow.tracking import MlflowClient
+
+    from engine.ml.dataset_schema import InferenceSchema
+
+    _HAS_MLFLOW = True
+except ImportError:
+    _HAS_MLFLOW = False
+
+# Langfuse is in [monitoring] extras — separately gated from [ml].
+# Either can be installed independently; observability is decoupled from
+# model serving. (Decision: B + fail-open, S13 sub-stage E planning.)
+try:
+    from langfuse import Langfuse
+
+    _HAS_LANGFUSE = True
+except ImportError:
+    _HAS_LANGFUSE = False
+
+_TUNING_MODEL_REGISTRY_NAME = "TuningEstimator"
+_TUNING_MODEL_PROD_URI = "models:/TuningEstimator/Production"
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """FastAPI lifespan — load /tuning model once at startup.
+
+    Modern replacement for the deprecated ``@app.on_event("startup")``
+    pattern shown in the V2_ROADMAP §V2.3 spec example. On any failure
+    (mlflow not installed, no Production version in registry, network or
+    artefact-store error) the lifespan logs a WARNING and leaves
+    ``app.state.tuning_model = None`` — the Sub-stage D /tuning handler
+    will then return HTTP 503 Service Unavailable. V1 endpoints are
+    unaffected.
+
+    Sets two ``app.state`` attributes consumed by the /tuning handler:
+        - ``tuning_model``: the loaded ``mlflow.pyfunc.PyFuncModel`` or
+          ``None`` on failure.
+        - ``tuning_model_metadata``: dict with ``model_version`` (MLflow
+          run_id) and ``dataset_dvc_hash`` (MLflow run tag), or ``None``
+          on failure.
+    """
+    # Pre-initialise — handler relies on attributes existing.
+    app.state.tuning_model = None
+    app.state.tuning_model_metadata = None
+
+    if not _HAS_MLFLOW:
+        logger.warning(
+            "V2.3 /tuning disabled — mlflow not installed. "
+            "Install with `pip install -e '.[ml,monitoring]'` on the "
+            "production droplet."
+        )
+    else:
+        try:
+            model = mlflow.pyfunc.load_model(_TUNING_MODEL_PROD_URI)
+            client = MlflowClient()
+            versions = client.get_latest_versions(
+                name=_TUNING_MODEL_REGISTRY_NAME,
+                stages=["Production"],
+            )
+            if not versions:
+                logger.warning(
+                    "V2.3 /tuning disabled — no Production version in "
+                    "MLflow Registry for model '%s'. Promote a Staging "
+                    "version manually before this lifespan retries.",
+                    _TUNING_MODEL_REGISTRY_NAME,
+                )
+            else:
+                mv = versions[0]
+                run = client.get_run(mv.run_id)
+                dataset_dvc_hash = run.data.tags.get("dvc_dataset_hash", "unknown")
+
+                # Extract target column ordering from training-time MLflow
+                # params. The model was logged without an explicit signature
+                # (see engine.ml.model_training.train L367-370), so
+                # model.predict returns a raw np.ndarray of shape (1, n_targets)
+                # with no column metadata. We need the names to shape the
+                # /tuning response. train() logs them as a comma-separated
+                # string via mlflow.log_params({"target_columns": ...}).
+                target_columns_str = run.data.params.get("target_columns", "")
+                target_columns = target_columns_str.split(",") if target_columns_str else []
+
+                app.state.tuning_model = model
+                app.state.tuning_model_metadata = {
+                    "model_version": mv.run_id,
+                    "dataset_dvc_hash": dataset_dvc_hash,
+                    "target_columns": target_columns,
+                }
+
+                if not target_columns:
+                    logger.warning(
+                        "V2.3 /tuning loaded, but 'target_columns' param "
+                        "missing from MLflow run %s — /tuning handler will "
+                        "return HTTP 503 because response shaping requires "
+                        "column ordering.",
+                        mv.run_id,
+                    )
+
+                if dataset_dvc_hash == "unknown":
+                    logger.warning(
+                        "V2.3 /tuning loaded, but 'dvc_dataset_hash' tag "
+                        "missing from MLflow run %s — TuningResponse "
+                        "provenance field will read 'unknown'. See "
+                        "TODO-S13-E for retroactive tag addition.",
+                        mv.run_id,
+                    )
+
+                logger.info(
+                    "V2.3 /tuning ready: %s v%s @ Production "
+                    "(run_id=%s..., dvc_hash=%s, n_targets=%d)",
+                    _TUNING_MODEL_REGISTRY_NAME,
+                    mv.version,
+                    mv.run_id[:12],
+                    dataset_dvc_hash[:12] if dataset_dvc_hash != "unknown" else "unknown",
+                    len(target_columns),
+                )
+        except Exception as e:
+            logger.warning(
+                "V2.3 /tuning disabled — model load failed: %s. "
+                "V1 endpoints continue to serve normally.",
+                e,
+            )
+
+    # -----------------------------------------------------------------------
+    # Langfuse tracing client init (separate fail-soft block — observability
+    # is independent from model serving; either can succeed without the other,
+    # per decision "B + fail-open" from S13 sub-stage C planning).
+    # -----------------------------------------------------------------------
+    app.state.langfuse_client = None
+    if not _HAS_LANGFUSE:
+        logger.warning(
+            "V2.3 Langfuse tracing disabled — langfuse package not installed. "
+            "Install with `pip install -e '.[monitoring]'` on the production "
+            "droplet (or '.[ml,monitoring]' for full V2.3 stack)."
+        )
+    else:
+        try:
+            langfuse_client = Langfuse()
+            if langfuse_client.auth_check():
+                app.state.langfuse_client = langfuse_client
+                logger.info("V2.3 Langfuse tracing ready: client authenticated.")
+            else:
+                logger.warning(
+                    "V2.3 Langfuse tracing disabled — auth_check returned "
+                    "False. Verify LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY "
+                    "/ LANGFUSE_HOST env vars match an active Langfuse "
+                    "project."
+                )
+        except Exception as e:
+            logger.warning(
+                "V2.3 Langfuse tracing disabled — client init failed: %s. "
+                "Endpoint will serve without tracing.",
+                e,
+            )
+
+    yield
+
+    # SHUTDOWN — flush any buffered Langfuse events before teardown (Langfuse
+    # SDK is async / batched; short-lived apps must flush or lose events).
+    if app.state.langfuse_client is not None:
+        try:
+            app.state.langfuse_client.flush()
+        except Exception as e:
+            logger.warning("Langfuse flush on shutdown failed: %s.", e)
+
+    # mlflow.pyfunc.PyFuncModel has no close() method; GC handles the model
+    # object on app teardown.
+    logger.info("FastAPI shutdown complete")
+
 
 # ---------------------------------------------------------------------------
 # App
@@ -63,6 +272,7 @@ app = FastAPI(
         "a 10-block hardware-sourced DSP effects chain, and RAG-powered "
         "sound design advisor."
     ),
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -733,6 +943,401 @@ async def compose(req: ComposeRequest) -> dict:
         raise HTTPException(status_code=500, detail=f"RAG pipeline error: {e}") from e
 
     return result
+
+
+# ---------------------------------------------------------------------------
+# V2 — /tuning endpoint (Model Serving)
+#
+# Pydantic API contract. Implementation references:
+#   - V2_ROADMAP.md §V2.3 (authoritative spec)
+#   - DECISIONS.md D-S7-02/03/04 (feature schema), D-S3-05 (sub_region scope)
+#   - PROJECT_PROTOCOL.md §3 #11 (extra="forbid"), #16 (pandera declarative)
+#
+# Field origin (vs V2_ROADMAP v2.0):
+#   pitch_class:int[0,11]     → pitch_midi:float[0,127]   (D-S3-05, D-S7-04)
+#   swing_pct retained at API → internal swing [0,1] via /100.0 (D-S7-04)
+#   genre_profile             → region (+ sub_region for JAPAN_IDM) (D-S7-02)
+#   sample_mapping_category   → REMOVED (D-S7-03)
+#   effects_density           → REMOVED (D-S7-03)
+# ---------------------------------------------------------------------------
+
+
+class TuningRequest(BaseModel):
+    """API contract for the /tuning endpoint.
+
+    Five-field input vector matching the internal feature schema
+    materialised by Layer 5 (``dataset_generator``) and Layer 6
+    (``model_training``). The ``region`` and ``sub_region`` fields use
+    type aliases from ``engine.ml.regional_profiles`` rather than
+    hardcoded Literal unions — single source of truth, no drift risk
+    (same pattern as ``engine.ml.dataset_schema`` per D-S7-02).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    bpm: float = Field(
+        ...,
+        ge=60.0,
+        le=240.0,
+        description="Tempo in beats per minute.",
+    )
+    pitch_midi: float = Field(
+        ...,
+        ge=0.0,
+        le=127.0,
+        description=(
+            "MIDI note number (A4 = 69). Replaces pitch_class:int[0,11] "
+            "from V2_ROADMAP v2.0 (D-S3-05, D-S7-04)."
+        ),
+    )
+    swing_pct: float = Field(
+        ...,
+        ge=0.0,
+        le=100.0,
+        description=(
+            "Swing percentage [0, 100] for API ergonomics. Converted to "
+            "internal swing [0.0, 1.0] at the handler boundary "
+            "(swing = swing_pct / 100.0) per D-S7-04 before model.predict."
+        ),
+    )
+    region: RegionCode = Field(
+        ...,
+        description=(
+            "Regional profile identifier. Mirrors the RegionCode type "
+            "alias in engine/ml/regional_profiles.py (D-S7-02). Renamed "
+            "from genre_profile (V2_ROADMAP v2.0)."
+        ),
+    )
+    sub_region: SubRegion | None = Field(
+        default=None,
+        description=(
+            "Sub-region discriminator. Required when region == "
+            "'JAPAN_IDM', MUST be None otherwise (D-S3-05, D-S7-02). "
+            "Cross-field validation enforced by _validate_sub_region "
+            "below; pandera InferenceSchema (Sub-stage B) provides "
+            "DataFrame-level defence in depth."
+        ),
+    )
+
+    @model_validator(mode="after")
+    def _validate_sub_region(self) -> TuningRequest:
+        """Cross-field rule: sub_region scope tied to JAPAN_IDM.
+
+        Pydantic v2 wraps the raised ``ValueError`` into a
+        ``ValidationError``; FastAPI surfaces it as HTTP 422.
+        """
+        if self.region == "JAPAN_IDM" and self.sub_region is None:
+            msg = "sub_region required when region == 'JAPAN_IDM'"
+            raise ValueError(msg)
+        if self.region != "JAPAN_IDM" and self.sub_region is not None:
+            msg = "sub_region must be None when region != 'JAPAN_IDM'"
+            raise ValueError(msg)
+        return self
+
+
+class ResonantPoint(BaseModel):
+    """A single resonant frequency point with provenance and confidence.
+
+    Variable-cardinality element of ``TuningResponse.resonant_points``.
+    Mirrors the ``(hz, label, confidence)`` shape of the internal
+    ``ResonantPoint`` dataclass produced by
+    ``engine.ml.deterministic_mapper``, in API-serialisable form.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    hz: float = Field(
+        ...,
+        gt=0.0,
+        description="Frequency in Hertz. Must be positive.",
+    )
+    label: str = Field(
+        ...,
+        min_length=1,
+        description=(
+            "Provenance tag — e.g. 'Earth resonance 2x', 'Solfeggio MI', 'mains_hum_50hz_h4'."
+        ),
+    )
+    confidence: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+        description="Model confidence in [0.0, 1.0].",
+    )
+
+
+class TuningResponse(BaseModel):
+    """API response from the /tuning endpoint.
+
+    Returns the predicted A4 tuning reference plus a variable-cardinality
+    list of resonant frequency points. Cardinality of ``resonant_points``
+    corresponds to the non-NaN ``freq_*`` columns in the trained model's
+    output schema, which varies per region (per V2_ROADMAP §V2.1).
+
+    ``protected_namespaces=()`` is set explicitly to allow the
+    ``model_version`` field name (Pydantic v2 reserves the ``model_``
+    prefix by default). The field name is locked by V2_ROADMAP §V2.3
+    spec — we permit it here without renaming.
+    """
+
+    model_config = ConfigDict(extra="forbid", protected_namespaces=())
+
+    tuning_hz: float = Field(
+        ...,
+        gt=0.0,
+        description=(
+            "A4 reference frequency selected by the model. Discrete "
+            "value (typically 432.0 or 440.0) per D-S5-01."
+        ),
+    )
+    resonant_points: list[ResonantPoint] = Field(
+        ...,
+        description=(
+            "Resonant frequency points. Variable cardinality per region "
+            "(NOT fixed-8 as in V2_ROADMAP v2.0); count corresponds to "
+            "non-NaN freq_* columns in the trained model output. Ranked "
+            "by confidence descending."
+        ),
+    )
+    model_version: str = Field(
+        ...,
+        description=(
+            "MLflow run_id of the loaded model. Populated from "
+            "app.state.tuning_model_metadata at request time "
+            "(Sub-stage C — lifespan)."
+        ),
+    )
+    dataset_dvc_hash: str = Field(
+        ...,
+        description=(
+            "DVC content hash of the training dataset. Provenance "
+            "signal for reproducibility — pairs ``model_version`` with "
+            "the exact data that produced it."
+        ),
+    )
+    inference_latency_ms: float = Field(
+        ...,
+        ge=0.0,
+        description=(
+            "Wall-clock latency of the model.predict call only "
+            "(excludes Pydantic validation, pandera validation, "
+            "response shaping, and network I/O)."
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# V2.3 — /tuning endpoint handler (Sub-stage D)
+#
+# 5-step flow per V2_ROADMAP §V2.3:
+#   1. 503 gate — model loaded? (fail-soft from lifespan honored here)
+#   2. Boundary conversion swing_pct → swing (D-S7-04)
+#   3. Build inference DataFrame; pandera InferenceSchema validates
+#   4. NaN sentinel for sub_region (mirror prepare_data L275); predict
+#   5. Response shaping — scalar tuning_hz + variable list[ResonantPoint]
+#
+# Registration is gated on _HAS_MLFLOW. When [ml] extras are absent (CI /
+# local dev without `pip install .[ml,monitoring]`), /tuning is NOT
+# registered and FastAPI returns 404 for that path. Production droplet
+# always has [ml] installed, so 404 is unreachable there.
+# ---------------------------------------------------------------------------
+
+# Minimum hz to keep as resonant point in response. Filters out XGBoost
+# regression predictions for "absent" freq_* columns — those train as 0.0
+# via engine.ml.model_training.prepare_data().fillna(0.0) and predict as
+# low-magnitude noise floats (~ ±1.0). Threshold of 1.0 Hz sits in the gap
+# between prediction noise and any legitimate MASTER_DATASET resonant
+# point (Schumann fundamental ~7.83 Hz, Drexciya sub-bass minimum ~16 Hz).
+# Reference: DATASET_SCHEMA freq_* check is pa.Check.gt(0); legitimate
+# values are always >> 1.
+_RESONANT_POINT_MIN_HZ: float = 1.0
+
+# Placeholder confidence value for resonant point predictions. XGBoost
+# regression does NOT natively expose prediction confidence; quantile
+# regression / conformal prediction would be the proper signal.
+# See TODO-S13-F for that future iteration. Static 1.0 documents the gap
+# transparently rather than fabricating false uncertainty.
+_RESONANT_POINT_DEFAULT_CONFIDENCE: float = 1.0
+
+
+if _HAS_MLFLOW:
+
+    @app.post("/tuning", response_model=TuningResponse)
+    async def tuning(request: TuningRequest) -> TuningResponse:
+        """Predict A4 tuning + resonant frequency points for a generative context.
+
+        Five-step flow per V2_ROADMAP §V2.3. Returns a fully shaped
+        :class:`TuningResponse` on success; raises HTTPException(503) when
+        the model is unavailable (lifespan fail-soft path) and
+        HTTPException(422) on pandera schema violations from the inference
+        DataFrame (defence in depth — TuningRequest @model_validator
+        catches the same case earlier).
+        """
+        # Step 1 — 503 gate. Lifespan fail-soft sets tuning_model = None when
+        # MLflow Registry / S3 / network blip prevents model load. Handler
+        # honors that signal and returns Service Unavailable.
+        if app.state.tuning_model is None:
+            raise HTTPException(
+                status_code=503,
+                detail=(
+                    "Tuning model unavailable — lifespan failed to load the "
+                    "model at startup. Check server logs for the underlying "
+                    "error; restart the application once resolved."
+                ),
+            )
+
+        target_columns: list[str] = app.state.tuning_model_metadata.get("target_columns", [])
+        if not target_columns:
+            # Lifespan logged a WARNING at startup. Cannot shape response
+            # without column ordering — fail closed rather than guess.
+            raise HTTPException(
+                status_code=503,
+                detail=(
+                    "Tuning model metadata incomplete — target_columns "
+                    "missing from MLflow run params. Re-train so "
+                    "engine.ml.model_training.train() logs target_columns "
+                    "(currently it does — see L355 — so a missing value "
+                    "indicates registry corruption)."
+                ),
+            )
+
+        # Step 2 — boundary conversion (D-S7-04). External API speaks
+        # swing_pct in [0, 100]; internal model speaks swing in [0.0, 1.0].
+        payload = request.model_dump()
+        payload["swing"] = payload.pop("swing_pct") / 100.0
+
+        # -------------------------------------------------------------------
+        # Langfuse trace span — opened here (after 503 gates, after payload
+        # built) so the trace captures only valid-shape requests. Fail-open
+        # at every hook (start, update, end) — Langfuse SDK promises its own
+        # fail-open semantics, but we add defense-in-depth wrappers because
+        # observability MUST NOT block business path (decision B + fail-open).
+        # -------------------------------------------------------------------
+        trace_input = {
+            "bpm": payload["bpm"],
+            "pitch_midi": payload["pitch_midi"],
+            "swing_pct": request.swing_pct,
+            "swing_internal": payload["swing"],
+            "region": payload["region"],
+            "sub_region": payload["sub_region"],
+        }
+
+        trace_span = None
+        if app.state.langfuse_client is not None:
+            try:
+                trace_span = app.state.langfuse_client.start_observation(
+                    as_type="span",
+                    name="POST /tuning",
+                    input=trace_input,
+                )
+            except Exception as e:
+                logger.warning(
+                    "Langfuse span start failed: %s. Request continues without trace.",
+                    e,
+                )
+                trace_span = None
+
+        try:
+            # Step 3 — build inference DataFrame; pandera InferenceSchema
+            # validate. Pydantic @model_validator already enforced the
+            # sub_region cross-field rule at request parsing; this is defence
+            # in depth at the DataFrame level.
+            df_validate = pd.DataFrame([payload])
+            try:
+                InferenceSchema.validate(df_validate)
+            except (pa.errors.SchemaError, pa.errors.SchemaErrors) as e:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Inference schema violation: {e}",
+                ) from e
+
+            # Step 4 — NaN sentinel for sub_region (mirror prepare_data L275
+            # in engine.ml.model_training); model.predict with latency timing.
+            # The OrdinalEncoder in the trained pipeline expects "__NaN__" as
+            # the sentinel category for missing sub_region; pandera tolerates
+            # None (nullable=True), so we substitute AFTER schema validation.
+            df_predict = df_validate.copy()
+            df_predict["sub_region"] = df_predict["sub_region"].fillna("__NaN__")
+
+            t0 = time.monotonic()
+            raw_predictions = app.state.tuning_model.predict(df_predict)
+            latency_ms = (time.monotonic() - t0) * 1000.0
+
+            # Step 5 — response shaping. raw_predictions is np.ndarray of
+            # shape (1, n_targets) because the model was logged without an
+            # mlflow signature (see engine.ml.model_training.train L367-370).
+            # Coerce to DataFrame using target_columns captured at lifespan
+            # time.
+            predictions_2d = (
+                raw_predictions
+                if hasattr(raw_predictions, "ndim") and raw_predictions.ndim == 2
+                else np.asarray(raw_predictions).reshape(1, -1)
+            )
+            predictions_df = pd.DataFrame(predictions_2d, columns=target_columns)
+
+            tuning_hz = float(predictions_df["tuning_hz"].iloc[0])
+
+            resonant_points: list[ResonantPoint] = []
+            for col in target_columns:
+                if not col.startswith("freq_"):
+                    continue
+                hz = float(predictions_df[col].iloc[0])
+                if hz < _RESONANT_POINT_MIN_HZ:
+                    # XGBoost regression for "absent" freq_* targets (trained
+                    # as 0.0) predicts low-magnitude noise; filter per
+                    # _RESONANT_POINT_MIN_HZ rationale above.
+                    continue
+                resonant_points.append(
+                    ResonantPoint(
+                        hz=hz,
+                        label=col.removeprefix("freq_"),
+                        confidence=_RESONANT_POINT_DEFAULT_CONFIDENCE,
+                    )
+                )
+
+            # Rank by confidence descending; tie-break by hz ascending for
+            # deterministic output. With placeholder confidence=1.0 for all
+            # points (TODO-S13-F), ordering reduces to hz ascending. When
+            # real confidence is wired (quantile regression / conformal
+            # prediction), this primary sort key takes effect naturally.
+            resonant_points.sort(key=lambda rp: (-rp.confidence, rp.hz))
+
+            response = TuningResponse(
+                tuning_hz=tuning_hz,
+                resonant_points=resonant_points,
+                model_version=app.state.tuning_model_metadata["model_version"],
+                dataset_dvc_hash=app.state.tuning_model_metadata["dataset_dvc_hash"],
+                inference_latency_ms=latency_ms,
+            )
+
+            # Trace update with output + metadata (fail-open).
+            if trace_span is not None:
+                try:
+                    trace_span.update(
+                        output={
+                            "tuning_hz": tuning_hz,
+                            "n_resonant_points": len(resonant_points),
+                            "inference_latency_ms": latency_ms,
+                        },
+                        metadata={
+                            "model_version": app.state.tuning_model_metadata["model_version"],
+                            "dataset_dvc_hash": app.state.tuning_model_metadata["dataset_dvc_hash"],
+                            "n_targets": len(target_columns),
+                        },
+                    )
+                except Exception as e:
+                    logger.warning("Langfuse span update failed: %s.", e)
+
+            return response
+        finally:
+            # End span unconditionally (fail-open). The trace will record
+            # latency even if the response shaping raised an exception above —
+            # useful for production debugging.
+            if trace_span is not None:
+                try:
+                    trace_span.end()
+                except Exception as e:
+                    logger.warning("Langfuse span end failed: %s.", e)
 
 
 # ---------------------------------------------------------------------------

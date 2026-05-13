@@ -344,6 +344,44 @@ def train(
 
         metrics["r2_mean"] = float(r2_score(y_test_arr, y_pred, multioutput="uniform_average"))
 
+        # --- Per-region RMSE diagnostic (S13 housekeeping Item 4/4) ---
+        # Stratified RMSE breakdown by region — V2_ROADMAP v3.0 §V2.2 lists
+        # "RMSE per-region (6 stratified subsets) ... at first-run review" as
+        # a recommended diagnostic. S12 baseline produced aggregate metrics
+        # only; from this run forward we log both aggregate-per-region (flat
+        # metrics, visible in MLflow UI metrics tab) and per-target × region
+        # (JSON artefact, full breakdown).
+        #
+        # Aggregate-per-region is mean RMSE across all targets restricted to
+        # rows where X_test["region"] == <region>. Per-region × per-target is
+        # the full 6 × n_targets matrix.
+        per_region_rmse_flat: dict[str, float] = {}
+        per_region_per_target_rmse: dict[str, dict[str, float]] = {}
+
+        region_series = X_test["region"]
+        for region in sorted(region_series.unique()):
+            mask = (region_series == region).to_numpy()
+            n_rows = int(mask.sum())
+            if n_rows == 0:
+                continue
+
+            y_test_region = y_test_arr[mask]
+            y_pred_region = y_pred[mask]
+
+            per_target_rmse: dict[str, float] = {}
+            for i, col in enumerate(y_test.columns):
+                rmse = float(np.sqrt(np.mean((y_test_region[:, i] - y_pred_region[:, i]) ** 2)))
+                per_target_rmse[col] = rmse
+            per_region_per_target_rmse[region] = {
+                "n_test_rows": n_rows,
+                **per_target_rmse,
+            }
+
+            # Aggregate-per-region (mean across all targets for this region).
+            agg = float(np.mean(list(per_target_rmse.values())))
+            per_region_rmse_flat[f"rmse_region_{region}"] = agg
+            metrics[f"rmse_region_{region}"] = agg
+
         # --- Log to MLflow ---
         mlflow.log_params(
             {
@@ -357,6 +395,9 @@ def train(
             }
         )
         mlflow.log_metrics(metrics)
+        # Per-region × per-target breakdown as a JSON artefact (too granular
+        # for flat metrics view but useful for offline diagnosis).
+        mlflow.log_dict(per_region_per_target_rmse, "per_region_rmse.json")
 
         # --- Log artifact, register, transition to Staging ---
         # Split log/register/transition for deterministic version handle. The
