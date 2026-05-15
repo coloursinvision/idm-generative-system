@@ -71,3 +71,8 @@ frontend/node_modules/
 # Playwright
 frontend/playwright-report/
 frontend/test-results/
+frontend/tsconfig.tsbuildinfo
+
+# Session backup files
+*.bak-S*
+.dvc/config.local.bak-*

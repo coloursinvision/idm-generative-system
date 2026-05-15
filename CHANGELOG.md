@@ -6,6 +6,67 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.6.1] — 2026-04-11 — EP-133 Group State Persistence (Complete Fix)
+
+### Fixed
+
+- **EP-133 Guide: complete per-group state persistence** (`frontend/src/components/guide/EP133Guide.tsx`, `frontend/src/hooks/useSequencer.ts`) — Full rewrite of the group state management layer. The previous partial fix (v0.5.2) preserved only step patterns via `groupStepsRef` and only `initialSteps` in `initTracks`. Three categories of state were still lost on every group switch: (1) loaded `AudioBuffer` references — samples had to be re-fetched after returning to a group; (2) per-group timing resolution — switching away from a group and back reset timing to `"1/16"` regardless of the user's selection; (3) the double-fire bug — `initTracks` was listed in the `useEffect` dependency array; because `initTracks` identity changes with `numSteps`, any timing change re-triggered the effect and wiped the active group's pattern.
+
+  **Root cause analysis (complete):**
+  - `useEffect([activeGroup, initTracks])` — `initTracks` in dep array caused effect to re-fire on timing change (identity shift via `numSteps` → `useCallback` deps), destroying the active group's pattern mid-session.
+  - No buffer persistence — `initTracks` always initialised `buffer: null`; loaded `AudioBuffer` references were discarded on group switch.
+  - No timing persistence — `timing` was a single `useState` shared across all 4 groups.
+  - Stale closure risk in `switchGroup` — snapshot of departing group's state could have used stale `tracks` values if `tracks` changed between the last render and the switch callback execution.
+
+  **Fix — `useSequencer.ts`:**
+  - `initTracks` extended with optional third parameter `initialBuffers?: (AudioBuffer | null)[]`. Initialises `buffer` field from saved references when restoring a group, eliminating the need to re-fetch samples.
+  - Guard on `initialSteps?.[i]?.length > 0` prevents accidental use of empty arrays as valid step data.
+
+  **Fix — `EP133Guide.tsx`:**
+  - `GroupState` interface: `{ steps: boolean[][], buffers: (AudioBuffer | null)[], timing: TimingMode }`.
+  - `groupStates: useRef<Record<Group, GroupState>>` — persistent store for all 4 groups. Pre-initialised with correctly-sized step arrays (default timing `1/16`). Mutations do not trigger re-renders.
+  - `liveDataRef: useRef<{ tracks, timing }>` — updated on every render via `useEffect([tracks, timing])`. `switchGroup` reads from this ref to snapshot departing group state, eliminating the stale closure.
+  - `switchGroup` saves `{ steps, buffers, timing }` to `groupStates.current[activeGroup]` before `setActiveGroup(group)`.
+  - `useEffect([activeGroup])` — dep array reduced to `[activeGroup]` only. Intentional omission of `initTracks` documented with `eslint-disable-next-line` comment. Restores `timing` (via `setTiming`) and tracks (via `initTracks` with saved steps + buffers) in a single React 18 batched render.
+  - `handleTimingChange` — mirrors new timing value into `groupStates.current[activeGroup].timing` immediately on user interaction, ensuring persistence on subsequent group switch.
+
+  **Behaviour after fix:** Switching between groups A/B/C/D preserves step patterns, loaded audio buffers, and timing resolution independently for each group. Samples do not need to be reloaded after returning to a previously-configured group.
+
+### Pending — Production Deployment
+
+The fix is committed on `develop` (commit `65bf69b`). It has **not yet been deployed to production** (`https://idm.coloursinvision.ai`). Deployment requires:
+1. `develop` → `main` PR merge
+2. CI build → GHCR push (automatic on `main`)
+3. Droplet: `cd /opt/idm && docker compose pull && docker compose up -d`
+
+---
+
+## [0.6.0] — 2026-04-10 — Frontend Production Deployment
+
+### Changed
+
+- **Dockerfile — 3-stage build** — Extended from 2-stage (Python builder + runtime) to 3-stage: `frontend-builder` (Node 22-slim, `npm ci && npm run build`) → `python-builder` (unchanged) → `runtime` (copies venv + `dist/` to `/app/static`). Frontend source from `frontend/` subdirectory. Workers hardcoded to `1` (OOM constraint on 2 GiB droplet).
+
+- **`api/main.py` — StaticFiles mount + SPA catch-all** — `StaticFiles` serves Vite hashed assets from `/app/static/assets/`. Catch-all `GET /{path:path}` returns `index.html` for client-side routing. Conditional on `static/` directory existence — no-op in development. Zero changes to existing API routes.
+
+### Added
+
+- **`frontend/public/.gitkeep`** — Git does not track empty directories. Required for `COPY frontend/public/ ./public/` in Dockerfile.
+
+### Fixed
+
+- **`frontend/package-lock.json` — lockfile sync** — Lockfile was out of sync with `package.json` (missing esbuild 0.28.0 transitive deps). Regenerated via `npm install`.
+
+- **Import sort violation (ruff I001)** — New imports (`Path`, `StaticFiles`, `FileResponse`) added in incorrect order. Auto-fixed via `ruff check --fix`.
+
+### Infrastructure
+
+- **Nginx vhost `idm.coloursinvision.ai`** — Added `location /api/` block with `proxy_pass http://127.0.0.1:8000/;` (trailing slash strips `/api` prefix). Matches Vite dev proxy rewrite rule (`vite.config.ts`). Frontend `fetch('/api/health')` reaches FastAPI at `/health`.
+
+- **Tailscale DNS workaround** — `nameserver 8.8.8.8` appended to `/etc/resolv.conf` on droplet. Tailscale DNS resolver (`100.100.100.100`) could not resolve `ghcr.io`. Temporary fix — overwritten on Tailscale restart.
+
+---
+
 ## [0.5.2] — 2026-04-08 — Security Patches + V1 Hardening
 
 ### Fixed
@@ -14,7 +75,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - **`ComposeResponse.reasoning` TypeScript type gap** (`frontend/src/types/index.ts`) — `reasoning?: string` was absent from the `ComposeResponse` interface. The runtime fix above referenced `result.reasoning`, which TypeScript rejected (`TS2339: Property 'reasoning' does not exist`). Field added as optional to maintain backward compatibility with backend error paths that may omit it. Surfaced by `tsc --noEmit` run after the runtime fix.
 
-- **EP-133 Guide: group step patterns lost on group switch** (`frontend/src/components/guide/EP133Guide.tsx`, `frontend/src/hooks/useSequencer.ts`) — Switching between Groups A/B/C/D cleared all active pad steps in the departing group. Root cause: `initTracks()` always initialised `steps: Array(numSteps).fill(false)` with no per-group state persistence. Fix: `useSequencer.initTracks` extended with optional `initialSteps?: boolean[][]` parameter. `EP133Guide` uses `groupStepsRef` (`useRef<Record<Group, boolean[][]>>`) to save and restore step patterns per group on switch. `PO33Guide` is unaffected — backward-compatible signature change.
+- **EP-133 Guide: group step patterns lost on group switch** (`frontend/src/components/guide/EP133Guide.tsx`, `frontend/src/hooks/useSequencer.ts`) — Partial fix: step pattern persistence only. `initTracks` extended with `initialSteps?: boolean[][]`. `groupStepsRef` saves and restores step arrays per group. Buffer and timing persistence, and the double-fire dep array bug, were not addressed in this release — resolved in full in v0.6.1.
 
 - **Playwright webkit clipboard skip** (`frontend/e2e/codegen.spec.ts`) — T-08.6 (COPY button clipboard test) skipped on Firefox only. WebKit Playwright context also does not support `grantPermissions(["clipboard-write"])`. Skip condition extended to `browserName === "firefox" || browserName === "webkit"`.
 

@@ -1,0 +1,129 @@
+schema: '2.0'
+stages:
+  generate:
+    cmd: python scripts/generate_dataset.py
+    deps:
+    - path: engine/ml/dataset_generator.py
+      hash: md5
+      md5: 7b14f62b24916d6c4502f54a24d5e822
+      size: 13614
+    - path: engine/ml/deterministic_mapper.py
+      hash: md5
+      md5: 9ffac50e6aba7ece7c1933bd9658a93c
+      size: 17210
+    - path: engine/ml/gaussian_noise.py
+      hash: md5
+      md5: b51d6bf3ecdde7e9eb621aabb3e1407b
+      size: 14761
+    - path: engine/ml/regional_profiles.py
+      hash: md5
+      md5: 13129c34db77c35d4c1eacc6bc52ce36
+      size: 23127
+    - path: engine/ml/resonance_rules.py
+      hash: md5
+      md5: f1560e187961f2f62a6439947cf45ec5
+      size: 16817
+    - path: scripts/generate_dataset.py
+      hash: md5
+      md5: fcb4fe5adfb44ca8d95f8d739a902587
+      size: 6509
+    params:
+      params.yaml:
+        generate:
+          n_perturbations: 10
+          master_seed: 42
+          specs_per_region: 150
+          output_path: data/synthetic/dataset.parquet
+          bpm_min: 60.0
+          bpm_max: 200.0
+          pitch_midi_min: 36
+          pitch_midi_max: 96
+          perturbation:
+            swing_sigma: 0.05
+            reverb_sigma: 50.0
+            saturation_sigma: 0.0
+            harmonic_sigma: 0.0
+            noise_sigma: 5.0
+            mapper_sigma: 3.0
+    outs:
+    - path: data/synthetic/dataset.parquet
+      hash: md5
+      md5: 5761061f669ed8e6724321231fc8cbdd
+      size: 1047904
+  validate:
+    cmd: python scripts/validate_schema.py
+    deps:
+    - path: data/synthetic/dataset.parquet
+      hash: md5
+      md5: 5761061f669ed8e6724321231fc8cbdd
+      size: 1047904
+    - path: engine/ml/dataset_schema.py
+      hash: md5
+      md5: bd5601845502ae31506a858f81c6728b
+      size: 6848
+    - path: scripts/validate_schema.py
+      hash: md5
+      md5: 1c2a25d8f8615a8f728196463a13acb7
+      size: 4114
+    outs:
+    - path: data/synthetic/validation_report.json
+      hash: md5
+      md5: accd9c59045385df8c3b0c247ec9ef72
+      size: 879
+  train:
+    cmd: python scripts/train_model.py
+    deps:
+    - path: data/synthetic/dataset.parquet
+      hash: md5
+      md5: 5761061f669ed8e6724321231fc8cbdd
+      size: 1047904
+    - path: engine/ml/model_training.py
+      hash: md5
+      md5: a13f842f0f0a0e61aad250b9ceefd5e7
+      size: 17545
+    - path: scripts/train_model.py
+      hash: md5
+      md5: 9e51262fffb45808ac37504435b8d6d2
+      size: 7541
+    params:
+      params.yaml:
+        train:
+          test_size: 0.2
+          random_state: 42
+          experiment_name: tuning-estimator
+          registry_name: TuningEstimator
+          optuna:
+            n_trials: 50
+            timeout_seconds: 1800
+            sampler_seed: 42
+          xgboost:
+            n_estimators_min: 100
+            n_estimators_max: 1000
+            max_depth_min: 3
+            max_depth_max: 10
+            learning_rate_min: 0.01
+            learning_rate_max: 0.3
+            subsample_min: 0.6
+            subsample_max: 1.0
+            colsample_bytree_min: 0.6
+            colsample_bytree_max: 1.0
+            min_child_weight_min: 1
+            min_child_weight_max: 10
+            reg_alpha_min: 0.0
+            reg_alpha_max: 1.0
+            reg_lambda_min: 0.0
+            reg_lambda_max: 1.0
+    outs:
+    - path: models/feature_importance.json
+      hash: md5
+      md5: 73c66907fdce07e501b3769ccef620be
+      size: 193
+    - path: models/metrics.json
+      hash: md5
+      md5: 7bb8ccf949c9d37c091d71245d002be5
+      size: 1227
+    - path: models/tuning_estimator
+      hash: md5
+      md5: 7165b549d4a2c3100f67a5737dfc1faa.dir
+      size: 15292159
+      nfiles: 5

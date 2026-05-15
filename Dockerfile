@@ -61,7 +61,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Install deps first (cache layer — only rebuilds when deps change).
 COPY pyproject.toml README.md ./
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir ".[dev]"
+    pip install --no-cache-dir ".[ml,monitoring]"
 
 # ---------------------------------------------------------------------------
 # Stage 3 — Runtime

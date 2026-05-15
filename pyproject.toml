@@ -11,7 +11,7 @@ build-backend = "hatchling.build"
 # ---------------------------------------------------------------------------
 [project]
 name = "idm-generative-system"
-version = "0.2.2"
+version = "0.7.0"
 description = "Generative audio engine for experimental IDM production — DSP modeling, algorithmic composition, and RAG-augmented sound design."
 readme = "README.md"
 license = "AGPL-3.0-or-later"
@@ -53,6 +53,9 @@ dependencies = [
 
     # Data (engine/generator.py — pattern DataFrames)
     "pandas>=2.0.0",
+    # Knowledge layer (engine/ml — profile spoke parsing)
+    "python-frontmatter>=1.1.0",
+    "PyYAML>=6.0.0",
 ]
 
 [project.optional-dependencies]
@@ -72,8 +75,12 @@ dev = [
 ml = [
     "scikit-learn>=1.4.0",
     "xgboost>=2.0.0",
-    "mlflow>=2.11.0",
+    "mlflow>=2.12.0",
     "pandas>=2.0.0",
+    "dvc[s3]>=3.0.0",
+    "pandera>=0.19.0",
+    "optuna>=3.6.0",
+    "boto3>=1.34.0",
 ]
 
 # LLM observability (V2)
@@ -146,6 +153,7 @@ ignore = [
     "S101",   # assert in tests
     "S311",   # pseudo-random in tests
     "N803",   # EffectClass, MockKB etc. — test parametrize convention
+    "N806",   # X, X_train, X_test — scikit-learn naming convention
 ]
 "engine/effects/*.py" = [
     "N803",   # DSP convention (Q, N, etc.)
@@ -197,6 +205,16 @@ module = [
     "pandas",
     "matplotlib",
     "matplotlib.*",
+    "sklearn.*",
+    "xgboost",
+    "optuna",
+    "optuna.*",
+    "mlflow",
+    "mlflow.*",
+    "pandera",
+    "pandera.*",
+    "langfuse",
+    "langfuse.*",
 ]
 ignore_missing_imports = true
 
