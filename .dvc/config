@@ -1,0 +1,5 @@
+[core]
+    remote = do-spaces
+['remote "do-spaces"']
+    url = s3://idm-generative-system/dvc
+    endpointurl = https://ams3.digitaloceanspaces.com

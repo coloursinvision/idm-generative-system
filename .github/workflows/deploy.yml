@@ -1,0 +1,45 @@
+# =============================================================================
+# IDM Generative System — Continuous Deployment
+# Triggers after CI passes on main. SSHes into the production droplet,
+# pulls the latest GHCR image, and restarts the stack.
+# =============================================================================
+
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: "Deploy to production"
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script_stop: true
+          script: |
+            echo "=== IDM Deploy $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
+            cd /opt/idm
+            docker compose pull idm-api
+            docker compose up -d idm-api
+            docker image prune -f
+            echo "=== Health check ==="
+            sleep 10
+            curl -sf http://localhost:8000/health || exit 1
+            echo ""
+            echo "=== Deploy complete ==="
