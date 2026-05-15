@@ -102,9 +102,7 @@ class TestHappyPath:
         assert body["extracted"]["sub_region"] is None
         assert body["model_version"] == api_main.rag.model
 
-    def test_happy_path_japan_idm_tokyo(
-        self, client: Any, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_happy_path_japan_idm_tokyo(self, client: Any, monkeypatch: pytest.MonkeyPatch) -> None:
         """JAPAN_IDM + TOKYO cross-field passes."""
         from api import main as api_main
 
@@ -162,9 +160,7 @@ class TestExtractionFailures:
         def raise_value_error(text: str) -> dict[str, Any]:
             raise ValueError("bpm out of range [60, 240]: 999")
 
-        monkeypatch.setattr(
-            api_main.rag, "extract_tuning_request", raise_value_error
-        )
+        monkeypatch.setattr(api_main.rag, "extract_tuning_request", raise_value_error)
 
         response = client.post(
             "/tuning/extract",
@@ -182,9 +178,7 @@ class TestExtractionFailures:
         def raise_upstream(text: str) -> dict[str, Any]:
             raise RuntimeError("OpenAI service unreachable")
 
-        monkeypatch.setattr(
-            api_main.rag, "extract_tuning_request", raise_upstream
-        )
+        monkeypatch.setattr(api_main.rag, "extract_tuning_request", raise_upstream)
 
         response = client.post(
             "/tuning/extract",
@@ -206,9 +200,7 @@ class TestExtractionFailures:
         bad["region"] = "JAPAN_IDM"
         bad["sub_region"] = None  # invalid combo
 
-        monkeypatch.setattr(
-            api_main.rag, "extract_tuning_request", lambda text: bad
-        )
+        monkeypatch.setattr(api_main.rag, "extract_tuning_request", lambda text: bad)
 
         response = client.post(
             "/tuning/extract",

@@ -448,21 +448,16 @@ class RAGPipeline:
             payload = json.loads(text)
         except json.JSONDecodeError as e:
             raise ValueError(
-                f"GPT-4o returned invalid JSON: {e}. "
-                f"Raw output (first 500 chars): {raw[:500]}"
+                f"GPT-4o returned invalid JSON: {e}. Raw output (first 500 chars): {raw[:500]}"
             ) from e
 
         if not isinstance(payload, dict):
-            raise ValueError(
-                f"GPT-4o returned {type(payload).__name__}, expected dict."
-            )
+            raise ValueError(f"GPT-4o returned {type(payload).__name__}, expected dict.")
 
         required = {"bpm", "pitch_midi", "swing_pct", "region", "sub_region"}
         missing = required - payload.keys()
         if missing:
-            raise ValueError(
-                f"GPT-4o extraction missing required keys: {sorted(missing)}"
-            )
+            raise ValueError(f"GPT-4o extraction missing required keys: {sorted(missing)}")
 
         valid_regions = {
             "DETROIT_FIRST_WAVE",
@@ -484,35 +479,27 @@ class RAGPipeline:
                 f"pitch_midi must be a number, got {type(payload['pitch_midi']).__name__}"
             )
         if not 0.0 <= float(payload["pitch_midi"]) <= 127.0:
-            raise ValueError(
-                f"pitch_midi out of range [0, 127]: {payload['pitch_midi']}"
-            )
+            raise ValueError(f"pitch_midi out of range [0, 127]: {payload['pitch_midi']}")
 
         if not isinstance(payload["swing_pct"], int | float):
             raise ValueError(
                 f"swing_pct must be a number, got {type(payload['swing_pct']).__name__}"
             )
         if not 0.0 <= float(payload["swing_pct"]) <= 100.0:
-            raise ValueError(
-                f"swing_pct out of range [0, 100]: {payload['swing_pct']}"
-            )
+            raise ValueError(f"swing_pct out of range [0, 100]: {payload['swing_pct']}")
 
         if payload["region"] not in valid_regions:
             raise ValueError(
-                f"region must be one of {sorted(valid_regions)}, "
-                f"got {payload['region']!r}"
+                f"region must be one of {sorted(valid_regions)}, got {payload['region']!r}"
             )
 
         if payload["sub_region"] not in valid_sub_regions:
             raise ValueError(
-                f"sub_region must be 'TOKYO', 'OSAKA', or null, "
-                f"got {payload['sub_region']!r}"
+                f"sub_region must be 'TOKYO', 'OSAKA', or null, got {payload['sub_region']!r}"
             )
 
         if payload["region"] == "JAPAN_IDM" and payload["sub_region"] is None:
-            raise ValueError(
-                "sub_region must be 'TOKYO' or 'OSAKA' when region == 'JAPAN_IDM'"
-            )
+            raise ValueError("sub_region must be 'TOKYO' or 'OSAKA' when region == 'JAPAN_IDM'")
         if payload["region"] != "JAPAN_IDM" and payload["sub_region"] is not None:
             raise ValueError(
                 f"sub_region must be null when region != 'JAPAN_IDM' "
