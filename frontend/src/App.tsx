@@ -7,6 +7,7 @@ import { GeneratorPanel } from "./components/generator/GeneratorPanel";
 import { PO33Guide } from "./components/guide/PO33Guide";
 import { EP133Guide } from "./components/guide/EP133Guide";
 import { CodegenPanel } from "./components/codegen";
+import { TuningPanel } from "./components/tuning";
 import { CodegenPopout } from "./components/codegen";
 
 export default function App() {
@@ -21,6 +22,7 @@ export default function App() {
         <Route path="/guide/ep133" element={<EP133Guide />} />
         <Route path="/codegen" element={<CodegenPanel />} />
         <Route path="/codegen-popout" element={<CodegenPopout />} />
+        <Route path="/tuning" element={<TuningPanel />} />
         <Route path="*" element={<Navigate to="/advisor" replace />} />
       </Routes>
     </AppShell>

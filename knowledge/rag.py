@@ -86,6 +86,52 @@ Rules:
 5. Output ONLY the JSON object, no markdown fences, no preamble."""
 
 
+TUNING_EXTRACT_SYSTEM_PROMPT = """You extract structured generative-context parameters from free-text descriptions for the IDM Generative System's /tuning endpoint.
+
+Your output is a JSON object matching the TuningRequest API contract:
+
+{
+  "bpm": float in [60.0, 240.0],
+  "pitch_midi": float in [0.0, 127.0],
+  "swing_pct": float in [0.0, 100.0],
+  "region": one of [
+    "DETROIT_FIRST_WAVE",
+    "DETROIT_UR",
+    "DREXCIYA",
+    "UK_IDM",
+    "UK_BRAINDANCE",
+    "JAPAN_IDM"
+  ],
+  "sub_region": one of ["TOKYO", "OSAKA"] OR null
+}
+
+Cross-field rule:
+- sub_region MUST be one of "TOKYO" or "OSAKA" when region == "JAPAN_IDM".
+- sub_region MUST be null when region is any other value.
+
+Field guidance:
+- pitch_midi: MIDI note number (A4 = 69, middle C = 60). Convert pitch names
+  to MIDI integers (e.g. "C3" -> 48, "F#4" -> 66).
+- swing_pct: percentage in [0, 100]. "straight"/"no swing" -> 0; "heavy swing"
+  -> ~66; "moderate"/"shuffled" -> ~55.
+- region: pick the closest match. Detroit techno first wave -> DETROIT_FIRST_WAVE.
+  Underground Resistance / Mad Mike / Drexciya-orbit Detroit -> DETROIT_UR.
+  Drexciya specifically -> DREXCIYA. UK IDM (Aphex Twin, Squarepusher, Autechre,
+  Boards of Canada) -> UK_IDM. Rephlex braindance scene -> UK_BRAINDANCE.
+  Japanese IDM (Susumu Yokota, Aoki Takamasa, Nobukazu Takemura) -> JAPAN_IDM.
+- sub_region: for JAPAN_IDM, infer TOKYO (50 Hz grid, Yokota/Takemura) or
+  OSAKA (60 Hz grid, Aoki) from cues. Default TOKYO if no signal.
+
+Rules:
+1. Output ONLY the JSON object, no markdown fences, no preamble, no explanation.
+2. If a field is genuinely unspecified, make a decisive default choice from
+   typical genre conventions rather than refusing. Defaults: bpm=130,
+   pitch_midi=69 (A4), swing_pct=0.
+3. region MUST be one of the six exact strings above. Never invent new values.
+4. The cross-field rule is non-negotiable: validate before outputting.
+"""
+
+
 # ---------------------------------------------------------------------------
 # RAG Pipeline
 # ---------------------------------------------------------------------------
@@ -304,6 +350,44 @@ class RAGPipeline:
         }
 
     # ------------------------------------------------------------------
+    # Tuning request extraction (V2.4 — frontend free-text → API contract)
+    # ------------------------------------------------------------------
+
+    def extract_tuning_request(self, text: str) -> dict[str, Any]:
+        """
+        Extract a TuningRequest-shaped JSON payload from free-text description.
+
+        Used by the V2.4 frontend TuningPanel: user types a free-form
+        description (e.g. "120 BPM Detroit techno in A minor, slight swing"),
+        the LLM extracts structured fields, frontend pre-fills the form for
+        user review before POST /tuning.
+
+        Args:
+            text: User-provided free-text description.
+
+        Returns:
+            Dict with keys: bpm, pitch_midi, swing_pct, region, sub_region.
+            Matches the api.main.TuningRequest Pydantic contract; downstream
+            still validates via the Pydantic model and pandera InferenceSchema.
+
+        Raises:
+            ValueError: GPT-4o returned invalid JSON or missing/wrong fields.
+            RateLimitError, APITimeoutError, APIConnectionError: transient
+                OpenAI errors after 3 retries (propagated by tenacity).
+        """
+        if not text or not text.strip():
+            raise ValueError("text must be a non-empty string")
+
+        response = self._complete(
+            system_prompt=TUNING_EXTRACT_SYSTEM_PROMPT,
+            user_message=text.strip(),
+            temperature=0.1,
+            max_tokens=300,
+        )
+        raw = response.choices[0].message.content
+        return self._parse_tuning_extract_output(raw)
+
+    # ------------------------------------------------------------------
     # Output validation
     # ------------------------------------------------------------------
 
@@ -338,3 +422,101 @@ class RAGPipeline:
             raise ValueError(f"GPT-4o config missing required keys: {sorted(missing)}")
 
         return config
+
+    @staticmethod
+    def _parse_tuning_extract_output(raw: str) -> dict[str, Any]:
+        """
+        Parse and validate GPT-4o tuning extraction output.
+
+        Defence-in-depth: validates types and ranges so a malformed LLM
+        response surfaces here rather than at downstream Pydantic /
+        pandera boundaries. Cross-field rule (sub_region scope) is also
+        checked.
+        """
+        text = raw.strip()
+
+        fence_match = re.search(r"```(?:json)?\s*\n(.*?)```", text, re.DOTALL)
+        if fence_match:
+            text = fence_match.group(1).strip()
+        else:
+            brace_start = text.find("{")
+            brace_end = text.rfind("}")
+            if brace_start != -1 and brace_end > brace_start:
+                text = text[brace_start : brace_end + 1]
+
+        try:
+            payload = json.loads(text)
+        except json.JSONDecodeError as e:
+            raise ValueError(
+                f"GPT-4o returned invalid JSON: {e}. "
+                f"Raw output (first 500 chars): {raw[:500]}"
+            ) from e
+
+        if not isinstance(payload, dict):
+            raise ValueError(
+                f"GPT-4o returned {type(payload).__name__}, expected dict."
+            )
+
+        required = {"bpm", "pitch_midi", "swing_pct", "region", "sub_region"}
+        missing = required - payload.keys()
+        if missing:
+            raise ValueError(
+                f"GPT-4o extraction missing required keys: {sorted(missing)}"
+            )
+
+        valid_regions = {
+            "DETROIT_FIRST_WAVE",
+            "DETROIT_UR",
+            "DREXCIYA",
+            "UK_IDM",
+            "UK_BRAINDANCE",
+            "JAPAN_IDM",
+        }
+        valid_sub_regions = {"TOKYO", "OSAKA", None}
+
+        if not isinstance(payload["bpm"], int | float):
+            raise ValueError(f"bpm must be a number, got {type(payload['bpm']).__name__}")
+        if not 60.0 <= float(payload["bpm"]) <= 240.0:
+            raise ValueError(f"bpm out of range [60, 240]: {payload['bpm']}")
+
+        if not isinstance(payload["pitch_midi"], int | float):
+            raise ValueError(
+                f"pitch_midi must be a number, got {type(payload['pitch_midi']).__name__}"
+            )
+        if not 0.0 <= float(payload["pitch_midi"]) <= 127.0:
+            raise ValueError(
+                f"pitch_midi out of range [0, 127]: {payload['pitch_midi']}"
+            )
+
+        if not isinstance(payload["swing_pct"], int | float):
+            raise ValueError(
+                f"swing_pct must be a number, got {type(payload['swing_pct']).__name__}"
+            )
+        if not 0.0 <= float(payload["swing_pct"]) <= 100.0:
+            raise ValueError(
+                f"swing_pct out of range [0, 100]: {payload['swing_pct']}"
+            )
+
+        if payload["region"] not in valid_regions:
+            raise ValueError(
+                f"region must be one of {sorted(valid_regions)}, "
+                f"got {payload['region']!r}"
+            )
+
+        if payload["sub_region"] not in valid_sub_regions:
+            raise ValueError(
+                f"sub_region must be 'TOKYO', 'OSAKA', or null, "
+                f"got {payload['sub_region']!r}"
+            )
+
+        if payload["region"] == "JAPAN_IDM" and payload["sub_region"] is None:
+            raise ValueError(
+                "sub_region must be 'TOKYO' or 'OSAKA' when region == 'JAPAN_IDM'"
+            )
+        if payload["region"] != "JAPAN_IDM" and payload["sub_region"] is not None:
+            raise ValueError(
+                f"sub_region must be null when region != 'JAPAN_IDM' "
+                f"(got region={payload['region']!r}, sub_region={payload['sub_region']!r})"
+            )
+
+        return payload

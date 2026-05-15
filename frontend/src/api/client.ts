@@ -76,3 +76,4 @@ export async function postGenerate(
 }
 
 export { postSynthdef, postTidal } from "./codegen";
+export { postTuning, postTuningExtract } from "./tuning";
