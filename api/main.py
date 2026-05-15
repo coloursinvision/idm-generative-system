@@ -1127,6 +1127,52 @@ class TuningResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# V2.4 — /tuning/extract endpoint Pydantic models
+#
+# Free-text → TuningRequest extraction via GPT-4o (RAGPipeline). Used by
+# V2.4 frontend TuningPanel to pre-fill the form. Extraction output is
+# validated by _parse_tuning_extract_output in knowledge/rag.py (types,
+# ranges, cross-field rule). User still reviews/edits before POST /tuning.
+# ---------------------------------------------------------------------------
+
+
+class TuningExtractRequest(BaseModel):
+    """Free-text input for the /tuning/extract endpoint."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    text: str = Field(
+        ...,
+        min_length=1,
+        max_length=2000,
+        description=(
+            "Free-text description of a generative context. Example: "
+            "'120 BPM Detroit techno in A minor with slight swing'."
+        ),
+    )
+
+
+class TuningExtractResponse(BaseModel):
+    """Extracted TuningRequest-shaped payload from GPT-4o."""
+
+    model_config = ConfigDict(extra="forbid", protected_namespaces=())
+
+    extracted: TuningRequest = Field(
+        ...,
+        description=(
+            "Structured TuningRequest payload extracted by GPT-4o, validated "
+            "against the same Pydantic + cross-field rules as /tuning. "
+            "Frontend uses this to pre-fill TuningForm; user reviews/edits "
+            "before POST /tuning."
+        ),
+    )
+    model_version: str = Field(
+        ...,
+        description="GPT model name used for extraction (mirrors /ask, /compose).",
+    )
+
+
+# ---------------------------------------------------------------------------
 # V2.3 — /tuning endpoint handler (Sub-stage D)
 #
 # 5-step flow per V2_ROADMAP §V2.3:
@@ -1338,6 +1384,110 @@ if _HAS_MLFLOW:
                     trace_span.end()
                 except Exception as e:
                     logger.warning("Langfuse span end failed: %s.", e)
+
+
+# ---------------------------------------------------------------------------
+# V2.4 — /tuning/extract endpoint handler
+#
+# Free-text → structured TuningRequest extraction via RAGPipeline.extract_
+# tuning_request (GPT-4o + parser + validator). Independent from MLflow —
+# registered unconditionally (not gated on _HAS_MLFLOW) because extraction
+# does NOT require the trained model; it produces a TuningRequest payload
+# that the frontend submits separately to /tuning.
+#
+# Langfuse tracing: same fail-open pattern as /tuning handler (Sub-stage E).
+# Span captures input text + extracted output + model metadata.
+# ---------------------------------------------------------------------------
+
+
+@app.post("/tuning/extract", response_model=TuningExtractResponse)
+async def tuning_extract(request: TuningExtractRequest) -> TuningExtractResponse:
+    """Extract a TuningRequest payload from free-text description (V2.4).
+
+    Pipeline:
+        1. Open Langfuse span (fail-open).
+        2. Call RAGPipeline.extract_tuning_request — GPT-4o + parser.
+        3. Validate via TuningRequest Pydantic model (defence in depth;
+           parser already validates types/ranges/cross-field rule).
+        4. Update + end Langfuse span (fail-open).
+        5. Return TuningExtractResponse.
+
+    Errors:
+        HTTP 422 — GPT-4o returned invalid extraction (ValueError from parser
+                   or Pydantic).
+        HTTP 502 — OpenAI transient error after retries exhausted.
+    """
+    trace_input = {"text": request.text}
+    trace_span = None
+    if app.state.langfuse_client is not None:
+        try:
+            trace_span = app.state.langfuse_client.start_observation(
+                as_type="span",
+                name="POST /tuning/extract",
+                input=trace_input,
+            )
+        except Exception as e:
+            logger.warning(
+                "Langfuse span start failed: %s. Request continues without trace.",
+                e,
+            )
+            trace_span = None
+
+    try:
+        try:
+            extracted_dict = rag.extract_tuning_request(request.text)
+        except ValueError as e:
+            # Parser-level rejection (invalid JSON, missing keys, out-of-range,
+            # cross-field violation). Surface as 422.
+            raise HTTPException(
+                status_code=422,
+                detail=f"Extraction validation failed: {e}",
+            ) from e
+        except Exception as e:
+            # OpenAI transient errors after retries, network, etc.
+            logger.exception("Tuning extraction failed unexpectedly")
+            raise HTTPException(
+                status_code=502,
+                detail=f"Upstream extraction service error: {e}",
+            ) from e
+
+        # Defence in depth: re-validate via Pydantic (catches anything the
+        # parser missed, e.g. future-added fields).
+        try:
+            extracted = TuningRequest(**extracted_dict)
+        except Exception as e:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Extracted payload failed Pydantic validation: {e}",
+            ) from e
+
+        response = TuningExtractResponse(
+            extracted=extracted,
+            model_version=rag.model,
+        )
+
+        if trace_span is not None:
+            try:
+                trace_span.update(
+                    output={
+                        "bpm": extracted.bpm,
+                        "pitch_midi": extracted.pitch_midi,
+                        "swing_pct": extracted.swing_pct,
+                        "region": extracted.region,
+                        "sub_region": extracted.sub_region,
+                    },
+                    metadata={"model_version": rag.model},
+                )
+            except Exception as e:
+                logger.warning("Langfuse span update failed: %s.", e)
+
+        return response
+    finally:
+        if trace_span is not None:
+            try:
+                trace_span.end()
+            except Exception as e:
+                logger.warning("Langfuse span end failed: %s.", e)
 
 
 # ---------------------------------------------------------------------------

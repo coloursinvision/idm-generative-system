@@ -8,6 +8,7 @@ const TABS = [
   { to: "/guide/po33", label: "PO-33" },
   { to: "/guide/ep133", label: "EP-133" },
   { to: "/codegen", label: "CODEGEN" },
+  { to: "/tuning", label: "TUNING" },
 ] as const;
 
 export function NavBar() {
