@@ -39,7 +39,7 @@ stages:
           cache: false
 
   train:
-    cmd: python scripts/train_model.py
+    cmd: bash scripts/train_with_hash.sh
     params:
       - train
     deps:
