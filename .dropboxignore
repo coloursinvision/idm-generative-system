@@ -1,0 +1,18 @@
+# Dropbox ignore — prevent sync of Python bytecode and other generated artifacts
+# that conflict with Dropbox versioning (TODO-S13-D resolution).
+#
+# Pattern syntax: gitignore-style, evaluated relative to this file's directory.
+# Source: https://help.dropbox.com/sync/extension-syncing
+
+# Python bytecode caches (root cause of "Selective Sync Conflict" directories)
+__pycache__
+*.pyc
+*.pyo
+
+# Tool caches
+.pytest_cache
+.mypy_cache
+.ruff_cache
+
+# OS detritus
+.DS_Store

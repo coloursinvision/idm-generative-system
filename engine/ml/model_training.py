@@ -34,6 +34,7 @@ Design principles:
 from __future__ import annotations
 
 import logging
+import os
 from dataclasses import dataclass, field
 from typing import Any, get_args
 
@@ -319,6 +320,11 @@ def train(
 
     with mlflow.start_run() as run:
         logger.info("MLflow run: %s", run.info.run_id)
+
+        # MLflow tag: DVC dataset hash for V2.3 endpoint provenance.
+        # Sourced from DVC_DATASET_HASH env var exported by scripts/train_with_hash.sh
+        # (TODO-S13-E). Falls back to "unknown" when run outside DVC pipeline.
+        mlflow.set_tag("dvc_dataset_hash", os.environ.get("DVC_DATASET_HASH", "unknown"))
 
         # --- Fit ---
         pipeline.fit(X_train, y_train)
