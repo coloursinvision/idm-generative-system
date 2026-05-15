@@ -26,7 +26,7 @@ export function NavBar() {
         </div>
 
         {/* Tabs */}
-        <div className="flex">
+        <div className="flex flex-wrap justify-end">
           {TABS.map(({ to, label }) => (
             <NavLink
               key={to}
