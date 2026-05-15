@@ -11,7 +11,7 @@ build-backend = "hatchling.build"
 # ---------------------------------------------------------------------------
 [project]
 name = "idm-generative-system"
-version = "0.6.1"
+version = "0.7.0"
 description = "Generative audio engine for experimental IDM production — DSP modeling, algorithmic composition, and RAG-augmented sound design."
 readme = "README.md"
 license = "AGPL-3.0-or-later"
