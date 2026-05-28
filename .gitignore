@@ -76,3 +76,8 @@ frontend/tsconfig.tsbuildinfo
 # Session backup files
 *.bak-S*
 .dvc/config.local.bak-*
+
+# Built SPA served by backend (build artifact — never commit)
+static/
+# MLflow local SQLite tracking DB (created at backend startup)
+mlflow.db
