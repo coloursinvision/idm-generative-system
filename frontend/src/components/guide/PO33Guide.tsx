@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useSequencer } from "../../hooks/useSequencer";
 
 /* ------------------------------------------------------------------ */
@@ -80,6 +80,7 @@ export function PO33Guide() {
     initTracks,
     toggleStep,
     loadAllSamples,
+    unlockAudioContext,
     play,
     stop,
     clearPattern,
@@ -91,6 +92,30 @@ export function PO33Guide() {
 
   const hasBuffers = tracks.some((t) => t.buffer !== null);
   const hasPattern = tracks.some((t) => t.steps.some(Boolean));
+
+  /*
+   * Click handlers wrap the async hook methods so that:
+   *  - WebKit audio unlock fires on the first user gesture (idempotent)
+   *  - Rejected Promises are surfaced to the console rather than left
+   *    unhandled, satisfying CR-F13 acceptance criterion 8.
+   */
+  const handleLoadSamples = useCallback(() => {
+    unlockAudioContext().catch((err) =>
+      console.error("[PO33Guide] unlockAudioContext failed:", err)
+    );
+    loadAllSamples().catch((err) =>
+      console.error("[PO33Guide] loadAllSamples failed:", err)
+    );
+  }, [unlockAudioContext, loadAllSamples]);
+
+  const handlePlay = useCallback(() => {
+    unlockAudioContext().catch((err) =>
+      console.error("[PO33Guide] unlockAudioContext failed:", err)
+    );
+    play().catch((err) =>
+      console.error("[PO33Guide] play failed:", err)
+    );
+  }, [unlockAudioContext, play]);
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -121,7 +146,7 @@ export function PO33Guide() {
         <div className="flex items-end gap-4">
           <button
             className="btn-primary"
-            onClick={loadAllSamples}
+            onClick={handleLoadSamples}
             disabled={loadingAll}
           >
             {loadingAll ? "LOADING…" : hasBuffers ? "RELOAD SAMPLES" : "LOAD SAMPLES"}
@@ -129,7 +154,7 @@ export function PO33Guide() {
 
           <button
             className={`${isPlaying ? "btn-secondary border-accent-red text-accent-red" : "btn-primary"}`}
-            onClick={isPlaying ? stop : play}
+            onClick={isPlaying ? stop : handlePlay}
             disabled={!hasBuffers || !hasPattern}
           >
             {isPlaying ? "STOP" : "PLAY"}
