@@ -76,3 +76,18 @@ frontend/tsconfig.tsbuildinfo
 # Session backup files
 *.bak-S*
 .dvc/config.local.bak-*
+
+# ---------------------------------------------------------------------------
+# SOPS + age — secrets encryption (see .sops.yaml and SOPS_AGE_RUNBOOK.md)
+# ---------------------------------------------------------------------------
+# Plaintext working forms — never commit
+secrets/*.plain.*
+secrets/*.dec.*
+secrets/*.plain.yaml
+secrets/*.plain.yml
+*.decrypted
+
+# age private key — must NEVER reach the repo (lives in ~/.config/sops/age/)
+keys.txt
+*.agekey
+age-key.txt
