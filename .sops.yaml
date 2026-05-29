@@ -1,0 +1,23 @@
+# SOPS configuration — secrets encryption rules.
+#
+# Files matching the regexes below are encrypted to the age recipient(s) listed.
+# This config is JAWNE — committed to the repo. Only the public key appears here;
+# the matching private key lives in ~/.config/sops/age/keys.txt on each authorised
+# machine and is NEVER committed or synced via file-sync clouds.
+#
+# Onboarding a new machine: install the private key locally, then `sops -d` works
+# without further configuration.
+#
+# See: SOPS_AGE_RUNBOOK.md (held outside the vault) for the full procedure,
+# and DECISIONS.md D-CRF13-01 for the off-Dropbox / secrets-as-code rationale.
+
+creation_rules:
+  # Encrypted secrets files (YAML)
+  - path_regex: secrets/.*\.enc\.ya?ml$
+    age: >-
+      age1ulhtjzwwt8raewsmnlkmg4glwwafyfpr3mp4qq8488qc9l9lve2sz6a8wz
+
+  # Encrypted dotenv file (optional, for codebases that require a .env)
+  - path_regex: \.env\.enc$
+    age: >-
+      age1ulhtjzwwt8raewsmnlkmg4glwwafyfpr3mp4qq8488qc9l9lve2sz6a8wz
