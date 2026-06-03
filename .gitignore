@@ -91,3 +91,6 @@ secrets/*.plain.yml
 keys.txt
 *.agekey
 age-key.txt
+
+# Claude Code local machine-specific settings (not committed)
+.claude/settings.local.json
