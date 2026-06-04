@@ -1,10 +1,25 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
+    "defaultMode": "plan",
     "deny": [
       "Read(./.env)",
       "Read(./.env.*)",
-      "Read(./secrets/**)"
+      "Read(./secrets/**)",
+      "Read(~/.config/sops/age/keys.txt)",
+      "Bash(cat ./.env*)",
+      "Bash(cat ./secrets/*)",
+      "Bash(sops -d*)",
+      "Bash(sops --decrypt*)",
+      "Bash(rm -rf*)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git reset --hard*)"
+    ],
+    "ask": [
+      "Bash(*)",
+      "Edit(*)",
+      "Write(*)"
     ]
   }
 }
