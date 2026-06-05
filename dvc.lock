@@ -17,8 +17,8 @@ stages:
       size: 14761
     - path: engine/ml/regional_profiles.py
       hash: md5
-      md5: 13129c34db77c35d4c1eacc6bc52ce36
-      size: 23127
+      md5: bc487fdb4755af27fde7221d1dbd45c2
+      size: 23095
     - path: engine/ml/resonance_rules.py
       hash: md5
       md5: f1560e187961f2f62a6439947cf45ec5
@@ -48,19 +48,19 @@ stages:
     outs:
     - path: data/synthetic/dataset.parquet
       hash: md5
-      md5: 5761061f669ed8e6724321231fc8cbdd
+      md5: 720045857557aa85d2dad29fc7a145c3
       size: 1047904
   validate:
     cmd: python scripts/validate_schema.py
     deps:
     - path: data/synthetic/dataset.parquet
       hash: md5
-      md5: 5761061f669ed8e6724321231fc8cbdd
+      md5: 720045857557aa85d2dad29fc7a145c3
       size: 1047904
     - path: engine/ml/dataset_schema.py
       hash: md5
-      md5: bd5601845502ae31506a858f81c6728b
-      size: 6848
+      md5: f39d82afcc7ffac8a3a1a737a9f38f94
+      size: 13284
     - path: scripts/validate_schema.py
       hash: md5
       md5: 1c2a25d8f8615a8f728196463a13acb7
@@ -68,19 +68,19 @@ stages:
     outs:
     - path: data/synthetic/validation_report.json
       hash: md5
-      md5: accd9c59045385df8c3b0c247ec9ef72
+      md5: 8d2cd7a3c11ea698866f6764e4656a71
       size: 879
   train:
-    cmd: python scripts/train_model.py
+    cmd: bash scripts/train_with_hash.sh
     deps:
     - path: data/synthetic/dataset.parquet
       hash: md5
-      md5: 5761061f669ed8e6724321231fc8cbdd
+      md5: 720045857557aa85d2dad29fc7a145c3
       size: 1047904
     - path: engine/ml/model_training.py
       hash: md5
-      md5: a13f842f0f0a0e61aad250b9ceefd5e7
-      size: 17545
+      md5: 85d9389caae954a4b3f6efc9091c744f
+      size: 19909
     - path: scripts/train_model.py
       hash: md5
       md5: 9e51262fffb45808ac37504435b8d6d2
@@ -116,14 +116,14 @@ stages:
     outs:
     - path: models/feature_importance.json
       hash: md5
-      md5: 73c66907fdce07e501b3769ccef620be
-      size: 193
+      md5: 93260193b0013729052199d4a0d4d328
+      size: 195
     - path: models/metrics.json
       hash: md5
-      md5: 7bb8ccf949c9d37c091d71245d002be5
-      size: 1227
+      md5: bcb055e0d2a5c6e6a2ec4527c925dd09
+      size: 1516
     - path: models/tuning_estimator
       hash: md5
-      md5: 7165b549d4a2c3100f67a5737dfc1faa.dir
-      size: 15292159
+      md5: 85536b550fd92ac5db0e56e418ad6ccc.dir
+      size: 8482092
       nfiles: 5
