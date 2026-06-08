@@ -1,5 +1,10 @@
-import { useEffect, useRef, useState, useCallback } from "react";
-import { useSequencer } from "../../hooks/useSequencer";
+import { useState, useCallback } from "react";
+import {
+  useEP133Sequencer,
+  TIMING_MODES,
+  STEPS_PER_TIMING,
+} from "../../hooks/useEP133Sequencer";
+import type { TimingMode } from "../../hooks/useEP133Sequencer";
 
 /* ------------------------------------------------------------------ */
 /* EP-133 K.O.II constants from manual                                 */
@@ -14,17 +19,6 @@ const GROUP_ROLES: Record<Group, { label: string; slots: string }> = {
   C: { label: "MELODIC", slots: "500-599" },
   D: { label: "SAMPLES", slots: "User samples" },
 };
-
-const TIMING_MODES = ["1/8", "1/16", "1/32"] as const;
-type TimingMode = (typeof TIMING_MODES)[number];
-
-const STEPS_PER_TIMING: Record<TimingMode, number> = {
-  "1/8": 8,
-  "1/16": 16,
-  "1/32": 32,
-};
-
-const DEFAULT_TIMING: TimingMode = "1/16";
 
 const GROUP_TRACKS: Record<Group, { name: string; generator: string }[]> = {
   A: [
@@ -66,161 +60,70 @@ const EP133_FX = [
 ];
 
 /* ------------------------------------------------------------------ */
-/* Per-group state shape                                               */
-/* ------------------------------------------------------------------ */
-
-interface GroupState {
-  /** Step pattern — one boolean[] per track. */
-  steps: boolean[][];
-  /** Decoded AudioBuffer references — one per track, null if not yet loaded. */
-  buffers: (AudioBuffer | null)[];
-  /** Timing resolution active for this group. */
-  timing: TimingMode;
-}
-
-/**
- * Builds the initial (empty) GroupState for a given group, pre-sized to the
- * default timing resolution so that `initTracks` always receives valid
- * initialSteps regardless of the active timing when a group is first visited.
- */
-function makeInitialGroupState(group: Group): GroupState {
-  const numSteps = STEPS_PER_TIMING[DEFAULT_TIMING];
-  return {
-    steps: GROUP_TRACKS[group].map(() => Array(numSteps).fill(false)),
-    buffers: GROUP_TRACKS[group].map(() => null),
-    timing: DEFAULT_TIMING,
-  };
-}
-
-/* ------------------------------------------------------------------ */
 /* Component                                                           */
 /* ------------------------------------------------------------------ */
 
 export function EP133Guide() {
+  /*
+   * activeGroup selects the EDITING SURFACE only. Playback is global and
+   * unaffected by this value (CR-F12 AC3) — the sequencer plays all four
+   * groups from one master transport regardless of which is on screen.
+   */
   const [activeGroup, setActiveGroup] = useState<Group>("A");
 
-  /*
-   * Per-group timing is kept in local React state so the sequencer grid
-   * re-renders when the user changes it. The canonical value for each group
-   * is also mirrored into groupStates so it survives group switches.
-   */
-  const [timing, setTiming] = useState<TimingMode>(DEFAULT_TIMING);
-
-  const numSteps = STEPS_PER_TIMING[timing];
-
-  const {
-    tracks,
-    bpm,
-    setBpm,
-    isPlaying,
-    currentStep,
-    loadingAll,
-    initTracks,
-    toggleStep,
-    loadAllSamples,
-    unlockAudioContext,
-    play,
-    stop,
-    clearPattern,
-  } = useSequencer({ numSteps, defaultBpm: 130 });
-
-  /*
-   * Persistent store for all four group states (steps, buffers, timing).
-   * A ref is used intentionally: mutations must not trigger re-renders,
-   * and the data is only read during group switches (not during rendering).
-   */
-  const groupStates = useRef<Record<Group, GroupState>>({
-    A: makeInitialGroupState("A"),
-    B: makeInitialGroupState("B"),
-    C: makeInitialGroupState("C"),
-    D: makeInitialGroupState("D"),
+  const seq = useEP133Sequencer({
+    groups: GROUPS,
+    groupTracks: GROUP_TRACKS,
+    defaultBpm: 130,
   });
 
-  /*
-   * A ref that always holds the latest tracks + timing values.
-   * Used inside switchGroup to snapshot the departing group's state without
-   * creating a stale-closure dependency on rapidly-changing `tracks`.
-   */
-  const liveDataRef = useRef({ tracks, timing });
-  useEffect(() => {
-    liveDataRef.current = { tracks, timing };
-  }, [tracks, timing]);
+  const active = seq.groups[activeGroup];
+  const numSteps = STEPS_PER_TIMING[active.timing];
+  const currentStep = seq.currentStepByGroup[activeGroup];
 
-  /* ---- Group switch ---- */
-  const switchGroup = useCallback(
-    (group: Group) => {
-      if (group === activeGroup) return;
-      if (isPlaying) stop();
+  const anySolo = GROUPS.some((g) => seq.groups[g].solo);
+  const audible = (g: Group) => (anySolo ? seq.groups[g].solo : !seq.groups[g].muted);
 
-      // Snapshot the departing group's current state into the persistent store.
-      const { tracks: currentTracks, timing: currentTiming } = liveDataRef.current;
-      groupStates.current[activeGroup] = {
-        steps: currentTracks.map((t) => [...t.steps]),
-        buffers: currentTracks.map((t) => t.buffer),
-        timing: currentTiming,
-      };
-
-      setActiveGroup(group);
-    },
-    [activeGroup, isPlaying, stop]
+  const anyBuffers = GROUPS.some((g) =>
+    seq.groups[g].tracks.some((t) => t.buffer !== null)
   );
+  const anyPattern = GROUPS.some((g) =>
+    seq.groups[g].tracks.some((t) => t.steps.some(Boolean))
+  );
+  const anyLoading = GROUPS.some((g) => seq.groups[g].loading);
 
-  /*
-   * Restore the incoming group's state whenever activeGroup changes.
-   *
-   * Intentional omission of `initTracks` from the dependency array: its
-   * identity changes when `numSteps` changes (i.e. when the user adjusts
-   * timing), which must NOT re-fire this effect and wipe the current pattern.
-   * `initTracks` and `setTiming` are both stable references (useCallback /
-   * useState setter) so this is safe.
-   *
-   * React 18 automatic batching ensures that the two state updates below
-   * (`setTiming` + `setTracks` inside `initTracks`) are committed in a single
-   * render, preventing any intermediate inconsistent state.
-   */
-  useEffect(() => {
-    const saved = groupStates.current[activeGroup];
-    // Restore timing first so numSteps is consistent with the restored steps.
-    setTiming(saved.timing);
-    // Restore tracks — passes existing steps and buffers so neither is lost.
-    initTracks(GROUP_TRACKS[activeGroup], saved.steps, saved.buffers);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeGroup]);
-
-  /* ---- Timing change for the active group ---- */
-  const handleTimingChange = useCallback((t: TimingMode) => {
-    setTiming(t);
-    // Mirror the new timing into the persistent store immediately so that
-    // switching away and back reflects the user's choice.
-    groupStates.current[activeGroup].timing = t;
-  }, [activeGroup]);
-
-  const hasBuffers = tracks.some((t) => t.buffer !== null);
-  const hasPattern = tracks.some((t) => t.steps.some(Boolean));
+  const activeLoaded = active.tracks.filter((t) => t.buffer).length;
 
   /*
    * Click handlers wrap the async hook methods so that:
    *  - WebKit audio unlock fires on the first user gesture (idempotent)
    *  - Rejected Promises are surfaced to the console rather than left
-   *    unhandled, satisfying CR-F13 acceptance criterion 8.
+   *    unhandled (CR-F13 acceptance criterion 8).
    */
-  const handleLoadSamples = useCallback(() => {
-    unlockAudioContext().catch((err) =>
+  const handleLoadGroup = useCallback(() => {
+    seq.unlockAudioContext().catch((err) =>
       console.error("[EP133Guide] unlockAudioContext failed:", err)
     );
-    loadAllSamples().catch((err) =>
-      console.error("[EP133Guide] loadAllSamples failed:", err)
+    seq.loadGroupSamples(activeGroup).catch((err) =>
+      console.error("[EP133Guide] loadGroupSamples failed:", err)
     );
-  }, [unlockAudioContext, loadAllSamples]);
+  }, [seq, activeGroup]);
+
+  const handleLoadAll = useCallback(() => {
+    seq.unlockAudioContext().catch((err) =>
+      console.error("[EP133Guide] unlockAudioContext failed:", err)
+    );
+    seq.loadAllGroups().catch((err) =>
+      console.error("[EP133Guide] loadAllGroups failed:", err)
+    );
+  }, [seq]);
 
   const handlePlay = useCallback(() => {
-    unlockAudioContext().catch((err) =>
+    seq.unlockAudioContext().catch((err) =>
       console.error("[EP133Guide] unlockAudioContext failed:", err)
     );
-    play().catch((err) =>
-      console.error("[EP133Guide] play failed:", err)
-    );
-  }, [unlockAudioContext, play]);
+    seq.play().catch((err) => console.error("[EP133Guide] play failed:", err));
+  }, [seq]);
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -230,59 +133,101 @@ export function EP133Guide() {
           EP-133 K.O.II GUIDE
         </h1>
         <p className="text-text-muted text-xs mt-1">
-          12 PADS × 4 GROUPS — LOAD SAMPLES, PROGRAM PATTERNS, PLAY BACK IN
-          BROWSER.
+          12 PADS × 4 GROUPS — ALL GROUPS PLAY SIMULTANEOUSLY FROM ONE MASTER
+          TRANSPORT.
         </p>
       </div>
 
       {/* Device info */}
       <div className="panel">
         <div className="flex gap-6 text-[10px] text-text-muted tracking-widest">
-          <span>GROUP {activeGroup}: {GROUP_ROLES[activeGroup].label}</span>
-          <span>TIMING: {timing}</span>
+          <span>EDITING {activeGroup}: {GROUP_ROLES[activeGroup].label}</span>
+          <span>TIMING: {active.timing}</span>
           <span>STEPS: {numSteps}</span>
-          <span>BPM: {bpm}</span>
+          <span>BPM: {seq.bpm}</span>
+          <span className={seq.isPlaying ? "text-accent-green" : ""}>
+            {seq.isPlaying ? "PLAYING" : "STOPPED"}
+          </span>
         </div>
       </div>
 
-      {/* Group selector + Timing */}
+      {/* Group selector (editing view + per-group mixer) + Timing */}
       <div className="flex gap-4">
         {/* Groups */}
         <div className="panel flex-1">
-          <div className="panel-header">Groups</div>
-          <div className="grid grid-cols-4 gap-0">
-            {GROUPS.map((g) => (
-              <button
-                key={g}
-                onClick={() => switchGroup(g)}
-                className={`py-3 text-center border transition-colors duration-100 ${
-                  activeGroup === g
-                    ? "bg-accent-green/10 text-accent-green border-accent-green"
-                    : "bg-surface-0 text-text-muted border-surface-3 hover:text-text-secondary"
-                }`}
-              >
-                <div className="text-lg font-bold font-display">{g}</div>
-                <div className="text-[9px] tracking-widest mt-0.5">
-                  {GROUP_ROLES[g].label}
+          <div className="panel-header">Groups — edit surface · mute / solo</div>
+          <div className="grid grid-cols-4 gap-2">
+            {GROUPS.map((g) => {
+              const gs = seq.groups[g];
+              const isActive = activeGroup === g;
+              return (
+                <div
+                  key={g}
+                  className={`border ${
+                    isActive ? "border-accent-green" : "border-surface-3"
+                  }`}
+                >
+                  <button
+                    onClick={() => setActiveGroup(g)}
+                    className={`w-full py-2 text-center transition-colors duration-100 ${
+                      isActive
+                        ? "bg-accent-green/10 text-accent-green"
+                        : "bg-surface-0 text-text-muted hover:text-text-secondary"
+                    }`}
+                  >
+                    <div className="flex items-center justify-center gap-1">
+                      <div className="text-lg font-bold font-display">{g}</div>
+                      {seq.isPlaying && audible(g) && (
+                        <span className="w-1.5 h-1.5 bg-accent-green rounded-full animate-pulse" />
+                      )}
+                    </div>
+                    <div className="text-[9px] tracking-widest mt-0.5">
+                      {GROUP_ROLES[g].label}
+                    </div>
+                  </button>
+
+                  {/* Per-group mixer: mute / solo */}
+                  <div className="grid grid-cols-2 gap-0 border-t border-surface-3">
+                    <button
+                      onClick={() => seq.toggleMute(g)}
+                      className={`py-1 text-[9px] tracking-widest border-r border-surface-3 transition-colors duration-100 ${
+                        gs.muted
+                          ? "bg-accent-red/15 text-accent-red"
+                          : "text-text-muted hover:text-text-secondary"
+                      }`}
+                    >
+                      MUTE
+                    </button>
+                    <button
+                      onClick={() => seq.toggleSolo(g)}
+                      className={`py-1 text-[9px] tracking-widest transition-colors duration-100 ${
+                        gs.solo
+                          ? "bg-accent-amber/15 text-accent-amber"
+                          : "text-text-muted hover:text-text-secondary"
+                      }`}
+                    >
+                      SOLO
+                    </button>
+                  </div>
                 </div>
-              </button>
-            ))}
+              );
+            })}
           </div>
           <div className="text-[9px] text-text-muted mt-2 tracking-wider">
             SLOTS: {GROUP_ROLES[activeGroup].slots}
           </div>
         </div>
 
-        {/* Timing */}
+        {/* Timing (per active group) */}
         <div className="panel w-48">
-          <div className="panel-header">Timing</div>
+          <div className="panel-header">Timing — group {activeGroup}</div>
           <div className="grid grid-cols-3 gap-0">
             {TIMING_MODES.map((t) => (
               <button
                 key={t}
-                onClick={() => handleTimingChange(t)}
+                onClick={() => seq.setTiming(activeGroup, t as TimingMode)}
                 className={`py-2 text-[10px] border transition-colors duration-100 ${
-                  timing === t
+                  active.timing === t
                     ? "bg-accent-amber/10 text-accent-amber border-accent-amber"
                     : "bg-surface-0 text-text-muted border-surface-3 hover:text-text-secondary"
                 }`}
@@ -294,50 +239,57 @@ export function EP133Guide() {
         </div>
       </div>
 
-      {/* Transport */}
+      {/* Transport (global) */}
       <div className="panel">
-        <div className="panel-header">Transport</div>
+        <div className="panel-header">Transport — master (all groups)</div>
         <div className="flex items-end gap-4">
           <button
             className="btn-primary"
-            onClick={handleLoadSamples}
-            disabled={loadingAll}
+            onClick={handleLoadGroup}
+            disabled={active.loading}
           >
-            {loadingAll
+            {active.loading
               ? "LOADING…"
-              : hasBuffers
-                ? "RELOAD SAMPLES"
-                : "LOAD SAMPLES"}
+              : activeLoaded > 0
+                ? `RELOAD ${activeGroup}`
+                : `LOAD ${activeGroup}`}
           </button>
 
           <button
-            className={`${isPlaying ? "btn-secondary border-accent-red text-accent-red" : "btn-primary"}`}
-            onClick={isPlaying ? stop : handlePlay}
-            disabled={!hasBuffers || !hasPattern}
+            className="btn-secondary"
+            onClick={handleLoadAll}
+            disabled={anyLoading}
           >
-            {isPlaying ? "STOP" : "PLAY"}
+            {anyLoading ? "LOADING…" : "LOAD ALL"}
+          </button>
+
+          <button
+            className={`${seq.isPlaying ? "btn-secondary border-accent-red text-accent-red" : "btn-primary"}`}
+            onClick={seq.isPlaying ? seq.stop : handlePlay}
+            disabled={!anyBuffers || !anyPattern}
+          >
+            {seq.isPlaying ? "STOP" : "PLAY"}
           </button>
 
           <div>
-            <label className="label">BPM: {bpm}</label>
+            <label className="label">BPM: {seq.bpm}</label>
             <input
               type="range"
               min={60}
               max={200}
-              value={bpm}
-              onChange={(e) => setBpm(Number(e.target.value))}
+              value={seq.bpm}
+              onChange={(e) => seq.setBpm(Number(e.target.value))}
               className="w-32 accent-accent-green"
             />
           </div>
 
           <div className="text-[10px] text-text-muted tracking-wider ml-auto">
-            {tracks.filter((t) => t.buffer).length}/{tracks.length} SAMPLES
-            LOADED
+            {activeLoaded}/{active.tracks.length} SAMPLES LOADED (GROUP {activeGroup})
           </div>
         </div>
       </div>
 
-      {/* Step sequencer — all tracks in group */}
+      {/* Step sequencer — active group's editing surface */}
       <div className="panel">
         <div className="panel-header">
           Step sequencer — Group {activeGroup} ({GROUP_ROLES[activeGroup].label})
@@ -364,7 +316,7 @@ export function EP133Guide() {
 
         {/* Track rows */}
         <div className="space-y-0.5">
-          {tracks.map((track, ti) => (
+          {active.tracks.map((track, ti) => (
             <div key={ti} className="flex items-center gap-2">
               <div className="w-16 flex items-center gap-1">
                 <span
@@ -384,16 +336,16 @@ export function EP133Guide() {
               </div>
 
               <div className="flex gap-0 flex-1">
-                {track.steps.slice(0, numSteps).map((active, si) => (
+                {track.steps.slice(0, numSteps).map((stepActive, si) => (
                   <button
                     key={si}
-                    onClick={() => toggleStep(ti, si)}
+                    onClick={() => seq.toggleStep(activeGroup, ti, si)}
                     className={`flex-1 h-5 border-r border-surface-0 transition-colors duration-75 ${
-                      active
-                        ? currentStep === si && isPlaying
+                      stepActive
+                        ? currentStep === si && seq.isPlaying
                           ? "bg-white"
                           : "bg-accent-green"
-                        : currentStep === si && isPlaying
+                        : currentStep === si && seq.isPlaying
                           ? "bg-surface-3"
                           : "bg-surface-2 hover:bg-surface-3"
                     }`}
@@ -422,7 +374,7 @@ export function EP133Guide() {
 
       {/* Action buttons */}
       <div className="flex gap-3">
-        <button className="btn-secondary" onClick={clearPattern}>
+        <button className="btn-secondary" onClick={() => seq.clearGroup(activeGroup)}>
           CLEAR GROUP {activeGroup}
         </button>
       </div>
