@@ -90,7 +90,6 @@ export function EP133Guide() {
   const anyPattern = GROUPS.some((g) =>
     seq.groups[g].tracks.some((t) => t.steps.some(Boolean))
   );
-  const anyLoading = GROUPS.some((g) => seq.groups[g].loading);
 
   const activeLoaded = active.tracks.filter((t) => t.buffer).length;
 
@@ -108,15 +107,6 @@ export function EP133Guide() {
       console.error("[EP133Guide] loadGroupSamples failed:", err)
     );
   }, [seq, activeGroup]);
-
-  const handleLoadAll = useCallback(() => {
-    seq.unlockAudioContext().catch((err) =>
-      console.error("[EP133Guide] unlockAudioContext failed:", err)
-    );
-    seq.loadAllGroups().catch((err) =>
-      console.error("[EP133Guide] loadAllGroups failed:", err)
-    );
-  }, [seq]);
 
   const handlePlay = useCallback(() => {
     seq.unlockAudioContext().catch((err) =>
@@ -253,14 +243,6 @@ export function EP133Guide() {
               : activeLoaded > 0
                 ? `RELOAD ${activeGroup}`
                 : `LOAD ${activeGroup}`}
-          </button>
-
-          <button
-            className="btn-secondary"
-            onClick={handleLoadAll}
-            disabled={anyLoading}
-          >
-            {anyLoading ? "LOADING…" : "LOAD ALL"}
           </button>
 
           <button
