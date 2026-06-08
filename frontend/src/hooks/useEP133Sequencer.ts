@@ -134,6 +134,7 @@ export function useEP133Sequencer<G extends string>({
   );
 
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const masterGainRef = useRef<GainNode | null>(null);
   const timerRef = useRef<number | null>(null);
   const masterStepRef = useRef(0);
   const nextNoteTimeRef = useRef(0);
@@ -180,11 +181,32 @@ export function useEP133Sequencer<G extends string>({
   const getAudioContext = useCallback(async (): Promise<AudioContext> => {
     if (!audioCtxRef.current || audioCtxRef.current.state === "closed") {
       audioCtxRef.current = new AudioContext({ sampleRate: 44100 });
+      masterGainRef.current = null; // rebuild the master bus for the new context
     }
-    if (isNonRunningState(audioCtxRef.current.state)) {
-      await audioCtxRef.current.resume();
+    const ctx = audioCtxRef.current;
+
+    // Master bus: every group's voices sum here, so route through a gain stage
+    // (headroom for up to 4 simultaneous groups) into a compressor acting as a
+    // limiter, mirroring the EP-133 hardware master compressor (manual §11).
+    // Without this the raw sum clips past 0 dBFS and degrades into distortion.
+    if (!masterGainRef.current) {
+      const gain = ctx.createGain();
+      gain.gain.value = 0.35;
+      const comp = ctx.createDynamicsCompressor();
+      comp.threshold.value = -10;
+      comp.knee.value = 6;
+      comp.ratio.value = 12;
+      comp.attack.value = 0.003;
+      comp.release.value = 0.25;
+      gain.connect(comp);
+      comp.connect(ctx.destination);
+      masterGainRef.current = gain;
     }
-    return audioCtxRef.current;
+
+    if (isNonRunningState(ctx.state)) {
+      await ctx.resume();
+    }
+    return ctx;
   }, []);
 
   const unlockAudioContext = useCallback(async (): Promise<void> => {
@@ -341,7 +363,7 @@ export function useEP133Sequencer<G extends string>({
         if (track.steps[stepIdx] && track.buffer) {
           const source = ctx.createBufferSource();
           source.buffer = track.buffer;
-          source.connect(ctx.destination);
+          source.connect(masterGainRef.current ?? ctx.destination);
           source.start(time);
         }
       }

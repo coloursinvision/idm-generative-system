@@ -56,6 +56,8 @@ interface MockAudioContext {
   close: ReturnType<typeof vi.fn>;
   createBuffer: ReturnType<typeof vi.fn>;
   createBufferSource: ReturnType<typeof vi.fn>;
+  createGain: ReturnType<typeof vi.fn>;
+  createDynamicsCompressor: ReturnType<typeof vi.fn>;
   decodeAudioData: ReturnType<typeof vi.fn>;
   __scheduled: ScheduledNote[];
 }
@@ -73,6 +75,15 @@ function createMockAudioContext(initialState: MockState = "suspended"): MockAudi
     close: vi.fn(),
     createBuffer: vi.fn(() => ({})),
     createBufferSource: vi.fn(),
+    createGain: vi.fn(() => ({ gain: { value: 0 }, connect: vi.fn() })),
+    createDynamicsCompressor: vi.fn(() => ({
+      threshold: { value: 0 },
+      knee: { value: 0 },
+      ratio: { value: 0 },
+      attack: { value: 0 },
+      release: { value: 0 },
+      connect: vi.fn(),
+    })),
     decodeAudioData: vi.fn(async () => ({ __group: decodeTag }) as unknown as AudioBuffer),
     __scheduled: [],
   };
