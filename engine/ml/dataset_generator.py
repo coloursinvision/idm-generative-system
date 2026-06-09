@@ -351,14 +351,23 @@ class SyntheticDatasetGenerator:
             A ``pandas.DataFrame`` with ``len(specifications) *
             (1 + n_perturbations)`` rows. Columns are ordered:
             input fields → ``tuning_hz`` → ``freq_*`` → DSP params →
-            metadata.
+            metadata (``spec_id`` → ``is_perturbed`` → ``perturbation_idx``).
+            ``spec_id`` is the global per-spec group key (the ``enumerate``
+            index over ``specifications``); the model never consumes it
+            (see :func:`extract_feature_target_columns`).
         """
         if not specifications:
             return pd.DataFrame()
 
         all_rows: list[dict[str, Any]] = []
-        for spec in specifications:
-            all_rows.extend(self.generate_rows(spec, profile=profile))
+        for spec_id, spec in enumerate(specifications):
+            # spec_id is the global per-TrackSpec group key: all 1 + n_perturbations
+            # rows of one spec share it, so train/test splits can group by it and
+            # avoid spec-level leakage (near-duplicate rows straddling partitions).
+            spec_rows = self.generate_rows(spec, profile=profile)
+            for row in spec_rows:
+                row["spec_id"] = spec_id
+            all_rows.extend(spec_rows)
 
         df = pd.DataFrame(all_rows)
 
@@ -374,7 +383,7 @@ class SyntheticDatasetGenerator:
             "noise_floor_hz",
             "noise_floor_db",
         ]
-        meta_cols = ["is_perturbed", "perturbation_idx"]
+        meta_cols = ["spec_id", "is_perturbed", "perturbation_idx"]
 
         ordered = (
             input_cols

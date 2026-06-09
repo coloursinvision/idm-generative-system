@@ -25,7 +25,6 @@ import mlflow
 import numpy as np
 import pandas as pd
 import yaml  # type: ignore[import-untyped]
-from sklearn.model_selection import train_test_split
 
 from engine.ml.dataset_schema import DATASET_SCHEMA
 from engine.ml.model_training import (
@@ -34,6 +33,7 @@ from engine.ml.model_training import (
     extract_feature_target_columns,
     prepare_data,
     run_optuna_study,
+    split_by_group,
 )
 
 logging.basicConfig(
@@ -166,13 +166,17 @@ def main() -> None:
         len(target_cols),
     )
 
-    # --- Train/test split (stratified by region) ---
-    X_train, X_test, y_train, y_test = train_test_split(  # noqa: N806
+    # --- Group-aware train/test split by spec_id (prevents spec-level leakage) ---
+    # Delegates to engine.ml.model_training.split_by_group: every TrackSpec's
+    # rows share a spec_id and stay wholly on one side, so near-duplicate
+    # perturbations cannot straddle train/test. Region stratification is dropped
+    # (GroupShuffleSplit cannot stratify); region balance is verified post-hoc.
+    X_train, X_test, y_train, y_test = split_by_group(  # noqa: N806
         X,
         y,
+        df["spec_id"],
         test_size=train_params["test_size"],
         random_state=train_params["random_state"],
-        stratify=X["region"],
     )
     logger.info("Train: %d rows, Test: %d rows", len(X_train), len(X_test))
 
