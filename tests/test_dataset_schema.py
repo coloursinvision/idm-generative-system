@@ -54,6 +54,10 @@ def _make_valid_df(**overrides: Any) -> pd.DataFrame:
         "perturbation_idx": [0, 1, 0],
     }
     base.update(overrides)
+    # spec_id defaults to one distinct group per row, sized to the row count, so
+    # callers that vary the row count need not override it. The schema only
+    # checks int >= 0; grouping semantics are exercised in the generator tests.
+    base.setdefault("spec_id", list(range(len(base["bpm"]))))
     return pd.DataFrame(base)
 
 
@@ -178,6 +182,16 @@ class TestSchemaRejectsInvalid:
 
     def test_negative_bpm(self) -> None:
         df = _make_valid_df(bpm=[-10.0, 120.0, 145.0])
+        with pytest.raises(pandera.errors.SchemaError):
+            DATASET_SCHEMA.validate(df)
+
+    def test_negative_spec_id(self) -> None:
+        df = _make_valid_df(spec_id=[-1, 0, 1])
+        with pytest.raises(pandera.errors.SchemaError):
+            DATASET_SCHEMA.validate(df)
+
+    def test_missing_spec_id(self) -> None:
+        df = _make_valid_df().drop(columns=["spec_id"])
         with pytest.raises(pandera.errors.SchemaError):
             DATASET_SCHEMA.validate(df)
 

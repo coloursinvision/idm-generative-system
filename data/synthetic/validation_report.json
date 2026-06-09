@@ -1,7 +1,7 @@
 {
   "input_path": "data/synthetic/dataset.parquet",
   "n_rows": 9900,
-  "n_columns": 29,
+  "n_columns": 30,
   "columns": [
     "bpm",
     "pitch_midi",
@@ -30,10 +30,11 @@
     "noise_sub_bass_hz",
     "noise_floor_hz",
     "noise_floor_db",
+    "spec_id",
     "is_perturbed",
     "perturbation_idx"
   ],
   "status": "passed",
   "errors": [],
-  "validation_ms": 58.77
+  "validation_ms": 62.42
 }
