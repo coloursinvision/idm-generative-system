@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import json
 import logging
+import shutil
 import sys
 from pathlib import Path
 
@@ -205,7 +206,13 @@ def main() -> None:
     )
 
     # --- Export model artifact for DVC ---
-    _MODEL_DIR.mkdir(parents=True, exist_ok=True)
+    # mlflow.sklearn.save_model refuses a non-empty target directory. The DVC
+    # `train` stage declares models/tuning_estimator as a persist:true out, so a
+    # prior run's artifact survives into the re-run; clear it first to keep the
+    # stage re-runnable (otherwise the second `dvc repro train` raises). save_model
+    # recreates the directory.
+    if _MODEL_DIR.exists():
+        shutil.rmtree(_MODEL_DIR)
     mlflow.sklearn.save_model(best_pipeline, str(_MODEL_DIR))
     logger.info("Model artifact saved to %s", _MODEL_DIR)
 
