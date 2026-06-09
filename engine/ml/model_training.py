@@ -44,6 +44,7 @@ import optuna
 import pandas as pd
 from mlflow.tracking import MlflowClient
 from sklearn.compose import ColumnTransformer
+from sklearn.model_selection import GroupShuffleSplit
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OrdinalEncoder, StandardScaler
@@ -69,7 +70,7 @@ _NUMERIC_FEATURES: list[str] = [
 ]
 
 # Columns excluded from features (metadata, targets, or identifiers).
-_EXCLUDE_COLUMNS: set[str] = {"is_perturbed", "perturbation_idx"}
+_EXCLUDE_COLUMNS: set[str] = {"spec_id", "is_perturbed", "perturbation_idx"}
 
 
 # ---------------------------------------------------------------------------
@@ -280,6 +281,53 @@ def prepare_data(
     y = y.fillna(0.0)
 
     return X, y
+
+
+# ---------------------------------------------------------------------------
+# Train/test split
+# ---------------------------------------------------------------------------
+
+
+def split_by_group(
+    X: pd.DataFrame,  # noqa: N803
+    y: pd.DataFrame,
+    groups: pd.Series,
+    *,
+    test_size: float,
+    random_state: int,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Group-aware train/test split keeping every group wholly on one side.
+
+    Prevents spec-level leakage: the ``1 + n_perturbations`` rows of one
+    ``TrackSpec`` share a ``spec_id`` (the group) and identical features. A
+    row-level split would straddle those near-duplicates across train and test
+    and inflate the reported metrics. Uses a single
+    :class:`sklearn.model_selection.GroupShuffleSplit`.
+
+    Args:
+        X: Feature matrix.
+        y: Target matrix, row-aligned with ``X``.
+        groups: Group label per row (e.g. ``df["spec_id"]``), row-aligned
+            with ``X``. ``test_size`` is applied at the *group* level.
+        test_size: Fraction of groups assigned to the test partition.
+        random_state: Seed for the group shuffle.
+
+    Returns:
+        ``(X_train, X_test, y_train, y_test)`` as positional ``.iloc`` slices.
+        No group label appears in both partitions.
+    """
+    splitter = GroupShuffleSplit(
+        n_splits=1,
+        test_size=test_size,
+        random_state=random_state,
+    )
+    train_idx, test_idx = next(splitter.split(X, y, groups=groups))
+    return (
+        X.iloc[train_idx],
+        X.iloc[test_idx],
+        y.iloc[train_idx],
+        y.iloc[test_idx],
+    )
 
 
 # ---------------------------------------------------------------------------

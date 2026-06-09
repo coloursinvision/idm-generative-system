@@ -373,7 +373,8 @@ class TestGenerateDataset:
         freq_start = 6
         freq_cols = [c for c in cols[freq_start:] if c.startswith("freq_")]
         assert freq_cols == sorted(freq_cols)
-        # Metadata columns come last
+        # Metadata columns come last (spec_id → is_perturbed → perturbation_idx)
+        assert cols[-3] == "spec_id"
         assert cols[-2] == "is_perturbed"
         assert cols[-1] == "perturbation_idx"
 
@@ -396,6 +397,25 @@ class TestGenerateDataset:
         gen = SyntheticDatasetGenerator(active_config, n_perturbations=3, master_seed=42)
         df = gen.generate_dataset([uk_spec], profile=uk_profile)
         assert list(df["perturbation_idx"]) == [0, 1, 2, 3]
+
+    def test_spec_id_groups(
+        self,
+        uk_spec: TrackSpec,
+        uk_profile: RegionalProfile,
+        active_config: PerturbationConfig,
+    ) -> None:
+        """spec_id is the global per-spec group key: one distinct id per
+        TrackSpec (enumerate position), shared by all 1 + n_perturbations
+        rows, contiguous 0..n_specs-1. Group-aware splitting relies on it."""
+        specs = [uk_spec, uk_spec, uk_spec]
+        gen = SyntheticDatasetGenerator(active_config, n_perturbations=4, master_seed=42)
+        df = gen.generate_dataset(specs, profile=uk_profile)
+        # One distinct, contiguous spec_id per spec.
+        assert sorted(df["spec_id"].unique()) == [0, 1, 2]
+        # Each spec contributes exactly 1 + n_perturbations rows...
+        assert df["spec_id"].value_counts().to_dict() == {0: 5, 1: 5, 2: 5}
+        # ...laid out as contiguous per-spec blocks (no interleaving).
+        assert list(df["spec_id"]) == [0] * 5 + [1] * 5 + [2] * 5
 
     def test_baseline_row_values_match_zero_sigma(
         self,
