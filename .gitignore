@@ -94,3 +94,8 @@ age-key.txt
 
 # Claude Code local machine-specific settings (not committed)
 .claude/settings.local.json
+
+# Built SPA served by backend (build artifact — never commit)
+static/
+# MLflow local SQLite tracking DB (created at backend startup)
+mlflow.db
