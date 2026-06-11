@@ -47,7 +47,7 @@ from functools import cache
 from pathlib import Path
 from typing import Literal
 
-import frontmatter  # type: ignore[import-untyped]
+import frontmatter
 import yaml  # type: ignore[import-untyped]
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 

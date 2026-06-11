@@ -5,8 +5,8 @@ stages:
     deps:
     - path: engine/ml/dataset_generator.py
       hash: md5
-      md5: 7b14f62b24916d6c4502f54a24d5e822
-      size: 13614
+      md5: 22e3f30c7683076dd7e3cc214cede463
+      size: 14271
     - path: engine/ml/deterministic_mapper.py
       hash: md5
       md5: 9ffac50e6aba7ece7c1933bd9658a93c
@@ -17,8 +17,8 @@ stages:
       size: 14761
     - path: engine/ml/regional_profiles.py
       hash: md5
-      md5: 13129c34db77c35d4c1eacc6bc52ce36
-      size: 23127
+      md5: bc487fdb4755af27fde7221d1dbd45c2
+      size: 23095
     - path: engine/ml/resonance_rules.py
       hash: md5
       md5: f1560e187961f2f62a6439947cf45ec5
@@ -48,19 +48,19 @@ stages:
     outs:
     - path: data/synthetic/dataset.parquet
       hash: md5
-      md5: 5761061f669ed8e6724321231fc8cbdd
-      size: 1047904
+      md5: 7194072c4adb3d2dd0464d89f4b076fb
+      size: 1054772
   validate:
     cmd: python scripts/validate_schema.py
     deps:
     - path: data/synthetic/dataset.parquet
       hash: md5
-      md5: 5761061f669ed8e6724321231fc8cbdd
-      size: 1047904
+      md5: 7194072c4adb3d2dd0464d89f4b076fb
+      size: 1054772
     - path: engine/ml/dataset_schema.py
       hash: md5
-      md5: bd5601845502ae31506a858f81c6728b
-      size: 6848
+      md5: 6ca430bc0fd044f89afaebed3c0d91cc
+      size: 13676
     - path: scripts/validate_schema.py
       hash: md5
       md5: 1c2a25d8f8615a8f728196463a13acb7
@@ -68,23 +68,23 @@ stages:
     outs:
     - path: data/synthetic/validation_report.json
       hash: md5
-      md5: accd9c59045385df8c3b0c247ec9ef72
-      size: 879
+      md5: 3cdf9f7905a18e17bf9f8daeba9f0ce3
+      size: 894
   train:
-    cmd: python scripts/train_model.py
+    cmd: bash scripts/train_with_hash.sh
     deps:
     - path: data/synthetic/dataset.parquet
       hash: md5
-      md5: 5761061f669ed8e6724321231fc8cbdd
-      size: 1047904
+      md5: 7194072c4adb3d2dd0464d89f4b076fb
+      size: 1054772
     - path: engine/ml/model_training.py
       hash: md5
-      md5: a13f842f0f0a0e61aad250b9ceefd5e7
-      size: 17545
+      md5: bd30b2c7d611790f7ee3eb28b80fbb33
+      size: 21607
     - path: scripts/train_model.py
       hash: md5
-      md5: 9e51262fffb45808ac37504435b8d6d2
-      size: 7541
+      md5: 4c11ed96dbaba8500438650ea8b6aa72
+      size: 7842
     params:
       params.yaml:
         train:
@@ -116,14 +116,14 @@ stages:
     outs:
     - path: models/feature_importance.json
       hash: md5
-      md5: 73c66907fdce07e501b3769ccef620be
-      size: 193
+      md5: 14655c4c83ba57156edf060d6c9045ce
+      size: 196
     - path: models/metrics.json
       hash: md5
-      md5: 7bb8ccf949c9d37c091d71245d002be5
-      size: 1227
+      md5: e0883c84571c8cac2bfbe491df7f6615
+      size: 1514
     - path: models/tuning_estimator
       hash: md5
-      md5: 7165b549d4a2c3100f67a5737dfc1faa.dir
-      size: 15292159
+      md5: 88fce20dc47b8e9eed42379eb2491836.dir
+      size: 16886813
       nfiles: 5

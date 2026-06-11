@@ -77,6 +77,24 @@ frontend/tsconfig.tsbuildinfo
 *.bak-S*
 .dvc/config.local.bak-*
 
+# ---------------------------------------------------------------------------
+# SOPS + age — secrets encryption (see .sops.yaml and SOPS_AGE_RUNBOOK.md)
+# ---------------------------------------------------------------------------
+# Plaintext working forms — never commit
+secrets/*.plain.*
+secrets/*.dec.*
+secrets/*.plain.yaml
+secrets/*.plain.yml
+*.decrypted
+
+# age private key — must NEVER reach the repo (lives in ~/.config/sops/age/)
+keys.txt
+*.agekey
+age-key.txt
+
+# Claude Code local machine-specific settings (not committed)
+.claude/settings.local.json
+
 # Built SPA served by backend (build artifact — never commit)
 static/
 # MLflow local SQLite tracking DB (created at backend startup)

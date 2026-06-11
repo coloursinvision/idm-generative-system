@@ -28,6 +28,7 @@ from engine.ml.model_training import (
     extract_feature_target_columns,
     prepare_data,
     run_optuna_study,
+    split_by_group,
     train,
 )
 
@@ -357,3 +358,49 @@ class TestOptunaStudy:
         # Best metrics are populated.
         assert "rmse_mean" in best_metrics
         assert best_metrics["rmse_mean"] >= 0.0
+
+
+# ---------------------------------------------------------------------------
+# Group-aware split (spec-level leakage prevention — #2)
+# ---------------------------------------------------------------------------
+
+
+class TestSplitByGroup:
+    """split_by_group keeps every group wholly on one side (acceptance #2)."""
+
+    @staticmethod
+    def _make_grouped(n_groups: int, rows_per: int) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series]:
+        """Build X, y, groups mirroring 1 baseline + (rows_per - 1) perturbations."""
+        n = n_groups * rows_per
+        groups = pd.Series(np.repeat(np.arange(n_groups), rows_per))
+        X = pd.DataFrame({"f": np.arange(n, dtype=float)})
+        y = pd.DataFrame({"t": np.arange(n, dtype=float)})
+        return X, y, groups
+
+    def test_no_group_in_both_partitions(self) -> None:
+        """The literal #2 acceptance: no spec_id appears in both partitions."""
+        n_groups, rows_per = 10, 11
+        X, y, groups = self._make_grouped(n_groups, rows_per)
+        X_train, X_test, y_train, y_test = split_by_group(
+            X, y, groups, test_size=0.2, random_state=42
+        )
+        train_groups = set(groups.loc[X_train.index])
+        test_groups = set(groups.loc[X_test.index])
+        # Disjoint group partitions.
+        assert train_groups.isdisjoint(test_groups)
+        # Split is at the group level: 20% of 10 groups → 2 test, 8 train.
+        assert len(test_groups) == 2
+        assert len(train_groups) == 8
+        # Every row accounted for exactly once.
+        assert len(X_train) + len(X_test) == n_groups * rows_per
+        assert X_train.index.intersection(X_test.index).empty
+        # X and y stay row-aligned through the split.
+        assert list(X_train.index) == list(y_train.index)
+        assert list(X_test.index) == list(y_test.index)
+
+    def test_deterministic(self) -> None:
+        """Same random_state → identical split."""
+        X, y, groups = self._make_grouped(8, 11)
+        a = split_by_group(X, y, groups, test_size=0.25, random_state=42)
+        b = split_by_group(X, y, groups, test_size=0.25, random_state=42)
+        assert list(a[1].index) == list(b[1].index)  # X_test rows identical
