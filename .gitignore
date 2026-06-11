@@ -91,3 +91,8 @@ secrets/*.plain.yml
 keys.txt
 *.agekey
 age-key.txt
+
+# Built SPA served by backend (build artifact — never commit)
+static/
+# MLflow local SQLite tracking DB (created at backend startup)
+mlflow.db
