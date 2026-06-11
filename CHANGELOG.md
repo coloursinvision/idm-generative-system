@@ -6,6 +6,55 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.9.0] — 2026-06-11 — EP-133 Simultaneous Multi-Group Transport + Global Play (CR-F12)
+
+### Fixed
+
+- **EP-133 Guide: simultaneous A/B/C/D playback under one master transport** (CRITICAL — CR-F12; `frontend/src/hooks/useEP133Sequencer.ts` [new], `frontend/src/components/guide/EP133Guide.tsx`) — The guide previously sounded only the single active group; the four EP-133 pad groups could not run together. The new `useEP133Sequencer` hook drives all four groups from **one `AudioContext` and a single master clock** at the finest interval (1/32 = 32 ticks/bar); each group strides over it (`stride = 32 / numSteps(timing)`), giving simultaneous playback and correct polyrhythm (8/16/32 all divide 32, so groups stay phase-aligned). One global BPM, per-group note interval (1/8, 1/16, 1/32).
+
+- **Multi-voice clipping eliminated** — all group voices route through a master bus `gain (0.35 headroom) → DynamicsCompressor (limiter) → destination`, mirroring the EP-133 hardware master compressor (manual §11). Without it the four-group sum exceeded 0 dBFS and degraded into distortion.
+
+- **Mute/solo** — mixer predicate read fresh each tick (`audible = anySolo ? solo : !muted`); solo wins over mute.
+
+### Changed
+
+- **Per-group sample loading** (`LOAD <group>` / `RELOAD <group>`) replaces the previous `LOAD ALL` convenience, matching the hardware (samples load per group).
+
+### Notes
+
+- `useSequencer.ts` and `PO33Guide.tsx` are untouched — **PO-33 is unaffected** (AC9). The CR-F13 WebKit `AudioContext` lifecycle is duplicated into the new hook by deliberate decision (shared `useAudioContext` util deferred — INF-S).
+- **Resolves INF-O** — `/health` `version` is sourced from `importlib.metadata` (`api/main.py`), so the deployed `/health` now reports the package version correctly; `develop` had drifted to `0.7.0` because the `0.8.0` bump landed on `main` only and was never back-merged.
+- Ships the whole `develop` integration branch (Git Flow): also includes training-time-only pipeline changes (spec-level-leakage fix via `spec_id` group split / `GroupShuffleSplit`, train re-run idempotency, regenerated `dvc.lock` / metrics for `TuningEstimator` v4 @ Staging). **Serving impact: none** — `/tuning` loads `TuningEstimator/Production` (v1, unchanged in the MLflow registry).
+- Gates: vitest **68/68** (11 new, AC1–AC8); real-browser AC1–AC9 PASS; `tsc` clean; `vite build` OK.
+
+---
+
+## [0.8.0] — 2026-05-15 — V2.4 /tuning/extract LLM Endpoint + TuningPanel
+
+### Added
+
+- **`POST /tuning/extract`** — free-text → `TuningRequest` extraction via GPT-4o (existing `RAGPipeline.extract_tuning_request`), Langfuse-traced, **fail-open** (not gated on `_HAS_MLFLOW`, per D-S14-03).
+- **Frontend `/tuning` route + TUNING navbar tab** (8th tab; wraps to a second row below 768 px). TuningPanel composes TuningExtract + TuningForm + TuningResult.
+
+### Notes
+
+- SemVer minor bump for the additive endpoint (D-S14-04). Both `/tuning` and `/tuning/extract` emit Langfuse traces to the EU project `idm-generative-system`. Deployed to production 2026-05-15.
+
+---
+
+## [0.7.0] — 2026-05-15 — V2.3 /tuning ML Endpoint — Production Deploy
+
+### Added
+
+- **`POST /tuning`** — V2.3 ML tuning endpoint (S13 sub-stages A–F): `TuningEstimator/Production` (XGBoost) maps a region/profile request to resonant points, loaded in the FastAPI lifespan from the MLflow registry. 29 integration cases (`tests/test_tuning_api.py`).
+- **Per-region RMSE diagnostic** in `model_training.train()`.
+
+### Changed
+
+- **Production `Dockerfile`** uses `[ml,monitoring]` extras (D-S14-01). Droplet `.env` carries `LANGFUSE_*` / `AWS_*`. Deployed to production via GHCR + `deploy.yml` (TODO-S13-J — closes the V2.3 production deployment gap).
+
+---
+
 ## [0.6.1] — 2026-04-11 — EP-133 Group State Persistence (Complete Fix)
 
 ### Fixed
