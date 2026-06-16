@@ -239,6 +239,12 @@ T-A (`/api` prefix mismatch) and T-B (backend 500) are **separate tickets**. The
 
 `~/.config/sops/age/keys.txt` on the machine itself (mode 600) and the iCloud Keychain note `IDM age private key (SOPS secrets master)`. Nowhere else. Not in Git, not in cloud docs, not in email, not in `/tmp`, not in a sync folder. Not "for a moment."
 
+### 6.9 No stray writes — project root and system disk are off-limits
+
+Claude Code MUST NOT create, write, or save any file in the **project root directory** or anywhere else **on the system disk** — explicitly including ephemeral, scratch, planning, hand-off, or generated documents. The **only** permitted location for such artifacts is `~/Downloads/`, and **only after explicit operator confirmation for that specific write**. Never write first and ask later.
+
+This does not block the version-controlled source work an approved task requires — editing existing tracked files, or adding new source files inside their proper subdirectory (`engine/`, `frontend/src/…`, `tests/`), committed via the Git Flow in §4.4. It forbids depositing ephemeral or stray files into the repo root or scattering them across the system disk. The project root is never a scratch space. When in doubt, ask before writing.
+
 ---
 
 ## 7. References (where the canonical documents live)
