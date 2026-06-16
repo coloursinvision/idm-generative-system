@@ -33,6 +33,7 @@ from engine.generator import (
 from engine.sample_maker import (
     SAMPLE_RATE,
     batch_export,
+    fm_analog,
     fm_blip,
     glitch_click,
     noise_burst,
@@ -56,6 +57,7 @@ __all__ = [
     "glitch_click",
     "noise_burst",
     "fm_blip",
+    "fm_analog",
     "normalize",
     "save_sample",
     "batch_export",
