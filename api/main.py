@@ -54,7 +54,13 @@ from engine.effects import (
     build_chain,
 )
 from engine.ml.regional_profiles import RegionCode, SubRegion
-from engine.sample_maker import SAMPLE_RATE, fm_blip, glitch_click, noise_burst
+from engine.sample_maker import (
+    SAMPLE_RATE,
+    fm_analog,
+    fm_blip,
+    glitch_click,
+    noise_burst,
+)
 from knowledge.rag import RAGPipeline
 
 # ---------------------------------------------------------------------------
@@ -291,6 +297,7 @@ GENERATORS: dict[str, Any] = {
     "glitch_click": glitch_click,
     "noise_burst": noise_burst,
     "fm_blip": fm_blip,
+    "fm_analog": fm_analog,
 }
 
 rag = RAGPipeline()
@@ -307,7 +314,8 @@ class GenerateRequest(BaseModel):
     generator: str = Field(
         default="glitch_click",
         description=(
-            "Sample generator function. Options: 'glitch_click', 'noise_burst', 'fm_blip'."
+            "Sample generator function. Options: 'glitch_click', 'noise_burst', "
+            "'fm_blip', 'fm_analog'."
         ),
     )
     generator_params: dict[str, Any] = Field(
@@ -700,6 +708,24 @@ async def generate(req: GenerateRequest) -> StreamingResponse:
                 "mod_index": float(np.random.uniform(0.5, 8.0)),
                 "length_ms": float(np.random.uniform(200, 800)),
                 "decay": float(np.random.uniform(1.5, 6.0)),
+                # FM-expansion: additive timbral variety (ratio left to presets)
+                "mod_index_end": float(np.random.uniform(0.5, 8.0)),
+                "feedback": float(np.random.uniform(0.0, 0.8)),
+                "attack_ms": float(np.random.uniform(0.0, 60.0)),
+            }
+        elif req.generator == "fm_analog":
+            params = {
+                "freq": float(np.random.uniform(36, 300)),
+                "ratio": float(np.random.choice([0.5, 1.0, 1.0, 2.0, 2.0, 3.0, 1.5])),
+                "index": float(np.random.uniform(1.0, 4.0)),
+                "length_ms": float(np.random.uniform(300, 1200)),
+                "detune_cents": float(np.random.uniform(4, 18)),
+                "cutoff_hz": float(np.random.uniform(150, 600)),
+                "cutoff_env": float(np.random.uniform(1200, 3800)),
+                "resonance": float(np.random.uniform(0.2, 0.7)),
+                "drive": float(np.random.uniform(1.2, 3.0)),
+                "attack_ms": float(np.random.uniform(2, 200)),
+                "decay": float(np.random.uniform(1.0, 4.5)),
             }
 
     try:
