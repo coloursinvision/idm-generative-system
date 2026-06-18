@@ -271,6 +271,12 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# CORS is for local development only: the Vite (5173) / CRA (3000) dev servers
+# call the backend cross-origin. In production the backend serves the SPA from
+# STATIC_DIR (same origin), so no CORS pre-flight occurs and these origins are
+# unused. If the API and SPA are ever deployed on separate origins, make
+# allow_origins env-driven (a tier-3 value in .env.shared) rather than editing
+# this hardcoded list.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://localhost:3000"],
