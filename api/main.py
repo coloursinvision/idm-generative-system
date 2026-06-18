@@ -1162,9 +1162,9 @@ class TuningExtractResponse(BaseModel):
             "before POST /tuning."
         ),
     )
-    model_version: str = Field(
+    model: str = Field(
         ...,
-        description="GPT model name used for extraction (mirrors /ask, /compose).",
+        description="GPT model name used for extraction (matches /ask, /compose).",
     )
 
 
@@ -1459,7 +1459,7 @@ async def tuning_extract(request: TuningExtractRequest) -> TuningExtractResponse
 
         response = TuningExtractResponse(
             extracted=extracted,
-            model_version=rag.model,
+            model=rag.model,
         )
 
         if trace_span is not None:
