@@ -40,10 +40,9 @@ test.describe("T-03: Composer Tab", () => {
       await input.press("Enter");
     }
 
-    // BUG: ComposerPanel checks parsed.reasoning (inside config object)
-    // but API returns reasoning at top level (result.reasoning).
-    // Reasoning section never renders. Verify sources render instead.
-    // TODO: Fix ComposerPanel to use result.reasoning — tracked as bug.
-    await expect(page.getByText(/Part 5/).first()).toBeVisible({ timeout: 5000 });
+    // Reasoning is a top-level field (ComposeResponse.reasoning) rendered in its own
+    // panel. Backend contract aligned 2026-06-18 — knowledge/rag.py compose() now lifts
+    // reasoning out of config to the top level (code review M2/M3).
+    await expect(page.getByText(/long hall decay/i).first()).toBeVisible({ timeout: 5000 });
   });
 });
