@@ -57,5 +57,5 @@ export interface TuningExtractRequest {
 
 export interface TuningExtractResponse {
   extracted: TuningRequest;
-  model_version: string;
+  model: string;
 }

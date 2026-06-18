@@ -100,7 +100,7 @@ class TestHappyPath:
         assert body["extracted"]["bpm"] == 130.0
         assert body["extracted"]["region"] == "UK_IDM"
         assert body["extracted"]["sub_region"] is None
-        assert body["model_version"] == api_main.rag.model
+        assert body["model"] == api_main.rag.model
 
     def test_happy_path_japan_idm_tokyo(self, client: Any, monkeypatch: pytest.MonkeyPatch) -> None:
         """JAPAN_IDM + TOKYO cross-field passes."""
@@ -231,7 +231,7 @@ class TestResponseShape:
         body = response.json()
 
         # Top-level keys
-        assert set(body.keys()) == {"extracted", "model_version"}
+        assert set(body.keys()) == {"extracted", "model"}
 
         # Extracted sub-object keys (matches TuningRequest contract)
         assert set(body["extracted"].keys()) == {
