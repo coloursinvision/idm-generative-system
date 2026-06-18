@@ -18,7 +18,7 @@ export function TuningExtract({ onExtracted }: Props) {
     setError("");
     try {
       const data = await postTuningExtract({ text: text.trim() });
-      setLastModel(data.model_version);
+      setLastModel(data.model);
       onExtracted(data.extracted);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Extraction failed");
