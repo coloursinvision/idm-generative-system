@@ -11,7 +11,10 @@ Implements the supervised ML training workflow for the tuning estimation
 model. The pipeline:
 
     1. Loads and validates a synthetic dataset (parquet).
-    2. Splits into train/test sets (stratified by region).
+    2. Splits into train/validation/test sets, grouped by ``spec_id`` so no
+       TrackSpec straddles partitions (prevents spec-level leakage). The
+       validation split scores Optuna trials; the test split is held out for
+       the single final metrics report.
     3. Preprocesses features via scikit-learn ``Pipeline``
        (``OrdinalEncoder`` for categoricals, ``StandardScaler`` for
        numerics).
@@ -83,14 +86,18 @@ class TrainingConfig:
     """Configuration for a single training run.
 
     Attributes:
-        test_size: Fraction of data reserved for testing.
-        random_state: Seed for train/test split and XGBoost.
+        test_size: Fraction of groups held out for the final test report.
+        val_size: Fraction of the post-test remainder held out for Optuna
+            validation scoring (so val is ``val_size * (1 - test_size)`` of
+            the whole). The test set is never seen during HPO.
+        random_state: Seed for the group splits and XGBoost.
         experiment_name: MLflow experiment name.
         registry_name: MLflow Model Registry name.
         xgboost_params: XGBoost hyperparameters (passed to XGBRegressor).
     """
 
     test_size: float = 0.2
+    val_size: float = 0.2
     random_state: int = 42
     experiment_name: str = "tuning-estimator"
     registry_name: str = "TuningEstimator"
@@ -330,6 +337,66 @@ def split_by_group(
     )
 
 
+def split_train_val_test_by_group(
+    X: pd.DataFrame,  # noqa: N803
+    y: pd.DataFrame,
+    groups: pd.Series,
+    *,
+    test_size: float,
+    val_size: float,
+    random_state: int,
+) -> tuple[
+    pd.DataFrame,
+    pd.DataFrame,
+    pd.DataFrame,
+    pd.DataFrame,
+    pd.DataFrame,
+    pd.DataFrame,
+]:
+    """Group-aware three-way split: train / validation / test.
+
+    Holds out the test partition first, then carves a validation partition
+    from the remaining train pool — both via :func:`split_by_group`, so a
+    ``spec_id`` group never straddles any two partitions. ``val_size`` is
+    applied to the *post-test remainder*, i.e. validation is
+    ``val_size * (1 - test_size)`` of the whole dataset.
+
+    The validation partition scores Optuna trials; the test partition is held
+    out for the single final metrics report (fixes HPO-on-test, V2_ROADMAP
+    backlog #3 / DECISIONS D-PIPE-06).
+
+    Args:
+        X: Feature matrix.
+        y: Target matrix, row-aligned with ``X``.
+        groups: Group label per row (e.g. ``df["spec_id"]``), row-aligned
+            with ``X``.
+        test_size: Fraction of groups assigned to the test partition.
+        val_size: Fraction of the *remaining* groups assigned to validation.
+        random_state: Seed for both group shuffles.
+
+    Returns:
+        ``(X_train, X_val, X_test, y_train, y_val, y_test)`` as positional
+        ``.iloc`` slices. No group label appears in more than one partition.
+    """
+    X_rest, X_test, y_rest, y_test = split_by_group(  # noqa: N806
+        X,
+        y,
+        groups,
+        test_size=test_size,
+        random_state=random_state,
+    )
+    # Re-align group labels to the surviving rows before the second split.
+    groups_rest = groups.loc[X_rest.index]
+    X_train, X_val, y_train, y_val = split_by_group(  # noqa: N806
+        X_rest,
+        y_rest,
+        groups_rest,
+        test_size=val_size,
+        random_state=random_state,
+    )
+    return X_train, X_val, X_test, y_train, y_val, y_test
+
+
 # ---------------------------------------------------------------------------
 # Training
 # ---------------------------------------------------------------------------
@@ -495,6 +562,8 @@ def train(
 def run_optuna_study(
     X_train: pd.DataFrame,  # noqa: N803
     y_train: pd.DataFrame,
+    X_val: pd.DataFrame,  # noqa: N803
+    y_val: pd.DataFrame,
     X_test: pd.DataFrame,  # noqa: N803
     y_test: pd.DataFrame,
     training_config: TrainingConfig,
@@ -502,15 +571,19 @@ def run_optuna_study(
 ) -> tuple[Pipeline, dict[str, float], optuna.Study]:
     """Run Optuna hyperparameter optimisation and return best pipeline.
 
-    Each trial suggests XGBoost hyperparameters within the ranges
-    defined in ``optuna_config.xgboost_ranges``, trains a pipeline,
-    and evaluates on the test set. The best trial's hyperparameters
-    are used for a final training run logged to MLflow.
+    Each trial suggests XGBoost hyperparameters within the ranges defined in
+    ``optuna_config.xgboost_ranges``, fits on the training set, and scores on
+    the **validation** set. The best trial's hyperparameters are then used to
+    refit on train + validation, and final metrics are reported once on the
+    held-out **test** set (so the metric optimised by HPO is never the metric
+    reported — fixes HPO-on-test, V2_ROADMAP backlog #3 / D-PIPE-06).
 
     Args:
         X_train: Training feature matrix.
         y_train: Training target matrix.
-        X_test: Test feature matrix.
+        X_val: Validation feature matrix (scores Optuna trials).
+        y_val: Validation target matrix.
+        X_test: Test feature matrix (held out for the final report).
         y_test: Test target matrix.
         training_config: Base training configuration.
         optuna_config: Optuna study configuration.
@@ -573,12 +646,13 @@ def run_optuna_study(
         )
         pipeline.fit(X_train, y_train)
 
-        y_pred = pipeline.predict(X_test)
+        y_pred = pipeline.predict(X_val)
         if isinstance(y_pred, np.ndarray) and y_pred.ndim == 1:
             y_pred = y_pred.reshape(-1, 1)
 
-        # Minimise mean RMSE across all targets.
-        rmse_per_target = np.sqrt(np.mean((y_test.values - y_pred) ** 2, axis=0))
+        # Minimise mean validation RMSE across all targets. The test set is
+        # untouched here so it stays a clean estimate for the final report.
+        rmse_per_target = np.sqrt(np.mean((y_val.values - y_pred) ** 2, axis=0))
         return float(np.mean(rmse_per_target))
 
     # --- Run study ---
@@ -612,11 +686,18 @@ def run_optuna_study(
     # --- Final training with best params ---
     best_config = TrainingConfig(
         test_size=training_config.test_size,
+        val_size=training_config.val_size,
         random_state=training_config.random_state,
         experiment_name=training_config.experiment_name,
         registry_name=training_config.registry_name,
         xgboost_params=study.best_trial.params,
     )
-    best_pipeline, best_metrics = train(X_train, y_train, X_test, y_test, best_config)
+
+    # Hyperparameters are already chosen on validation; refit the final model
+    # on train + validation for maximum data, then report metrics once on the
+    # held-out test set.
+    X_trainval = pd.concat([X_train, X_val])  # noqa: N806
+    y_trainval = pd.concat([y_train, y_val])
+    best_pipeline, best_metrics = train(X_trainval, y_trainval, X_test, y_test, best_config)
 
     return best_pipeline, best_metrics, study

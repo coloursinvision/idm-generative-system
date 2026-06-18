@@ -46,8 +46,13 @@ generate:
 # Model training (scripts/train_model.py)
 # ---------------------------------------------------------------------------
 train:
-  # Train / test split ratio.
+  # Group-aware train / val / test split ratios (by spec_id).
+  # test_size is the held-out test fraction; val_size is taken from the
+  # post-test remainder (so val ≈ val_size * (1 - test_size) of the whole).
+  # The validation split scores Optuna trials; the test split is held out for
+  # the single final metrics report (D-PIPE-06, fixes HPO-on-test).
   test_size: 0.2
+  val_size: 0.2
   random_state: 42
 
   # MLflow experiment name.
