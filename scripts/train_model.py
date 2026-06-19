@@ -34,7 +34,7 @@ from engine.ml.model_training import (
     extract_feature_target_columns,
     prepare_data,
     run_optuna_study,
-    split_by_group,
+    split_train_val_test_by_group,
 )
 
 logging.basicConfig(
@@ -167,19 +167,28 @@ def main() -> None:
         len(target_cols),
     )
 
-    # --- Group-aware train/test split by spec_id (prevents spec-level leakage) ---
-    # Delegates to engine.ml.model_training.split_by_group: every TrackSpec's
-    # rows share a spec_id and stay wholly on one side, so near-duplicate
-    # perturbations cannot straddle train/test. Region stratification is dropped
-    # (GroupShuffleSplit cannot stratify); region balance is verified post-hoc.
-    X_train, X_test, y_train, y_test = split_by_group(  # noqa: N806
+    # --- Group-aware train/val/test split by spec_id (prevents spec-level leakage) ---
+    # Delegates to engine.ml.model_training.split_train_val_test_by_group: every
+    # TrackSpec's rows share a spec_id and stay wholly on one side, so near-duplicate
+    # perturbations cannot straddle partitions. The validation split scores Optuna
+    # trials; the test split is held out for the single final metrics report
+    # (fixes HPO-on-test — V2_ROADMAP backlog #3 / D-PIPE-06). Region stratification
+    # is dropped (GroupShuffleSplit cannot stratify); region balance is verified
+    # post-hoc.
+    X_train, X_val, X_test, y_train, y_val, y_test = split_train_val_test_by_group(  # noqa: N806
         X,
         y,
         df["spec_id"],
         test_size=train_params["test_size"],
+        val_size=train_params["val_size"],
         random_state=train_params["random_state"],
     )
-    logger.info("Train: %d rows, Test: %d rows", len(X_train), len(X_test))
+    logger.info(
+        "Train: %d rows, Val: %d rows, Test: %d rows",
+        len(X_train),
+        len(X_val),
+        len(X_test),
+    )
 
     # --- Configure ---
     optuna_params = train_params["optuna"]
@@ -187,6 +196,7 @@ def main() -> None:
 
     training_config = TrainingConfig(
         test_size=train_params["test_size"],
+        val_size=train_params["val_size"],
         random_state=train_params["random_state"],
         experiment_name=train_params["experiment_name"],
         registry_name=train_params["registry_name"],
@@ -203,6 +213,8 @@ def main() -> None:
     best_pipeline, best_metrics, study = run_optuna_study(
         X_train,
         y_train,
+        X_val,
+        y_val,
         X_test,
         y_test,
         training_config,

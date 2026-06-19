@@ -375,6 +375,11 @@ class SyntheticDatasetGenerator:
         input_cols = ["bpm", "pitch_midi", "swing", "region", "sub_region"]
         tuning_cols = ["tuning_hz"]
         freq_cols = sorted(c for c in df.columns if c.startswith("freq_"))
+        # Profile DSP outputs. NOTE: these are NOT consumed by the current
+        # model — model_training selects only the input + target columns, and
+        # its ColumnTransformer uses remainder="drop". They are emitted for
+        # completeness / provenance and reserved for a future feature set; drop
+        # them here if dataset size becomes a concern.
         dsp_cols = [
             "swing_amount",
             "reverb_decay",

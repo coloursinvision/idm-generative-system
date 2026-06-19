@@ -29,6 +29,7 @@ from engine.ml.model_training import (
     prepare_data,
     run_optuna_study,
     split_by_group,
+    split_train_val_test_by_group,
     train,
 )
 
@@ -305,7 +306,10 @@ class TestOptunaStudy:
 
         from sklearn.model_selection import train_test_split
 
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        X_tmp, X_test, y_tmp, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        X_train, X_val, y_train, y_val = train_test_split(
+            X_tmp, y_tmp, test_size=0.2, random_state=42
+        )
 
         training_config = TrainingConfig(
             test_size=0.2,
@@ -342,6 +346,8 @@ class TestOptunaStudy:
             best_pipeline, best_metrics, study = run_optuna_study(
                 X_train,
                 y_train,
+                X_val,
+                y_val,
                 X_test,
                 y_test,
                 training_config,
@@ -404,3 +410,60 @@ class TestSplitByGroup:
         a = split_by_group(X, y, groups, test_size=0.25, random_state=42)
         b = split_by_group(X, y, groups, test_size=0.25, random_state=42)
         assert list(a[1].index) == list(b[1].index)  # X_test rows identical
+
+
+# ---------------------------------------------------------------------------
+# Group-aware three-way split (HPO validation split — #3 / D-PIPE-06)
+# ---------------------------------------------------------------------------
+
+
+class TestSplitTrainValTestByGroup:
+    """split_train_val_test_by_group yields three group-disjoint partitions."""
+
+    @staticmethod
+    def _make_grouped(n_groups: int, rows_per: int) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series]:
+        """Build X, y, groups mirroring 1 baseline + (rows_per - 1) perturbations."""
+        n = n_groups * rows_per
+        groups = pd.Series(np.repeat(np.arange(n_groups), rows_per))
+        X = pd.DataFrame({"f": np.arange(n, dtype=float)})
+        y = pd.DataFrame({"t": np.arange(n, dtype=float)})
+        return X, y, groups
+
+    def test_three_way_group_disjoint(self) -> None:
+        """No spec_id appears in more than one of train/val/test (acceptance #3)."""
+        n_groups, rows_per = 20, 11
+        X, y, groups = self._make_grouped(n_groups, rows_per)
+        X_train, X_val, X_test, y_train, y_val, y_test = split_train_val_test_by_group(
+            X, y, groups, test_size=0.2, val_size=0.2, random_state=42
+        )
+        g_train = set(groups.loc[X_train.index])
+        g_val = set(groups.loc[X_val.index])
+        g_test = set(groups.loc[X_test.index])
+        # Pairwise disjoint group partitions.
+        assert g_train.isdisjoint(g_val)
+        assert g_train.isdisjoint(g_test)
+        assert g_val.isdisjoint(g_test)
+        # All groups partitioned exactly once — none lost, none duplicated.
+        assert g_train | g_val | g_test == set(range(n_groups))
+        assert len(g_train) + len(g_val) + len(g_test) == n_groups
+        # Every row accounted for exactly once.
+        assert len(X_train) + len(X_val) + len(X_test) == n_groups * rows_per
+        # X and y stay row-aligned within each partition.
+        assert list(X_train.index) == list(y_train.index)
+        assert list(X_val.index) == list(y_val.index)
+        assert list(X_test.index) == list(y_test.index)
+        # Train is the largest partition.
+        assert len(g_train) > len(g_val)
+        assert len(g_train) > len(g_test)
+
+    def test_deterministic(self) -> None:
+        """Same random_state → identical three-way split."""
+        X, y, groups = self._make_grouped(20, 11)
+        a = split_train_val_test_by_group(
+            X, y, groups, test_size=0.2, val_size=0.2, random_state=42
+        )
+        b = split_train_val_test_by_group(
+            X, y, groups, test_size=0.2, val_size=0.2, random_state=42
+        )
+        assert list(a[2].index) == list(b[2].index)  # X_test rows identical
+        assert list(a[1].index) == list(b[1].index)  # X_val rows identical
