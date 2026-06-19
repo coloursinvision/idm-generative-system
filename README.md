@@ -1,35 +1,37 @@
 # IDM Generative System
 
-A generative audio application for experimental IDM production. Reconstructs the analog and digital signal chain of 1987–1999 underground electronic music through DSP modeling, algorithmic composition, and RAG-augmented sound design.
+A generative audio application for experimental IDM production. Reconstructs the analog and digital signal chain of 1987–1999 underground electronic music through DSP modeling, algorithmic composition, RAG-augmented sound design, and a knowledge-informed ML tuning pipeline.
 
 Built around a 10-block effects chain that models specific hardware units — from the Mackie CR-1604 noise floor through SP-1200 bitcrushing, TB-303 resonant filtering, Alesis Quadraverb reverb, Roland Space Echo tape delay, to DAT brick-wall mastering. Every block is parameterised against documented specifications from the original equipment.
 
 Output targets: **Teenage Engineering PO-33 K.O!** and **EP-133 K.O.II** — the application generates samples, maps them to device-specific slot configurations, and produces step-by-step programming instructions for each hardware sequencer.
+
+**Live:** [idm.coloursinvision.ai](https://idm.coloursinvision.ai) · **Release:** `v0.9.0`
 
 ---
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────┐
-│               React Frontend                │
-│   React 18 + Vite + TypeScript + Tailwind   │
-│   Advisor | Composer | Effects | Generator  │
-│   PO-33 Guide | EP-133 Guide               │
-└─────────────────┬───────────────────────────┘
-                  │ HTTP
-┌─────────────────▼───────────────────────────┐
-│          FastAPI Backend v0.2.0              │
-│   /generate  /process  /ask  /compose       │
-│   /effects   /health                        │
-└──────┬──────────────────────────┬───────────┘
-       │                          │
-┌──────▼──────┐          ┌────────▼────────┐
-│   Engine    │          │    Knowledge    │
-│  Generators │          │  Qdrant Cloud   │
-│  Effects    │          │  GPT-4o RAG     │
-│  Chain      │          │  Langfuse       │
-└─────────────┘          └─────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                        React Frontend                        │
+│         React 18 + Vite + TypeScript + Tailwind CSS          │
+│  Advisor │ Composer │ Effects │ Generator │ PO-33 │ EP-133    │
+│                     Codegen │ Tuning                         │
+└───────────────────────────┬──────────────────────────────────┘
+                            │ HTTP  (/api/* — nginx strips prefix)
+┌───────────────────────────▼──────────────────────────────────┐
+│                    FastAPI Backend (v0.9.0)                   │
+│  /generate /process /ask /compose /effects /health           │
+│  /codegen /tuning /tuning/extract                            │
+└──────┬───────────────────┬───────────────────────┬───────────┘
+       │                   │                       │
+┌──────▼──────┐   ┌────────▼────────┐   ┌──────────▼───────────┐
+│   Engine    │   │    Knowledge    │   │   ML Tuning Pipeline │
+│  Generators │   │  Qdrant Cloud   │   │  engine/ml — L1→L6   │
+│  Effects    │   │  GPT-4o RAG     │   │  XGBoost · MLflow    │
+│  Chain      │   │  Langfuse       │   │  DVC · DO Spaces     │
+└─────────────┘   └─────────────────┘   └──────────────────────┘
 ```
 
 Two operating modes:
@@ -71,7 +73,7 @@ Tail padding: 2s zero-pad before chain processing. Reverb and delay tails decay 
 ## Features
 
 ### Advisor (`/advisor`)
-Sound design Q&A powered by RAG retrieval over the project's technical knowledge base (43 chunks in Qdrant, embedded with `text-embedding-3-large`). Ask about hardware characteristics, DSP techniques, or regional aesthetics — responses are grounded in documented specifications with source attribution.
+Sound design Q&A powered by RAG retrieval over the project's technical knowledge base (Qdrant Cloud, embedded with `text-embedding-3-large`). Ask about hardware characteristics, DSP techniques, or regional aesthetics — responses are grounded in documented specifications with source attribution.
 
 ### Composer (`/composer`)
 Describe an aesthetic direction in natural language. GPT-4o interprets the description against the knowledge base and returns a JSON effects chain configuration with reasoning. Send the config directly to the Generator.
@@ -86,6 +88,12 @@ Each generator feeds through the 10-block effects chain with per-block skip togg
 
 ### Effects Explorer (`/effects`)
 Read-only signal chain visualisation. Horizontal flow diagram of all 10 blocks with expandable parameter cards and hardware source references.
+
+### Codegen (`/codegen`)
+Translates generated patterns into live-coding source for **SuperCollider** and **TidalCycles**. SC / TIDAL tabs, a 3-click live flow, solarized-dark syntax highlighting, a config drawer, and a pop-out window synchronised via `BroadcastChannel` (with heartbeat and graceful degradation).
+
+### Tuning (`/tuning`)
+Frontend for the V2 ML tuning pipeline. Describe a tuning intent in free text (TuningExtract → GPT-4o), review/adjust the structured request (TuningForm), and compute resonant tuning points (TuningResult) for a region/profile via the `TuningEstimator` model. Conditional `sub_region` for `JAPAN_IDM`; philosophical region captions.
 
 ### PO-33 Guide (`/guide/po33`)
 Interactive programming guide for the Teenage Engineering PO-33 K.O!
@@ -104,11 +112,31 @@ Interactive programming guide for the Teenage Engineering EP-133 K.O.II
 - 12-pad grid (3×4) × 4 groups (A/B/C/D) matching the physical device
 - Group management: A=Drums, B=Bass, C=Melodic, D=Samples
 - Timing modes: 1/8, 1/8T, 1/16, 1/16T, 1/32
+- **Simultaneous multi-group transport (CR-F12, v0.9.0):** all four groups A/B/C/D play together under one master clock (1/32 grid, per-group stride for polyrhythm), a master/global play control, and a `gain → DynamicsCompressor` master bus that prevents multi-voice clipping. Mute/solo per group (solo wins over mute); per-group sample loading.
 - Step input and live record simulation
 - Instruction generator: converts patterns into EP-133 workflow with button combinations
-- Scene/pattern commit flow visualisation
 - Keys mode: chromatic keyboard for melodic input
-- 4-group Web Audio sequencer with variable timing and BPM control
+
+---
+
+## V2 — Knowledge-to-DSP ML Tuning Pipeline
+
+A supervised model (`TuningEstimator`) that maps a regional/aesthetic profile to a set of resonant tuning frequencies, trained end-to-end on a synthetic dataset derived from the project's documented knowledge. The pipeline is a six-layer chain (`engine/ml/`), reproducible via DVC and tracked in MLflow.
+
+| Layer | Module | Role |
+|-------|--------|------|
+| **L1** | knowledge spokes (vault) | Human knowledge — label rosters, hardware facts, regional history |
+| **L2** | regional profiles + resonance rules | Formalised DSP-target specs (`regional_profiles.py`, `resonance_rules.py`) |
+| **L3** | `deterministic_mapper.py` | Maps profile + resonance rules → deterministic DSP targets |
+| **L4** | `gaussian_noise.py` | Calibrated per-parameter sigma → synthetic perturbation |
+| **L5** | `dataset_generator.py` + `dataset_schema.py` | Composes a labeled synthetic dataset (pandera-validated DataFrame) |
+| **L6** | `model_training.py` | XGBoost + Optuna HPO, MLflow tracking → `TuningEstimator` |
+
+- **Reproducibility:** DVC pipeline (`dvc.yaml`: `generate → validate → train`); model artifacts and the synthetic dataset are content-hashed (`dvc_dataset_hash` MLflow tag).
+- **Registry:** `TuningEstimator/Production` (served by `/tuning`); newer baselines land at `Staging` first.
+- **Serving:** the FastAPI lifespan loads `models:/TuningEstimator/Production` from the MLflow registry (artifacts on DigitalOcean Spaces). `/tuning` returns resonant points; `/tuning/extract` turns free text into a structured `TuningRequest` via GPT-4o. Both endpoints emit Langfuse traces.
+
+> Pipeline execution (training / `dvc repro`) runs on a workstation, **never** on the production droplet. See `06-MLOps/` in the project vault for the full pipeline state, decisions, and runbook.
 
 ---
 
@@ -119,10 +147,15 @@ Interactive programming guide for the Teenage Engineering EP-133 K.O.II
 | Frontend | React 18, Vite, TypeScript, Tailwind CSS |
 | Backend | FastAPI (Python 3.11) |
 | LLM | GPT-4o (OpenAI API) via RAG pipeline |
-| Vector DB | Qdrant Cloud (text-embedding-3-large, 3072 dims) |
+| Vector DB | Qdrant Cloud (`text-embedding-3-large`, 3072 dims) |
+| ML | XGBoost, Optuna (HPO), scikit-learn, pandera |
+| ML tracking | MLflow (model registry + tracking server), DVC (pipeline + data versioning) |
+| Object storage | DigitalOcean Spaces (S3-compatible — DVC remote + MLflow artifacts) |
 | Observability | Langfuse (LLM tracing) |
 | Auxiliary UI | Streamlit (parameter inspection, RAG testing) |
 | Audio export | 24-bit WAV via soundfile |
+| Secrets | SOPS + age (`./scripts/run-with-env.sh`) |
+| Container / CI-CD | Docker Compose, GitHub Actions, GHCR |
 | Environment | Miniconda (`idm` environment) |
 
 Visual direction: **The Designers Republic / Warp Records (1992–1999)** — brutalist typography, industrial grids, high-contrast monochrome with neon accents. No rounded corners, no icons, text labels only.
@@ -134,9 +167,9 @@ Visual direction: **The Designers Republic / Warp Records (1992–1999)** — br
 ### Prerequisites
 
 - Python 3.11+ (Miniconda recommended)
-- Node.js 18+
-- OpenAI API key
-- Qdrant Cloud instance (or local Qdrant)
+- Node.js 18+ (22 LTS recommended, via `nvm`)
+- OpenAI API key, Qdrant Cloud instance
+- (ML pipeline only) DigitalOcean Spaces credentials + MLflow tracking URI
 
 ### Backend
 
@@ -146,15 +179,18 @@ cd idm-generative-system
 
 conda env create -f environment.yml
 conda activate idm
+pip install -e ".[dev]"          # add ".[ml]" for the V2 tuning pipeline
 
-# Set environment variables
+# Provide secrets (SOPS + age) — see the secrets architecture docs
 export OPENAI_API_KEY="your-key"
 export QDRANT_URL="your-qdrant-url"
 export QDRANT_API_KEY="your-qdrant-key"
 
-# Start API server
+# Start API server (or wrap with ./scripts/run-with-env.sh to inject SOPS secrets)
 uvicorn api.main:app --reload --port 8000
 ```
+
+Secrets are managed with SOPS + age: encrypted values live in `secrets/app.enc.yaml`, non-secret shared config in `.env.shared`. The entry point `./scripts/run-with-env.sh <command>` decrypts and injects them for any process.
 
 ### Frontend
 
@@ -168,11 +204,9 @@ npm run dev
 ### Verify
 
 ```bash
-# API health check
-curl http://localhost:8000/health
-
-# Run test suite
-pytest  # 23 tests, ~7s
+curl http://localhost:8000/health        # {"status":"ok","version":"0.9.0"}
+pytest                                    # backend test suite
+npm --prefix frontend run test            # frontend vitest
 ```
 
 ---
@@ -181,27 +215,39 @@ pytest  # 23 tests, ~7s
 
 | Endpoint | Method | Function |
 |----------|--------|----------|
-| `/health` | GET | Health check (polled by frontend StatusBar every 30s) |
+| `/health` | GET | Health check (version-stamped via `importlib.metadata`; polled by the frontend StatusBar) |
 | `/effects` | GET | Returns full chain configuration and per-block parameters |
 | `/generate` | POST | Generate sample through effects chain → 24-bit WAV |
 | `/process` | POST | Process uploaded audio through effects chain |
 | `/ask` | POST | RAG-augmented sound design Q&A (Advisor mode) |
 | `/compose` | POST | Aesthetic description → JSON effects config (Composer mode) |
+| `/codegen` | POST | Pattern → SuperCollider / TidalCycles source |
+| `/tuning` | POST | Region/profile request → resonant tuning points (`TuningEstimator`) |
+| `/tuning/extract` | POST | Free text → structured `TuningRequest` (GPT-4o) |
 
-CORS enabled for `localhost:5173` and `localhost:3000`.
+In production, an nginx reverse proxy strips the `/api` prefix; the frontend calls `/api/*` and the backend serves the routes at root.
 
 ---
 
 ## Testing
 
 ```bash
-pytest                    # Full suite: 23 tests
+pytest                    # Backend suite (engine, effects, API, ML)
 pytest -v                 # Verbose output
-pytest engine/            # Engine tests only
-pytest api/               # API tests only
+npm --prefix frontend run test    # Frontend vitest
 ```
 
-All tests validate signal chain integrity, effects block behavior, generator output ranges, and API endpoint responses.
+CI (`ci.yml`) runs `ruff check` + `ruff format --check`, `mypy`, the pytest suite, and a Docker build on every PR to `main` and push to `develop`/`main`.
+
+---
+
+## Deployment
+
+Production runs on a DigitalOcean droplet (AMS3) behind nginx, via Docker Compose (`idm-api` + `mlflow` containers).
+
+- **Git Flow:** feature branches → `develop` (integration) → `main` (release). Production deploys **only** from `main`.
+- **CI/CD:** a push to `main` triggers `ci.yml`, which builds and pushes the image to GHCR (`ghcr.io/coloursinvision/idm-generative-system:latest`). On CI success, `deploy.yml` SSHes the droplet and runs `docker compose pull idm-api && docker compose up -d idm-api`.
+- **MLflow:** the tracking/registry server runs on the droplet, behind a Tailscale-restricted vhost (`mlflow.idm.coloursinvision.ai`); artifacts are stored in DigitalOcean Spaces.
 
 ---
 
@@ -224,7 +270,6 @@ Micro sampler with built-in microphone, 16-step sequencer, and 40-second sample 
 **Resources:**
 - Product page: [teenage.engineering/store/po-33](https://teenage.engineering/store/po-33/)
 - User guide: [teenage.engineering/guides/po-33](https://teenage.engineering/guides/po-33/)
-- Quick start video: [teenage.engineering/learn/po-33](https://teenage.engineering/learn/po-33/)
 
 ### EP-133 K.O.II
 
@@ -243,11 +288,6 @@ Sampler, drum machine, and sequencer with 12 velocity-sensitive pads, 4 groups, 
 **Resources:**
 - Product page: [teenage.engineering/store/ep-133](https://teenage.engineering/store/ep-133/)
 - User guide: [teenage.engineering/guides/ep-133](https://teenage.engineering/guides/ep-133/)
-- Sound library: [teenage.engineering/sounds/ep-133](https://teenage.engineering/sounds/ep-133/)
-
-### Service Documentation
-
-Teenage Engineering maintains comprehensive technical documentation, firmware updates, and sound packs at [teenage.engineering/support](https://teenage.engineering/support/). Factory reset procedures, MIDI implementation charts, and sync configuration guides are available per device.
 
 ---
 
@@ -258,45 +298,28 @@ IDM_Generative_System_app/
 ├── engine/
 │   ├── generator.py              ← Euclidean rhythms, Markov chain, mutate_pattern
 │   ├── sample_maker.py           ← glitch_click, noise_burst, fm_blip
-│   ├── acid_dsp_model.py         ← TB-303 slide/accent, Detroit chord memory
-│   ├── acid_engine_v2.py         ← Full sequencer render to WAV
-│   ├── acid_granular_experiment.py
-│   ├── AcidSynthEngine.cpp       ← C++ real-time implementation
-│   └── effects/
-│       ├── base.py               ← BaseEffect abstract class
-│       ├── chain.py              ← EffectChain sequential pipeline
-│       ├── noise_floor.py        ← Block 1
-│       ├── bitcrusher.py         ← Block 2
-│       ├── filter.py             ← Block 3
-│       ├── saturation.py         ← Block 4
-│       ├── reverb.py             ← Block 5
-│       ├── delay.py              ← Block 6
-│       ├── spatial.py            ← Block 7
-│       ├── glitch.py             ← Block 8
-│       ├── compressor.py         ← Block 9
-│       └── vinyl.py              ← Block 10
+│   ├── effects/                  ← 10-block signal chain (base, chain, blocks 1–10)
+│   └── ml/                       ← V2 tuning pipeline (Layers 3–6)
+│       ├── regional_profiles.py  ← L2 spoke parsing
+│       ├── resonance_rules.py    ← L2 resonance rules
+│       ├── deterministic_mapper.py  ← L3
+│       ├── gaussian_noise.py     ← L4
+│       ├── dataset_generator.py  ← L5
+│       ├── dataset_schema.py     ← L5 pandera schema
+│       └── model_training.py     ← L6 XGBoost + Optuna + MLflow
 ├── api/
-│   └── main.py                   ← FastAPI backend v0.2.0
+│   └── main.py                   ← FastAPI backend
 ├── knowledge/
-│   └── qdrant_client.py          ← Qdrant vector DB connector
-├── notebooks/
-│   ├── idm_project_01.ipynb      ← Reference: rhythm algorithms
-│   └── sample_maker.ipynb        ← Reference: sample generators
-├── streamlit_app/
-│   └── app.py                    ← Auxiliary UI
-├── frontend/
-│   ├── src/
-│   │   ├── api/client.ts         ← Fetch wrapper for FastAPI
-│   │   ├── components/           ← All UI components (layout, tabs, shared)
-│   │   ├── hooks/                ← useApi, useAudio
-│   │   ├── types/index.ts        ← TypeScript interfaces
-│   │   ├── App.tsx
-│   │   └── main.tsx
-│   ├── package.json
-│   ├── vite.config.ts
-│   └── tailwind.config.ts
+│   ├── qdrant_client.py          ← Qdrant vector DB connector
+│   └── rag.py                    ← RAG pipeline (Advisor, /tuning/extract)
+├── scripts/                      ← run-with-env.sh, train pipeline helpers
+├── streamlit_app/                ← Auxiliary UI
+├── frontend/                     ← React 18 + Vite + TS app
+├── dvc.yaml / params.yaml        ← DVC pipeline definition
+├── pyproject.toml                ← Single source of truth (metadata, deps, tooling)
+├── Dockerfile                    ← 3-stage build (frontend + python + runtime)
 ├── environment.yml
-├── .gitignore
+├── CHANGELOG.md
 └── README.md
 ```
 
@@ -304,15 +327,15 @@ IDM_Generative_System_app/
 
 ## Knowledge Base
 
-The system's RAG pipeline retrieves from **THE_MASTER_DATASET_SPECIFICATION.md** — a 744-line technical document covering:
+The RAG and ML pipelines draw on **THE_MASTER_DATASET_SPECIFICATION** and its Layer-2 spokes, covering:
 
 - **Hardware specifications:** TR-808, TR-909, SP-1200, S950, TB-303, SH-101, DX100, Quadraverb, RE-201, Mackie CR-1604
 - **Regional aesthetics:** UK IDM (Warp, Rephlex, Skam), Detroit Techno (UR, Model 500), Japan (Sublime, Frogman, Far East Recording)
-- **DSP algorithms:** Acid slide (30ms RC glide), accent coupling (filter/VCA/saturation interaction), Detroit chord memory (parallel oscillator stacking), granular synthesis (Autechre-style stochastic grain distribution)
+- **DSP algorithms:** acid slide (30ms RC glide), accent coupling, Detroit chord memory, Autechre-style stochastic granular distribution
 - **Environmental constraints:** 16kHz DAT brick-wall, -75dB pink noise floor, asymmetric saturation curves, DR 8–10 dynamic range targets
 - **Resonant frequency architecture:** Solfeggio series, Schumann resonance, brainwave entrainment bands, atonal/alikwotic sources
 
-43 chunks indexed in Qdrant with `text-embedding-3-large` (3072 dimensions). Cosine similarity retrieval with configurable context depth (1–10 chunks per query).
+Indexed in Qdrant with `text-embedding-3-large` (3072 dimensions); cosine-similarity retrieval with configurable context depth.
 
 ---
 
@@ -320,14 +343,10 @@ The system's RAG pipeline retrieves from **THE_MASTER_DATASET_SPECIFICATION.md**
 
 ### Hardware Documentation
 - Teenage Engineering — [teenage.engineering](https://teenage.engineering/)
-- Roland TB-303 Service Notes — [Roland Corporation](https://www.roland.com/)
-- Akai S950 Technical Manual
-- E-mu SP-1200 Service Manual
-- Alesis Quadraverb Owner's Manual
+- Roland TB-303 Service Notes, Akai S950 Technical Manual, E-mu SP-1200 Service Manual, Alesis Quadraverb Owner's Manual
 
 ### Cultural and Technical Sources
-- Warp Records — [warp.net](https://warp.net/)
-- Rephlex Records archive
+- Warp Records — [warp.net](https://warp.net/) · Rephlex Records archive
 - The Designers Republic — [thedesignersrepublic.com](https://thedesignersrepublic.com/)
 - Hans Cousto — *The Cosmic Octave* (Earth frequency calculations)
 
@@ -340,7 +359,7 @@ The system's RAG pipeline retrieves from **THE_MASTER_DATASET_SPECIFICATION.md**
 
 ## License
 
-AGPL v3 (pending)
+AGPL-3.0-or-later
 
 ---
 

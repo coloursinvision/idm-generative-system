@@ -2,13 +2,14 @@
 /* hooks/useEP133Sequencer.test.ts                                     */
 /* CR-F12 — EP-133 simultaneous multi-group playback.                  */
 /* Covers acceptance criteria AC1–AC8 from EP133_BUG_SCOPE_2026-05-27. */
-/* (AC9 — PO-33 no regression — is covered by the untouched            */
-/*  useSequencer.test.ts suite, since useSequencer.ts is unchanged.)   */
+/* (AC9 — PO-33 no regression — is covered by the useSequencer.test.ts  */
+/*  suite. Both hooks use the setTimeout-based scheduler clock.)         */
 /* ------------------------------------------------------------------ */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, renderHook } from "@testing-library/react";
 import { useEP133Sequencer } from "../../hooks/useEP133Sequencer";
+import { SCHEDULER_INTERVAL_MS } from "../../hooks/useSequencer";
 
 /* ------------------------------------------------------------------ */
 /* api/client mock — postGenerate returns a blob-like with arrayBuffer */
@@ -108,24 +109,36 @@ function createMockAudioContext(initialState: MockState = "suspended"): MockAudi
 }
 
 let currentMockCtx: MockAudioContext;
-let rafCb: FrameRequestCallback | null;
+let schedulerCb: (() => void) | null;
+
+// Capture the real timer before any stub replaces the global, so non-scheduler
+// setTimeout calls (React / act() async flushing) keep working.
+const realSetTimeout = globalThis.setTimeout.bind(globalThis);
 
 beforeEach(() => {
   decodeTag = "?";
-  rafCb = null;
+  schedulerCb = null;
   currentMockCtx = createMockAudioContext("suspended");
 
   vi.stubGlobal(
     "AudioContext",
     vi.fn(function (this: unknown) { return currentMockCtx; })
   );
-  // Capture the scheduler callback instead of running it on a real frame, so
-  // tests can pump the master clock deterministically.
+  // Capture the scheduler pump callback (the setTimeout at SCHEDULER_INTERVAL_MS)
+  // instead of running it on a real timer, so tests can pump the master clock
+  // deterministically. All other setTimeout calls pass through to the real timer
+  // so React / act() async flushing keeps working.
   vi.stubGlobal(
-    "requestAnimationFrame",
-    vi.fn((cb: FrameRequestCallback) => { rafCb = cb; return 1; })
+    "setTimeout",
+    vi.fn((cb: () => void, delay?: number) => {
+      if (delay === SCHEDULER_INTERVAL_MS) {
+        schedulerCb = cb;
+        return 1;
+      }
+      return realSetTimeout(cb, delay);
+    })
   );
-  vi.stubGlobal("cancelAnimationFrame", vi.fn());
+  vi.stubGlobal("clearTimeout", vi.fn());
 });
 
 afterEach(() => {
@@ -164,7 +177,7 @@ function fillTrack0(api: () => Api, group: Group, n: number) {
 async function pump(currentTime: number) {
   currentMockCtx.currentTime = currentTime;
   await act(async () => {
-    rafCb?.(0);
+    schedulerCb?.();
   });
 }
 
@@ -218,7 +231,7 @@ describe("useEP133Sequencer — CR-F12 multi-group playback", () => {
     act(() => { result.current.stop(); });
 
     expect(result.current.isPlaying).toBe(false);
-    expect(cancelAnimationFrame).toHaveBeenCalled();
+    expect(clearTimeout).toHaveBeenCalled();
     expect(result.current.currentStepByGroup).toEqual({ A: -1, B: -1, C: -1, D: -1 });
   });
 
@@ -231,7 +244,7 @@ describe("useEP133Sequencer — CR-F12 multi-group playback", () => {
     await act(async () => { await result.current.play(); });
     await pump(0.05);
 
-    (cancelAnimationFrame as unknown as ReturnType<typeof vi.fn>).mockClear();
+    (clearTimeout as unknown as ReturnType<typeof vi.fn>).mockClear();
 
     // Edit a different group's pattern + timing mid-playback.
     act(() => {
@@ -240,7 +253,7 @@ describe("useEP133Sequencer — CR-F12 multi-group playback", () => {
     });
 
     expect(result.current.isPlaying).toBe(true);
-    expect(cancelAnimationFrame).not.toHaveBeenCalled();
+    expect(clearTimeout).not.toHaveBeenCalled();
   });
 
   it("AC4: muting silences a group on the next tick; unmuting restores it", async () => {
