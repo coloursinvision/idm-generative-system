@@ -5,8 +5,8 @@ stages:
     deps:
     - path: engine/ml/dataset_generator.py
       hash: md5
-      md5: 22e3f30c7683076dd7e3cc214cede463
-      size: 14271
+      md5: f02bee662329059fafc8226c351f2681
+      size: 14637
     - path: engine/ml/deterministic_mapper.py
       hash: md5
       md5: 9ffac50e6aba7ece7c1933bd9658a93c
@@ -59,8 +59,8 @@ stages:
       size: 1054772
     - path: engine/ml/dataset_schema.py
       hash: md5
-      md5: 6ca430bc0fd044f89afaebed3c0d91cc
-      size: 13676
+      md5: 0218b1f51d0000978534f167edd54b23
+      size: 14027
     - path: scripts/validate_schema.py
       hash: md5
       md5: 1c2a25d8f8615a8f728196463a13acb7
@@ -68,7 +68,7 @@ stages:
     outs:
     - path: data/synthetic/validation_report.json
       hash: md5
-      md5: 3cdf9f7905a18e17bf9f8daeba9f0ce3
+      md5: 30b35232650fdccbf7f8d6741e66715b
       size: 894
   train:
     cmd: bash scripts/train_with_hash.sh
@@ -79,16 +79,17 @@ stages:
       size: 1054772
     - path: engine/ml/model_training.py
       hash: md5
-      md5: bd30b2c7d611790f7ee3eb28b80fbb33
-      size: 21607
+      md5: 33ddbf9d03dcad5602b63e79a7f1134d
+      size: 24919
     - path: scripts/train_model.py
       hash: md5
-      md5: 4c11ed96dbaba8500438650ea8b6aa72
-      size: 7842
+      md5: 0e99012b8c5cab5c690314fdff34a219
+      size: 8649
     params:
       params.yaml:
         train:
           test_size: 0.2
+          val_size: 0.2
           random_state: 42
           experiment_name: tuning-estimator
           registry_name: TuningEstimator
@@ -116,14 +117,14 @@ stages:
     outs:
     - path: models/feature_importance.json
       hash: md5
-      md5: 14655c4c83ba57156edf060d6c9045ce
+      md5: 2443ababb16dbbb70a2b992fab62d494
       size: 196
     - path: models/metrics.json
       hash: md5
-      md5: e0883c84571c8cac2bfbe491df7f6615
-      size: 1514
+      md5: 1504930c36cb3300c1670dd9231f58b1
+      size: 1513
     - path: models/tuning_estimator
       hash: md5
-      md5: 88fce20dc47b8e9eed42379eb2491836.dir
-      size: 16886813
+      md5: 6d8f30cfff381c16cef0c183d6a6f189.dir
+      size: 9787660
       nfiles: 5
