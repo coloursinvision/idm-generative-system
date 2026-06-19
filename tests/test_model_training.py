@@ -150,9 +150,12 @@ class TestExtractColumns:
     def test_target_columns(self) -> None:
         df = _make_training_df(10)
         _, target_cols = extract_feature_target_columns(df)
-        assert "tuning_hz" in target_cols
+        # tuning_hz is reframed OUT of the target set (D-PIPE-07): deterministic
+        # A4 reference, not a learned target. Targets are the freq_* columns only.
+        assert "tuning_hz" not in target_cols
         assert "freq_pitch_ref" in target_cols
         assert "freq_bpm_harmonic" in target_cols
+        assert all(c.startswith("freq_") for c in target_cols)
 
     def test_metadata_excluded_from_targets(self) -> None:
         df = _make_training_df(10)
