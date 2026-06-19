@@ -76,9 +76,7 @@ logger = logging.getLogger(__name__)
 # Per V2_ROADMAP §V2.3 + DECISIONS.md (S12 Fix A: TuningEstimator v1
 # manually promoted Staging → Production before this lifespan can succeed).
 #
-# Architecture (industrial-PRO substitutions over spec example):
-#   - Modern `lifespan` async context manager replaces deprecated
-#     @app.on_event("startup") shown in V2_ROADMAP §V2.3 example.
+# Behaviour:
 #   - Fail-soft on model load failure: V1 endpoints continue to serve.
 #     app.state.tuning_model = None signals to the /tuning handler
 #     (Sub-stage D) to return HTTP 503.
@@ -123,10 +121,8 @@ _TUNING_MODEL_PROD_URI = "models:/TuningEstimator/Production"
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """FastAPI lifespan — load /tuning model once at startup.
 
-    Modern replacement for the deprecated ``@app.on_event("startup")``
-    pattern shown in the V2_ROADMAP §V2.3 spec example. On any failure
-    (mlflow not installed, no Production version in registry, network or
-    artefact-store error) the lifespan logs a WARNING and leaves
+    On any failure (mlflow not installed, no Production version in registry,
+    network or artefact-store error) the lifespan logs a WARNING and leaves
     ``app.state.tuning_model = None`` — the Sub-stage D /tuning handler
     will then return HTTP 503 Service Unavailable. V1 endpoints are
     unaffected.
@@ -170,8 +166,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
                 # Extract target column ordering from training-time MLflow
                 # params. The model was logged without an explicit signature
-                # (see engine.ml.model_training.train L367-370), so
-                # model.predict returns a raw np.ndarray of shape (1, n_targets)
+                # (engine.ml.model_training.train logs the model without a
+                # signature), so model.predict returns a raw np.ndarray of shape (1, n_targets)
                 # with no column metadata. We need the names to shape the
                 # /tuning response. train() logs them as a comma-separated
                 # string via mlflow.log_params({"target_columns": ...}).
@@ -281,6 +277,12 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# CORS is for local development only: the Vite (5173) / CRA (3000) dev servers
+# call the backend cross-origin. In production the backend serves the SPA from
+# STATIC_DIR (same origin), so no CORS pre-flight occurs and these origins are
+# unused. If the API and SPA are ever deployed on separate origins, make
+# allow_origins env-driven (a tier-3 value in .env.shared) rather than editing
+# this hardcoded list.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://localhost:3000"],
@@ -1192,9 +1194,9 @@ class TuningExtractResponse(BaseModel):
             "before POST /tuning."
         ),
     )
-    model_version: str = Field(
+    model: str = Field(
         ...,
-        description="GPT model name used for extraction (mirrors /ask, /compose).",
+        description="GPT model name used for extraction (matches /ask, /compose).",
     )
 
 
@@ -1205,7 +1207,7 @@ class TuningExtractResponse(BaseModel):
 #   1. 503 gate — model loaded? (fail-soft from lifespan honored here)
 #   2. Boundary conversion swing_pct → swing (D-S7-04)
 #   3. Build inference DataFrame; pandera InferenceSchema validates
-#   4. NaN sentinel for sub_region (mirror prepare_data L275); predict
+#   4. NaN sentinel for sub_region (mirror prepare_data); predict
 #   5. Response shaping — scalar tuning_hz + variable list[ResonantPoint]
 #
 # Registration is gated on _HAS_MLFLOW. When [ml] extras are absent (CI /
@@ -1268,7 +1270,7 @@ if _HAS_MLFLOW:
                     "Tuning model metadata incomplete — target_columns "
                     "missing from MLflow run params. Re-train so "
                     "engine.ml.model_training.train() logs target_columns "
-                    "(currently it does — see L355 — so a missing value "
+                    "(currently it does, so a missing value "
                     "indicates registry corruption)."
                 ),
             )
@@ -1323,7 +1325,7 @@ if _HAS_MLFLOW:
                     detail=f"Inference schema violation: {e}",
                 ) from e
 
-            # Step 4 — NaN sentinel for sub_region (mirror prepare_data L275
+            # Step 4 — NaN sentinel for sub_region (mirror prepare_data
             # in engine.ml.model_training); model.predict with latency timing.
             # The OrdinalEncoder in the trained pipeline expects "__NaN__" as
             # the sentinel category for missing sub_region; pandera tolerates
@@ -1337,7 +1339,7 @@ if _HAS_MLFLOW:
 
             # Step 5 — response shaping. raw_predictions is np.ndarray of
             # shape (1, n_targets) because the model was logged without an
-            # mlflow signature (see engine.ml.model_training.train L367-370).
+            # mlflow signature (engine.ml.model_training.train logs without one).
             # Coerce to DataFrame using target_columns captured at lifespan
             # time.
             predictions_2d = (
@@ -1489,7 +1491,7 @@ async def tuning_extract(request: TuningExtractRequest) -> TuningExtractResponse
 
         response = TuningExtractResponse(
             extracted=extracted,
-            model_version=rag.model,
+            model=rag.model,
         )
 
         if trace_span is not None:
