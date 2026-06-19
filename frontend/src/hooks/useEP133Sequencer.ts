@@ -10,6 +10,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { postGenerate } from "../api/client";
 import type { SequencerTrack } from "./useSequencer";
+import { SCHEDULER_INTERVAL_MS } from "./useSequencer";
 
 /* ------------------------------------------------------------------ */
 /* Timing model — single source of truth for the EP-133 guide          */
@@ -149,7 +150,7 @@ export function useEP133Sequencer<G extends string>({
   // Cleanup on unmount.
   useEffect(() => {
     return () => {
-      if (timerRef.current) cancelAnimationFrame(timerRef.current);
+      if (timerRef.current) clearTimeout(timerRef.current);
       if (audioCtxRef.current) audioCtxRef.current.close();
     };
   }, []);
@@ -384,7 +385,7 @@ export function useEP133Sequencer<G extends string>({
     }
 
     setCurrentStepByGroup({ ...currentStepRef.current });
-    timerRef.current = requestAnimationFrame(scheduler);
+    timerRef.current = setTimeout(scheduler, SCHEDULER_INTERVAL_MS);
   }, [scheduleTick]);
 
   /* ---- Transport ---- */
@@ -395,6 +396,10 @@ export function useEP133Sequencer<G extends string>({
       groupState[k].tracks.some((t) => t.buffer !== null)
     );
     if (!hasBuffers) return;
+
+    // Re-entrancy guard: a scheduler loop is already armed — don't spawn a
+    // second one (a double play() would double-schedule every tick).
+    if (timerRef.current !== null) return;
 
     const ctx = await getAudioContext();
     if (ctx.state !== "running") {
@@ -413,12 +418,12 @@ export function useEP133Sequencer<G extends string>({
 
     setIsPlaying(true);
     setCurrentStepByGroup({ ...currentStepRef.current });
-    timerRef.current = requestAnimationFrame(scheduler);
+    timerRef.current = setTimeout(scheduler, SCHEDULER_INTERVAL_MS);
   }, [getAudioContext, scheduler]);
 
   const stop = useCallback(() => {
     if (timerRef.current) {
-      cancelAnimationFrame(timerRef.current);
+      clearTimeout(timerRef.current);
       timerRef.current = null;
     }
     setIsPlaying(false);

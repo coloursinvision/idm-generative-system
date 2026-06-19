@@ -54,7 +54,13 @@ from engine.effects import (
     build_chain,
 )
 from engine.ml.regional_profiles import RegionCode, SubRegion
-from engine.sample_maker import SAMPLE_RATE, fm_blip, glitch_click, noise_burst
+from engine.sample_maker import (
+    SAMPLE_RATE,
+    fm_analog,
+    fm_blip,
+    glitch_click,
+    noise_burst,
+)
 from knowledge.rag import RAGPipeline
 
 # ---------------------------------------------------------------------------
@@ -70,9 +76,7 @@ logger = logging.getLogger(__name__)
 # Per V2_ROADMAP §V2.3 + DECISIONS.md (S12 Fix A: TuningEstimator v1
 # manually promoted Staging → Production before this lifespan can succeed).
 #
-# Architecture (industrial-PRO substitutions over spec example):
-#   - Modern `lifespan` async context manager replaces deprecated
-#     @app.on_event("startup") shown in V2_ROADMAP §V2.3 example.
+# Behaviour:
 #   - Fail-soft on model load failure: V1 endpoints continue to serve.
 #     app.state.tuning_model = None signals to the /tuning handler
 #     (Sub-stage D) to return HTTP 503.
@@ -117,10 +121,8 @@ _TUNING_MODEL_PROD_URI = "models:/TuningEstimator/Production"
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """FastAPI lifespan — load /tuning model once at startup.
 
-    Modern replacement for the deprecated ``@app.on_event("startup")``
-    pattern shown in the V2_ROADMAP §V2.3 spec example. On any failure
-    (mlflow not installed, no Production version in registry, network or
-    artefact-store error) the lifespan logs a WARNING and leaves
+    On any failure (mlflow not installed, no Production version in registry,
+    network or artefact-store error) the lifespan logs a WARNING and leaves
     ``app.state.tuning_model = None`` — the Sub-stage D /tuning handler
     will then return HTTP 503 Service Unavailable. V1 endpoints are
     unaffected.
@@ -164,8 +166,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
                 # Extract target column ordering from training-time MLflow
                 # params. The model was logged without an explicit signature
-                # (see engine.ml.model_training.train L367-370), so
-                # model.predict returns a raw np.ndarray of shape (1, n_targets)
+                # (engine.ml.model_training.train logs the model without a
+                # signature), so model.predict returns a raw np.ndarray of shape (1, n_targets)
                 # with no column metadata. We need the names to shape the
                 # /tuning response. train() logs them as a comma-separated
                 # string via mlflow.log_params({"target_columns": ...}).
@@ -275,6 +277,12 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# CORS is for local development only: the Vite (5173) / CRA (3000) dev servers
+# call the backend cross-origin. In production the backend serves the SPA from
+# STATIC_DIR (same origin), so no CORS pre-flight occurs and these origins are
+# unused. If the API and SPA are ever deployed on separate origins, make
+# allow_origins env-driven (a tier-3 value in .env.shared) rather than editing
+# this hardcoded list.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://localhost:3000"],
@@ -291,6 +299,7 @@ GENERATORS: dict[str, Any] = {
     "glitch_click": glitch_click,
     "noise_burst": noise_burst,
     "fm_blip": fm_blip,
+    "fm_analog": fm_analog,
 }
 
 rag = RAGPipeline()
@@ -307,7 +316,8 @@ class GenerateRequest(BaseModel):
     generator: str = Field(
         default="glitch_click",
         description=(
-            "Sample generator function. Options: 'glitch_click', 'noise_burst', 'fm_blip'."
+            "Sample generator function. Options: 'glitch_click', 'noise_burst', "
+            "'fm_blip', 'fm_analog'."
         ),
     )
     generator_params: dict[str, Any] = Field(
@@ -700,6 +710,24 @@ async def generate(req: GenerateRequest) -> StreamingResponse:
                 "mod_index": float(np.random.uniform(0.5, 8.0)),
                 "length_ms": float(np.random.uniform(200, 800)),
                 "decay": float(np.random.uniform(1.5, 6.0)),
+                # FM-expansion: additive timbral variety (ratio left to presets)
+                "mod_index_end": float(np.random.uniform(0.5, 8.0)),
+                "feedback": float(np.random.uniform(0.0, 0.8)),
+                "attack_ms": float(np.random.uniform(0.0, 60.0)),
+            }
+        elif req.generator == "fm_analog":
+            params = {
+                "freq": float(np.random.uniform(36, 300)),
+                "ratio": float(np.random.choice([0.5, 1.0, 1.0, 2.0, 2.0, 3.0, 1.5])),
+                "index": float(np.random.uniform(1.0, 4.0)),
+                "length_ms": float(np.random.uniform(300, 1200)),
+                "detune_cents": float(np.random.uniform(4, 18)),
+                "cutoff_hz": float(np.random.uniform(150, 600)),
+                "cutoff_env": float(np.random.uniform(1200, 3800)),
+                "resonance": float(np.random.uniform(0.2, 0.7)),
+                "drive": float(np.random.uniform(1.2, 3.0)),
+                "attack_ms": float(np.random.uniform(2, 200)),
+                "decay": float(np.random.uniform(1.0, 4.5)),
             }
 
     try:
@@ -1086,8 +1114,10 @@ class TuningResponse(BaseModel):
         ...,
         gt=0.0,
         description=(
-            "A4 reference frequency selected by the model. Discrete "
-            "value (typically 432.0 or 440.0) per D-S5-01."
+            "A4 reference frequency. Deterministic value (440.0, ISO 16) "
+            "echoed from the mapper's tuning selection — NOT a model "
+            "prediction (D-PIPE-07; reframed out of the regression targets). "
+            "Discrete 432.0/440.0 per D-S5-01 once 432 practice is wired."
         ),
     )
     resonant_points: list[ResonantPoint] = Field(
@@ -1166,9 +1196,9 @@ class TuningExtractResponse(BaseModel):
             "before POST /tuning."
         ),
     )
-    model_version: str = Field(
+    model: str = Field(
         ...,
-        description="GPT model name used for extraction (mirrors /ask, /compose).",
+        description="GPT model name used for extraction (matches /ask, /compose).",
     )
 
 
@@ -1179,7 +1209,7 @@ class TuningExtractResponse(BaseModel):
 #   1. 503 gate — model loaded? (fail-soft from lifespan honored here)
 #   2. Boundary conversion swing_pct → swing (D-S7-04)
 #   3. Build inference DataFrame; pandera InferenceSchema validates
-#   4. NaN sentinel for sub_region (mirror prepare_data L275); predict
+#   4. NaN sentinel for sub_region (mirror prepare_data); predict
 #   5. Response shaping — scalar tuning_hz + variable list[ResonantPoint]
 #
 # Registration is gated on _HAS_MLFLOW. When [ml] extras are absent (CI /
@@ -1204,6 +1234,15 @@ _RESONANT_POINT_MIN_HZ: float = 1.0
 # See TODO-S13-F for that future iteration. Static 1.0 documents the gap
 # transparently rather than fabricating false uncertainty.
 _RESONANT_POINT_DEFAULT_CONFIDENCE: float = 1.0
+
+# Deterministic A4 reference echoed in the /tuning response. tuning_hz is NOT a
+# model prediction (D-PIPE-07): the mapper selects it deterministically (constant
+# 440.0 — ISO 16 — until TODO-3 resolves the 432 Hz practice). Sourcing the echo
+# from this constant rather than predictions_df decouples the handler from the
+# model's target set, so it works for both the v1-era model (16 targets incl.
+# tuning_hz) and the reframed model (freq_* only). When tuning becomes
+# region-conditional, wire this to engine.ml.deterministic_mapper._select_tuning_hz.
+_DEFAULT_TUNING_HZ: float = 440.0
 
 
 if _HAS_MLFLOW:
@@ -1242,7 +1281,7 @@ if _HAS_MLFLOW:
                     "Tuning model metadata incomplete — target_columns "
                     "missing from MLflow run params. Re-train so "
                     "engine.ml.model_training.train() logs target_columns "
-                    "(currently it does — see L355 — so a missing value "
+                    "(currently it does, so a missing value "
                     "indicates registry corruption)."
                 ),
             )
@@ -1297,7 +1336,7 @@ if _HAS_MLFLOW:
                     detail=f"Inference schema violation: {e}",
                 ) from e
 
-            # Step 4 — NaN sentinel for sub_region (mirror prepare_data L275
+            # Step 4 — NaN sentinel for sub_region (mirror prepare_data
             # in engine.ml.model_training); model.predict with latency timing.
             # The OrdinalEncoder in the trained pipeline expects "__NaN__" as
             # the sentinel category for missing sub_region; pandera tolerates
@@ -1311,7 +1350,7 @@ if _HAS_MLFLOW:
 
             # Step 5 — response shaping. raw_predictions is np.ndarray of
             # shape (1, n_targets) because the model was logged without an
-            # mlflow signature (see engine.ml.model_training.train L367-370).
+            # mlflow signature (engine.ml.model_training.train logs without one).
             # Coerce to DataFrame using target_columns captured at lifespan
             # time.
             predictions_2d = (
@@ -1321,7 +1360,10 @@ if _HAS_MLFLOW:
             )
             predictions_df = pd.DataFrame(predictions_2d, columns=target_columns)
 
-            tuning_hz = float(predictions_df["tuning_hz"].iloc[0])
+            # tuning_hz is a deterministic A4 reference, not a model output
+            # (D-PIPE-07). Echo the constant rather than reading predictions_df,
+            # which need not contain a "tuning_hz" column for the reframed model.
+            tuning_hz = _DEFAULT_TUNING_HZ
 
             resonant_points: list[ResonantPoint] = []
             for col in target_columns:
@@ -1463,7 +1505,7 @@ async def tuning_extract(request: TuningExtractRequest) -> TuningExtractResponse
 
         response = TuningExtractResponse(
             extracted=extracted,
-            model_version=rag.model,
+            model=rag.model,
         )
 
         if trace_span is not None:

@@ -67,7 +67,13 @@ DATASET_SCHEMA: pa.DataFrameSchema = pa.DataFrameSchema(
             float,
             checks=pa.Check.gt(0),
             nullable=False,
-            description="Tempo in beats per minute. Must be positive.",
+            description=(
+                "Tempo in beats per minute. Must be positive. Intentionally "
+                "looser than InferenceSchema.bpm ([60, 240]): this gate validates "
+                "generator output (bounded by params.yaml bpm_min/bpm_max, "
+                "default 60-200); the public [60, 240] API range is enforced by "
+                "TuningRequest + InferenceSchema, not here."
+            ),
         ),
         "pitch_midi": pa.Column(
             float,

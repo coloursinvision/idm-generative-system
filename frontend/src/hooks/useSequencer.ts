@@ -6,6 +6,17 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { postGenerate } from "../api/client";
 
+/**
+ * Scheduler pump interval (ms) for the setTimeout-based lookahead clock.
+ *
+ * setTimeout — not requestAnimationFrame — drives the scheduler: rAF is paused
+ * or throttled in background tabs, which would stall note scheduling and break
+ * the very background-tab robustness the visibilitychange handler protects.
+ * Canonical "A Tale of Two Clocks" pattern: a coarse setTimeout pump advances a
+ * fine-grained Web Audio lookahead window (see `scheduler` below).
+ */
+export const SCHEDULER_INTERVAL_MS = 25;
+
 export interface SequencerTrack {
   name: string;
   generator: string;
@@ -72,7 +83,7 @@ export function useSequencer({ numSteps, defaultBpm = 120 }: UseSequencerOptions
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (timerRef.current) cancelAnimationFrame(timerRef.current);
+      if (timerRef.current) clearTimeout(timerRef.current);
       if (audioCtxRef.current) audioCtxRef.current.close();
     };
   }, []);
@@ -289,7 +300,7 @@ export function useSequencer({ numSteps, defaultBpm = 120 }: UseSequencerOptions
       stepRef.current = (stepRef.current + 1) % numSteps;
     }
 
-    timerRef.current = requestAnimationFrame(scheduler);
+    timerRef.current = setTimeout(scheduler, SCHEDULER_INTERVAL_MS);
   }, [numSteps, scheduleNote]);
 
   /**
@@ -310,6 +321,10 @@ export function useSequencer({ numSteps, defaultBpm = 120 }: UseSequencerOptions
     const hasBuffers = tracksRef.current.some((t) => t.buffer !== null);
     if (!hasBuffers) return;
 
+    // Re-entrancy guard: a scheduler loop is already armed — don't spawn a
+    // second one (a double play() would double-schedule every note).
+    if (timerRef.current !== null) return;
+
     const ctx = await getAudioContext();
 
     if (ctx.state !== "running") {
@@ -325,12 +340,12 @@ export function useSequencer({ numSteps, defaultBpm = 120 }: UseSequencerOptions
     setIsPlaying(true);
     setCurrentStep(0);
 
-    timerRef.current = requestAnimationFrame(scheduler);
+    timerRef.current = setTimeout(scheduler, SCHEDULER_INTERVAL_MS);
   }, [getAudioContext, scheduler]);
 
   const stop = useCallback(() => {
     if (timerRef.current) {
-      cancelAnimationFrame(timerRef.current);
+      clearTimeout(timerRef.current);
       timerRef.current = null;
     }
     setIsPlaying(false);

@@ -147,8 +147,8 @@ class TestComposeEndpoint:
                 "generator_params": {"length_ms": 200, "decay": 4.0},
                 "chain_overrides": {"bitcrusher": {"hardware_preset": "sp1200"}},
                 "chain_skip": [],
-                "reasoning": "SP-1200 grit for classic boom-bap texture.",
             },
+            "reasoning": "SP-1200 grit for classic boom-bap texture.",
             "sources": [{"title": "Part 1.1", "part": "1.1", "score": 0.89}],
             "model": "gpt-4o",
             "usage": {"prompt_tokens": 120, "completion_tokens": 80, "total_tokens": 200},
@@ -166,6 +166,9 @@ class TestComposeEndpoint:
         assert "config" in data
         assert isinstance(data["config"], dict)
         assert data["config"]["generator"] == "glitch_click"
+        # M2 contract: reasoning is a top-level field, not nested in config.
+        assert data["reasoning"] == "SP-1200 grit for classic boom-bap texture."
+        assert "reasoning" not in data["config"]
 
     def test_compose_rejects_empty_description(self, client: TestClient) -> None:
         resp = client.post("/compose", json={"description": ""})
@@ -240,6 +243,9 @@ class TestRAGPipelineInternal:
         assert mock_kb.search.call_count == 1
         assert isinstance(result["config"], dict)
         assert result["config"]["generator"] == "fm_blip"
+        # M2 contract: compose() lifts reasoning out of config to the top level.
+        assert result["reasoning"] == "test"
+        assert "reasoning" not in result["config"]
 
     @patch("knowledge.rag.OpenAI")
     @patch("knowledge.rag.KnowledgeBase")

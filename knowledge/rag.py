@@ -317,7 +317,8 @@ class RAGPipeline:
             limit:       Max context chunks to retrieve.
 
         Returns:
-            Dict with: config (parsed dict), sources, model, usage.
+            Dict with: config (parsed dict, ``reasoning`` removed),
+            reasoning (str | None), sources, model, usage.
         """
         context, results = self._retrieve_context(query=description, limit=limit)
 
@@ -334,12 +335,18 @@ class RAGPipeline:
         # Validate and parse GPT-4o JSON output
         config = self._parse_compose_output(choice.message.content)
 
+        # The model's explanation is surfaced as a top-level field, not left inside
+        # `config` — `config` must stay a clean /generate-/process-ready payload.
+        # Matches the frontend ComposeResponse contract (reasoning at top level).
+        reasoning = config.pop("reasoning", None)
+
         source_titles = [
             {"title": s["title"], "part": s["part"], "score": s["score"]} for s in results
         ]
 
         return {
             "config": config,
+            "reasoning": reasoning,
             "sources": source_titles,
             "model": self.model,
             "usage": {
