@@ -54,9 +54,7 @@ from engine.ml.resonance_rules import ProfileKey
 
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
 # Type aliases
-# ---------------------------------------------------------------------------
 
 # RegionCode is the canonical name inside regional_profiles; it aliases
 # ProfileKey (defined once in resonance_rules) so the two modules cannot drift.
@@ -64,9 +62,7 @@ RegionCode = ProfileKey
 
 SubRegion = Literal["TOKYO", "OSAKA"]
 
-# ---------------------------------------------------------------------------
 # Constants
-# ---------------------------------------------------------------------------
 
 _REGION_TO_FILENAME: dict[RegionCode, str] = {
     "DETROIT_FIRST_WAVE": "DETROIT_FIRST_WAVE_PROFILE.md",
@@ -90,9 +86,7 @@ _DSP_SPEC_PATTERN: re.Pattern[str] = re.compile(
 )
 
 
-# ---------------------------------------------------------------------------
 # Exceptions
-# ---------------------------------------------------------------------------
 
 
 class SpokeParseError(Exception):
@@ -114,9 +108,7 @@ class SpokeParseError(Exception):
         super().__init__(f"[{spoke_path.name}] {message}")
 
 
-# ---------------------------------------------------------------------------
 # Path resolution
-# ---------------------------------------------------------------------------
 
 
 def _default_profiles_dir() -> Path:
@@ -137,9 +129,7 @@ def _default_profiles_dir() -> Path:
     return repo_root.parent / "IDM_Obsidian" / "02-Knowledge" / "supporting" / "profiles"
 
 
-# ---------------------------------------------------------------------------
 # Pydantic validation layer (internal)
-# ---------------------------------------------------------------------------
 
 
 class _DSPSpecModel(BaseModel):
@@ -217,9 +207,7 @@ class _DSPSpecModel(BaseModel):
         return v
 
 
-# ---------------------------------------------------------------------------
 # Public frozen dataclasses
-# ---------------------------------------------------------------------------
 
 
 @dataclass(frozen=True)
@@ -380,9 +368,7 @@ class RegionalProfile:
     vocal_presence: bool | None = None
 
 
-# ---------------------------------------------------------------------------
 # Parsing pipeline (internal)
-# ---------------------------------------------------------------------------
 
 
 def _extract_dsp_yaml(markdown_body: str, spoke_path: Path) -> str:
@@ -558,9 +544,7 @@ def _model_to_profile(
     )
 
 
-# ---------------------------------------------------------------------------
 # Public API
-# ---------------------------------------------------------------------------
 
 
 @cache

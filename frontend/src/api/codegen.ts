@@ -3,7 +3,7 @@ import type { CodegenRequest, CodegenResponse } from "../types/codegen";
 const API_BASE = "/api";
 
 /**
- * Shared codegen fetch — DRY wrapper for both endpoints.
+ * Shared codegen fetch - DRY wrapper for both endpoints.
  * Handles FastAPI HTTPException detail extraction and Pydantic validation errors.
  * Throws Error with a human-readable message on any failure.
  */
@@ -35,7 +35,7 @@ async function codegen(
       if (typeof payload.detail === "string") {
         message = payload.detail;
       } else if (Array.isArray(payload.detail)) {
-        // Pydantic validation errors — join error messages
+        // Pydantic validation errors - join error messages
         message = payload.detail
           .map((e: { msg?: string }) => e.msg ?? JSON.stringify(e))
           .join("; ");

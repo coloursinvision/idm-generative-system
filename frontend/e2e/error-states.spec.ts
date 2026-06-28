@@ -4,9 +4,7 @@
 
 import { test as base, expect, type Page } from "@playwright/test";
 
-/* ================================================================== */
 /* T-12: Error States (uses custom mocks, not auto-mock fixture)       */
-/* ================================================================== */
 
 base.describe("T-12: Error States", () => {
   base.beforeEach(async ({ page }) => {
@@ -75,9 +73,7 @@ base.describe("T-12: Error States", () => {
   });
 });
 
-/* ================================================================== */
 /* T-13: Console Audit (uses working mocks)                            */
-/* ================================================================== */
 
 import { test } from "./fixtures";
 

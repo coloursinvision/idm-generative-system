@@ -10,9 +10,7 @@ import { act, renderHook } from "@testing-library/react";
 import { useEP133Sequencer } from "../../hooks/useEP133Sequencer";
 import { SCHEDULER_INTERVAL_MS } from "../../hooks/useSequencer";
 
-/* ------------------------------------------------------------------ */
-/* api/client mock — postGenerate returns a blob-like with arrayBuffer */
-/* ------------------------------------------------------------------ */
+/* api/client mock - postGenerate returns a blob-like with arrayBuffer */
 
 vi.mock("../../api/client", () => ({
   postGenerate: vi.fn(async () => ({
@@ -20,9 +18,7 @@ vi.mock("../../api/client", () => ({
   })),
 }));
 
-/* ------------------------------------------------------------------ */
 /* Test fixtures                                                       */
-/* ------------------------------------------------------------------ */
 
 const GROUPS = ["A", "B", "C", "D"] as const;
 type Group = (typeof GROUPS)[number];
@@ -60,7 +56,7 @@ interface MockAudioContext {
   __scheduled: ScheduledNote[];
 }
 
-/** Tag stamped onto the next decoded buffer — set before each group load so
+/** Tag stamped onto the next decoded buffer - set before each group load so
  *  scheduled notes can be attributed back to their group. */
 let decodeTag = "?";
 
@@ -143,9 +139,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-/* ------------------------------------------------------------------ */
 /* Helpers                                                             */
-/* ------------------------------------------------------------------ */
 
 type Api = ReturnType<typeof useEP133Sequencer<Group>>;
 
@@ -187,9 +181,7 @@ function notesByGroup(): Record<string, number> {
   return out;
 }
 
-/* ------------------------------------------------------------------ */
 /* Tests                                                               */
-/* ------------------------------------------------------------------ */
 
 describe("useEP133Sequencer multi-group playback", () => {
   it("initialises every group playhead to -1 and exposes all groups", () => {
@@ -291,7 +283,7 @@ describe("useEP133Sequencer multi-group playback", () => {
 
     await act(async () => { await result.current.play(); });
 
-    // Solo C — only C audible (A muted anyway, B silenced by solo).
+    // Solo C - only C audible (A muted anyway, B silenced by solo).
     act(() => { result.current.toggleSolo("C"); });
     currentMockCtx.__scheduled = [];
     await pump(0.1);
@@ -300,7 +292,7 @@ describe("useEP133Sequencer multi-group playback", () => {
     expect(notes.A ?? 0).toBe(0);
     expect(notes.B ?? 0).toBe(0);
 
-    // Clear solo — A stays muted (prior state), B + C audible.
+    // Clear solo - A stays muted (prior state), B + C audible.
     act(() => { result.current.toggleSolo("C"); });
     currentMockCtx.__scheduled = [];
     await pump(0.2);

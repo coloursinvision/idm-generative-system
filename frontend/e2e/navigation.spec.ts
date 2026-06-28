@@ -12,7 +12,7 @@ test.describe("T-01: Navigation & Layout", () => {
   test("T-01.1 — app shell renders with dark background", async ({ page }) => {
     const body = page.locator("body");
     await expect(body).toBeVisible();
-    // Verify dark theme — background should be near-black
+    // Verify dark theme - background should be near-black
     const bg = await body.evaluate((el) => getComputedStyle(el).backgroundColor);
     // Accept any very dark color
     expect(bg).toMatch(/rgb\(\d{1,2}, \d{1,2}, \d{1,2}\)/);
@@ -83,7 +83,7 @@ test.describe("T-01: Navigation & Layout", () => {
   });
 
   test("T-01.6 — StatusBar shows connected state", async ({ page }) => {
-    // Health endpoint is mocked to return 200 — should show connected
+    // Health endpoint is mocked to return 200 - should show connected
     // Wait for health poll
     await page.waitForTimeout(2000);
     const statusBar = page.locator("[data-testid=status-bar], footer, [class*=status]").first();

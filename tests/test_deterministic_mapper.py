@@ -31,9 +31,7 @@ from engine.ml.resonance_rules import (
     schumann_bpm_anchor,
 )
 
-# ---------------------------------------------------------------------------
-# Fixtures — synthetic profiles
-# ---------------------------------------------------------------------------
+# Fixtures - synthetic profiles
 
 _SWING_DEFAULT = SwingSpec(
     bpm_range=(120, 150),
@@ -110,9 +108,7 @@ def _points_by_source(
     return [p for p in mapping.resonant_points if p.source.startswith(prefix)]
 
 
-# ---------------------------------------------------------------------------
 # Input validation
-# ---------------------------------------------------------------------------
 
 
 class TestInputValidation:
@@ -191,9 +187,7 @@ class TestInputValidation:
         assert isinstance(result, DeterministicMapping)
 
 
-# ---------------------------------------------------------------------------
 # Return type and structure
-# ---------------------------------------------------------------------------
 
 
 class TestReturnStructure:
@@ -266,9 +260,7 @@ class TestReturnStructure:
         assert all(p.source for p in result.resonant_points)
 
 
-# ---------------------------------------------------------------------------
-# Step 2 — pitch_ref
-# ---------------------------------------------------------------------------
+# Step 2 - pitch_ref
 
 
 class TestPitchRef:
@@ -336,9 +328,7 @@ class TestPitchRef:
         assert pitch_pt.frequency_hz == pytest.approx(expected)
 
 
-# ---------------------------------------------------------------------------
-# Step 3 — bpm_harmonic
-# ---------------------------------------------------------------------------
+# Step 3 - bpm_harmonic
 
 
 class TestBpmHarmonic:
@@ -380,9 +370,7 @@ class TestBpmHarmonic:
         assert result.resonant_points[1].source == "bpm_harmonic"
 
 
-# ---------------------------------------------------------------------------
 # Mains stack (dual-stack)
-# ---------------------------------------------------------------------------
 
 
 class TestMainsStackUK:
@@ -541,9 +529,7 @@ class TestMainsStackJapan:
         assert len(ref_pts) == 5
 
 
-# ---------------------------------------------------------------------------
-# Step 5 — Solfeggio seed
-# ---------------------------------------------------------------------------
+# Step 5 - Solfeggio seed
 
 
 class TestSolfeggioSeed:
@@ -592,9 +578,7 @@ class TestSolfeggioSeed:
         assert len(seed_pts) == 0
 
 
-# ---------------------------------------------------------------------------
-# Step 6 — Schumann BPM anchor
-# ---------------------------------------------------------------------------
+# Step 6 - Schumann BPM anchor
 
 
 class TestSchumannAnchor:
@@ -661,9 +645,7 @@ class TestSchumannAnchor:
         assert sch_pts[0].frequency_hz == pytest.approx(7.83)
 
 
-# ---------------------------------------------------------------------------
-# Step 6b — sub-bass
-# ---------------------------------------------------------------------------
+# Step 6b - sub-bass
 
 
 class TestSubBass:
@@ -716,9 +698,7 @@ class TestSubBass:
         assert sub_pts[0].frequency_hz == pytest.approx(60.0)
 
 
-# ---------------------------------------------------------------------------
-# Step 7 — effects filtering
-# ---------------------------------------------------------------------------
+# Step 7 - effects filtering
 
 
 class TestEffectsFiltering:
@@ -783,9 +763,7 @@ class TestEffectsFiltering:
         )
 
 
-# ---------------------------------------------------------------------------
 # Determinism
-# ---------------------------------------------------------------------------
 
 
 class TestDeterminism:
@@ -813,9 +791,7 @@ class TestDeterminism:
         assert tags[2] == "mains_fundamental"
 
 
-# ---------------------------------------------------------------------------
 # Swing pass-through
-# ---------------------------------------------------------------------------
 
 
 class TestSwingPassThrough:
@@ -848,9 +824,7 @@ class TestSwingPassThrough:
         assert result == baseline
 
 
-# ---------------------------------------------------------------------------
-# All 6 regions — smoke tests
-# ---------------------------------------------------------------------------
+# All 6 regions - smoke tests
 
 
 class TestAllRegionsSmoke:

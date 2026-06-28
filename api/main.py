@@ -97,7 +97,7 @@ try:
 except ImportError:
     _HAS_MLFLOW = False
 
-# Langfuse is in [monitoring] extras — separately gated from [ml].
+# Langfuse is in [monitoring] extras - separately gated from [ml].
 # Either can be installed independently; observability is decoupled from
 # model serving; it is fail-open by design.
 try:
@@ -128,7 +128,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
           run_id) and ``dataset_dvc_hash`` (MLflow run tag), or ``None``
           on failure.
     """
-    # Pre-initialise — handler relies on attributes existing.
+    # Pre-initialise - handler relies on attributes existing.
     app.state.tuning_model = None
     app.state.tuning_model_metadata = None
 
@@ -240,7 +240,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     yield
 
-    # SHUTDOWN — flush any buffered Langfuse events before teardown (Langfuse
+    # SHUTDOWN - flush any buffered Langfuse events before teardown (Langfuse
     # SDK is async / batched; short-lived apps must flush or lose events).
     if app.state.langfuse_client is not None:
         try:
@@ -253,9 +253,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     logger.info("FastAPI shutdown complete")
 
 
-# ---------------------------------------------------------------------------
 # App
-# ---------------------------------------------------------------------------
 
 app = FastAPI(
     title="IDM Generative System",
@@ -282,9 +280,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ---------------------------------------------------------------------------
 # Singletons
-# ---------------------------------------------------------------------------
 
 GENERATORS: dict[str, Any] = {
     "glitch_click": glitch_click,
@@ -296,9 +292,7 @@ GENERATORS: dict[str, Any] = {
 rag = RAGPipeline()
 
 
-# ---------------------------------------------------------------------------
 # Request / response models
-# ---------------------------------------------------------------------------
 
 
 class GenerateRequest(BaseModel):
@@ -459,9 +453,7 @@ class CodegenResponse(BaseModel):
     )
 
 
-# ---------------------------------------------------------------------------
 # Helpers
-# ---------------------------------------------------------------------------
 
 
 def _signal_to_wav_response(
@@ -546,7 +538,7 @@ def _format_type_hint(type_hint: type) -> str:
         args = get_args(type_hint)
         non_none = [a for a in args if a is not type(None)]
         if len(non_none) == 1 and type(None) in args:
-            # Optional[X] — display as "X | null"
+            # Optional[X] - display as "X | null"
             return f"{_format_type_hint(non_none[0])} | null"
         return " | ".join(_format_type_hint(a) for a in args)
     return getattr(type_hint, "__name__", str(type_hint))
@@ -586,10 +578,10 @@ def _extract_param_schema(cls: type) -> dict[str, Any]:
     return params
 
 
-# Valid block keys derived from canonical chain order — single source of truth
+# Valid block keys derived from canonical chain order - single source of truth
 _VALID_CHAIN_KEYS: set[str] = {key for key, _ in CANONICAL_ORDER}
 
-# Maximum file size accepted by /process — enforced before audio decoding
+# Maximum file size accepted by /process - enforced before audio decoding
 MAX_UPLOAD_BYTES: int = 50 * 1024 * 1024  # 50 MB
 
 
@@ -624,9 +616,7 @@ def _validate_chain_keys(
             )
 
 
-# ---------------------------------------------------------------------------
-# Endpoints — DSP
-# ---------------------------------------------------------------------------
+# Endpoints - DSP
 
 
 @app.get("/health")
@@ -678,7 +668,7 @@ async def generate(req: GenerateRequest) -> StreamingResponse:
             detail=(f"Unknown generator '{req.generator}'. Options: {list(GENERATORS.keys())}"),
         )
 
-    # Generate raw sample — randomise params if none provided
+    # Generate raw sample - randomise params if none provided
     params = dict(req.generator_params)
     if not params:
         if req.generator == "glitch_click":
@@ -816,9 +806,7 @@ async def process_audio(
     return _signal_to_wav_response(signal, sr=sr, filename="processed.wav")
 
 
-# ---------------------------------------------------------------------------
-# Endpoints — Code Generation (SuperCollider / TidalCycles)
-# ---------------------------------------------------------------------------
+# Endpoints - Code Generation (SuperCollider / TidalCycles)
 
 
 def _codegen_result_to_response(result: Any) -> CodegenResponse:
@@ -905,9 +893,7 @@ async def tidal(req: CodegenRequest) -> CodegenResponse:
     return _codegen_result_to_response(result)
 
 
-# ---------------------------------------------------------------------------
-# Endpoints — RAG (Knowledge Base + GPT-4o)
-# ---------------------------------------------------------------------------
+# Endpoints - RAG (Knowledge Base + GPT-4o)
 
 
 @app.post("/ask")
@@ -1134,14 +1120,12 @@ class TuningResponse(BaseModel):
     )
 
 
-# ---------------------------------------------------------------------------
-# V2.4 — /tuning/extract endpoint Pydantic models
+# V2.4 - /tuning/extract endpoint Pydantic models
 #
 # Free-text → TuningRequest extraction via GPT-4o (RAGPipeline). Used by
 # V2.4 frontend TuningPanel to pre-fill the form. Extraction output is
 # validated by _parse_tuning_extract_output in knowledge/rag.py (types,
 # ranges, cross-field rule). User still reviews/edits before POST /tuning.
-# ---------------------------------------------------------------------------
 
 
 class TuningExtractRequest(BaseModel):
@@ -1193,7 +1177,7 @@ class TuningExtractResponse(BaseModel):
 # [ml] installed, so 404 is unreachable there.
 
 # Minimum hz to keep as resonant point in response. Filters out XGBoost
-# regression predictions for "absent" freq_* columns — those train as 0.0
+# regression predictions for "absent" freq_* columns - those train as 0.0
 # via engine.ml.model_training.prepare_data().fillna(0.0) and predict as
 # low-magnitude noise floats (~ ±1.0). Threshold of 1.0 Hz sits in the gap
 # between prediction noise and any legitimate MASTER_DATASET resonant
@@ -1238,7 +1222,7 @@ if _HAS_MLFLOW:
         target_columns: list[str] = app.state.tuning_model_metadata.get("target_columns", [])
         if not target_columns:
             # Lifespan logged a WARNING at startup. Cannot shape response
-            # without column ordering — fail closed rather than guess.
+            # without column ordering - fail closed rather than guess.
             raise HTTPException(
                 status_code=503,
                 detail=(
@@ -1255,13 +1239,11 @@ if _HAS_MLFLOW:
         payload = request.model_dump()
         payload["swing"] = payload.pop("swing_pct") / 100.0
 
-        # -------------------------------------------------------------------
-        # Langfuse trace span — opened here (after 503 gates, after payload
+        # Langfuse trace span - opened here (after 503 gates, after payload
         # built) so the trace captures only valid-shape requests. Fail-open
-        # at every hook (start, update, end) — Langfuse SDK promises its own
+        # at every hook (start, update, end) - Langfuse SDK promises its own
         # fail-open semantics, but we add defense-in-depth wrappers because
         # observability MUST NOT block business path (decision B + fail-open).
-        # -------------------------------------------------------------------
         trace_input = {
             "bpm": payload["bpm"],
             "pitch_midi": payload["pitch_midi"],
@@ -1380,7 +1362,7 @@ if _HAS_MLFLOW:
             return response
         finally:
             # End span unconditionally (fail-open). The trace will record
-            # latency even if the response shaping raised an exception above —
+            # latency even if the response shaping raised an exception above -
             # useful for production debugging.
             if trace_span is not None:
                 try:
@@ -1389,18 +1371,16 @@ if _HAS_MLFLOW:
                     logger.warning("Langfuse span end failed: %s.", e)
 
 
-# ---------------------------------------------------------------------------
-# V2.4 — /tuning/extract endpoint handler
+# V2.4 - /tuning/extract endpoint handler
 #
 # Free-text → structured TuningRequest extraction via RAGPipeline.extract_
-# tuning_request (GPT-4o + parser + validator). Independent from MLflow —
+# tuning_request (GPT-4o + parser + validator). Independent from MLflow -
 # registered unconditionally (not gated on _HAS_MLFLOW) because extraction
 # does NOT require the trained model; it produces a TuningRequest payload
 # that the frontend submits separately to /tuning.
 #
 # Langfuse tracing: same fail-open pattern as /tuning handler.
 # Span captures input text + extracted output + model metadata.
-# ---------------------------------------------------------------------------
 
 
 @app.post("/tuning/extract", response_model=TuningExtractResponse)
@@ -1493,9 +1473,7 @@ async def tuning_extract(request: TuningExtractRequest) -> TuningExtractResponse
                 logger.warning("Langfuse span end failed: %s.", e)
 
 
-# ---------------------------------------------------------------------------
-# Static frontend serving (production only — Vite bundle in /app/static)
-# ---------------------------------------------------------------------------
+# Static frontend serving (production only - Vite bundle in /app/static)
 
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"

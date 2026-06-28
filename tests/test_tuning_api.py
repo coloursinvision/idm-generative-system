@@ -40,7 +40,7 @@ pytest.importorskip("pandera")
 pytest.importorskip("xgboost")
 
 # OPENAI_API_KEY must be set for api.main to import (V1 RAGPipeline checks
-# at construction). Any non-empty value works for these tests — no actual
+# at construction). Any non-empty value works for these tests - no actual
 # OpenAI calls are made.
 os.environ.setdefault("OPENAI_API_KEY", "dummy-key-for-tests-only")
 
@@ -50,9 +50,7 @@ if TYPE_CHECKING:
     from fastapi import FastAPI
 
 
-# ---------------------------------------------------------------------------
 # Module fixtures
-# ---------------------------------------------------------------------------
 
 
 @pytest.fixture(scope="module")
@@ -99,9 +97,7 @@ def _valid_payload(**overrides: Any) -> dict[str, Any]:
     return base
 
 
-# ---------------------------------------------------------------------------
-# Pydantic field-level validation — boundary cases
-# ---------------------------------------------------------------------------
+# Pydantic field-level validation - boundary cases
 
 
 class TestPydanticFieldValidation:
@@ -159,9 +155,7 @@ class TestPydanticFieldValidation:
         assert r.status_code == 422
 
 
-# ---------------------------------------------------------------------------
 # Cross-field rule: sub_region ↔ JAPAN_IDM
-# ---------------------------------------------------------------------------
 
 
 class TestCrossFieldRule:
@@ -195,9 +189,7 @@ class TestCrossFieldRule:
         assert r.status_code == 200
 
 
-# ---------------------------------------------------------------------------
 # Happy path: each of the 6 RegionCode values returns 200
-# ---------------------------------------------------------------------------
 
 
 class TestHappyPathAllRegions:
@@ -240,9 +232,7 @@ class TestHappyPathAllRegions:
         assert body["inference_latency_ms"] >= 0.0
 
 
-# ---------------------------------------------------------------------------
 # Response shape integrity
-# ---------------------------------------------------------------------------
 
 
 class TestResponseShape:
@@ -275,9 +265,7 @@ class TestResponseShape:
             assert 0.0 <= p["confidence"] <= 1.0
 
 
-# ---------------------------------------------------------------------------
 # Fail-soft 503 paths
-# ---------------------------------------------------------------------------
 
 
 class TestFailSoft:
@@ -312,9 +300,7 @@ class TestFailSoft:
         assert "target_columns" in r.text
 
 
-# ---------------------------------------------------------------------------
 # Pydantic extra="forbid"
-# ---------------------------------------------------------------------------
 
 
 class TestExtraFieldsRejected:
@@ -328,9 +314,7 @@ class TestExtraFieldsRejected:
         assert r.status_code == 422
 
 
-# ---------------------------------------------------------------------------
 # Latency + metadata provenance integrity
-# ---------------------------------------------------------------------------
 
 
 class TestLatencyAndMetadata:
@@ -360,9 +344,7 @@ class TestLatencyAndMetadata:
         )
 
 
-# ---------------------------------------------------------------------------
 # Langfuse fail-open: trace breaks → request still succeeds
-# ---------------------------------------------------------------------------
 
 
 class TestLangfuseFailOpen:

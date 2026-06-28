@@ -1,9 +1,7 @@
 import { useCallback, useEffect } from "react";
 import { useSequencer } from "../../hooks/useSequencer";
 
-/* ------------------------------------------------------------------ */
 /* PO-33 K.O! constants from manual                                    */
-/* ------------------------------------------------------------------ */
 
 const STEPS = 16;
 
@@ -25,9 +23,7 @@ const TRACK_DEFS = [
   { name: "GLITCH 2", generator: "fm_blip" },
 ];
 
-/* ------------------------------------------------------------------ */
 /* Instruction generator                                               */
-/* ------------------------------------------------------------------ */
 
 function generateInstructions(
   tracks: { name: string; steps: boolean[] }[]
@@ -65,9 +61,7 @@ function generateInstructions(
   return instructions;
 }
 
-/* ------------------------------------------------------------------ */
 /* Component                                                           */
-/* ------------------------------------------------------------------ */
 
 export function PO33Guide() {
   const {

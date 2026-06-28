@@ -32,7 +32,7 @@ test.describe("T-02: Advisor Tab", () => {
       await input.press("Enter");
     }
 
-    // Wait for answer text (not textarea — use the response container)
+    // Wait for answer text (not textarea - use the response container)
     await expect(page.getByText(/portamento circuit/).first()).toBeVisible({ timeout: 5000 });
     // Sources should be visible
     await expect(page.getByText(/Part 4\.2/).first()).toBeVisible();

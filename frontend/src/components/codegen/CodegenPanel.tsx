@@ -1,15 +1,15 @@
 /**
  * components/codegen/CodegenPanel.tsx
  *
- * Code generation panel — main app tab (docked mode).
+ * Code generation panel - main app tab (docked mode).
  *
- * Layout (v4 — live-ready):
+ * Layout (v4 - live-ready):
  *   ┌─────────────────────────────────────┐
  *   │  SC │ TIDAL            ⧉  GENERATE  │  ← top bar
  *   ├─────────────────────────────────────┤
  *   │  ▸ CONFIG  ─── GLITCH / STUDIO / …  │  ← collapsed drawer
  *   ├─────────────────────────────────────┤
- *   │  SCLANG .SCD — 48 LINES   COPY SAVE │  ← code toolbar
+ *   │  SCLANG .SCD - 48 LINES   COPY SAVE │  ← code toolbar
  *   │  1 │ // IDM Generative System …      │
  *   │  2 │ // glitch_click | studio | 120  │  ← code output
  *   │  … │ …                               │     (85% of panel)
@@ -39,9 +39,7 @@ import type {
   CodegenBroadcastMessage,
 } from "../../types/codegen";
 
-/* ------------------------------------------------------------------ */
 /* Constants                                                           */
-/* ------------------------------------------------------------------ */
 
 const GENERATORS = ["glitch_click", "noise_burst", "fm_blip"] as const;
 
@@ -57,9 +55,7 @@ const POPOUT_URL = "/codegen-popout";
 const POPOUT_FEATURES =
   "width=780,height=720,menubar=no,toolbar=no,status=no,scrollbars=yes";
 
-/* ------------------------------------------------------------------ */
 /* Collapsible info strip                                              */
-/* ------------------------------------------------------------------ */
 
 function InfoStrip({
   title,
@@ -99,9 +95,7 @@ function InfoStrip({
   );
 }
 
-/* ------------------------------------------------------------------ */
 /* CodegenPanel                                                        */
-/* ------------------------------------------------------------------ */
 
 export function CodegenPanel() {
   /* --- State: config --- */

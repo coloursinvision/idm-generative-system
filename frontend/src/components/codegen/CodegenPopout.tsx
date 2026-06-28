@@ -29,9 +29,7 @@ import type {
   CodegenBroadcastMessage,
 } from "../../types/codegen";
 
-/* ------------------------------------------------------------------ */
 /* Constants                                                           */
-/* ------------------------------------------------------------------ */
 
 const GENERATORS = ["glitch_click", "noise_burst", "fm_blip"] as const;
 
@@ -44,9 +42,7 @@ type EffectKey = (typeof EFFECT_BLOCKS)[number];
 
 const CHANNEL_NAME = "idm-codegen";
 
-/* ------------------------------------------------------------------ */
-/* Collapsible info strip (local copy — avoids cross-file dep)         */
-/* ------------------------------------------------------------------ */
+/* Collapsible info strip (local copy - avoids cross-file dep)         */
 
 function InfoStrip({
   title,
@@ -85,9 +81,7 @@ function InfoStrip({
   );
 }
 
-/* ------------------------------------------------------------------ */
 /* CodegenPopout                                                       */
-/* ------------------------------------------------------------------ */
 
 export function CodegenPopout() {
   /* --- State: config --- */

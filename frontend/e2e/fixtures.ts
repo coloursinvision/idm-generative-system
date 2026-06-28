@@ -5,14 +5,12 @@
  * and reusable page helpers for all E2E specs.
  *
  * Every test file imports `test` and `expect` from here instead of
- * @playwright/test directly — this wires up API mocking automatically.
+ * @playwright/test directly - this wires up API mocking automatically.
  */
 
 import { test as base, expect, type Page } from "@playwright/test";
 
-/* ------------------------------------------------------------------ */
 /* Deterministic API response payloads                                 */
-/* ------------------------------------------------------------------ */
 
 export const HEALTH_RESPONSE = {
   status: "ok",
@@ -63,7 +61,7 @@ export const COMPOSE_RESPONSE = {
 
 export const SYNTHDEF_RESPONSE = {
   code: `(
-// IDM Generative System — SuperCollider SynthDef
+// IDM Generative System - SuperCollider SynthDef
 // Generator: glitch_click | Mode: studio
 s.waitForBoot({
     SynthDef(\\idm_glitch_click, {
@@ -109,9 +107,7 @@ d1 $ s "click" # n (irand 8)
   setup_notes: ["Requires TidalCycles 1.9+", "SuperDirt must be running"],
 };
 
-/* ------------------------------------------------------------------ */
 /* Minimal WAV file generator (silence, 0.1s, 44100Hz, 16-bit mono)   */
-/* ------------------------------------------------------------------ */
 
 function createMinimalWavBase64(): string {
   const sampleRate = 44100;
@@ -137,7 +133,7 @@ function createMinimalWavBase64(): string {
   // data chunk
   writeString(view, 36, "data");
   view.setUint32(40, dataSize, true);
-  // silence — all zeros
+  // silence - all zeros
 
   const bytes = new Uint8Array(buffer);
   let binary = "";
@@ -153,9 +149,7 @@ function createMinimalWavBase64(): string {
   }
 }
 
-/* ------------------------------------------------------------------ */
 /* API mock setup                                                      */
-/* ------------------------------------------------------------------ */
 
 async function mockAllApiRoutes(page: Page) {
   // Health
@@ -163,12 +157,12 @@ async function mockAllApiRoutes(page: Page) {
     route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(HEALTH_RESPONSE) })
   );
 
-  // Effects — API returns array directly, not { chain: [...] }
+  // Effects - API returns array directly, not { chain: [...] }
   await page.route("**/api/effects", (route) =>
     route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(EFFECTS_RESPONSE.chain) })
   );
 
-  // Generate — return WAV binary
+  // Generate - return WAV binary
   await page.route("**/api/generate", (route) =>
     route.fulfill({
       status: 200,
@@ -177,7 +171,7 @@ async function mockAllApiRoutes(page: Page) {
     })
   );
 
-  // Process — same as generate
+  // Process - same as generate
   await page.route("**/api/process", (route) =>
     route.fulfill({
       status: 200,
@@ -207,9 +201,7 @@ async function mockAllApiRoutes(page: Page) {
   );
 }
 
-/* ------------------------------------------------------------------ */
 /* Extended test fixture with auto-mocking                             */
-/* ------------------------------------------------------------------ */
 
 export const test = base.extend<{ mockApi: void }>({
   mockApi: [
@@ -223,9 +215,7 @@ export const test = base.extend<{ mockApi: void }>({
 
 export { expect };
 
-/* ------------------------------------------------------------------ */
 /* Page helpers                                                        */
-/* ------------------------------------------------------------------ */
 
 /** Navigate to a tab and wait for route */
 export async function navigateToTab(page: Page, tabName: string, expectedPath: string) {
@@ -247,7 +237,7 @@ export async function collectConsoleErrors(page: Page, fn: () => Promise<void>):
 
 /**
  * Extract full code text from CodeBlock component.
- * CodeBlock renders each line in a separate <code> element —
+ * CodeBlock renders each line in a separate <code> element -
  * we collect all and join to get the complete source.
  */
 export async function getCodeBlockText(page: Page): Promise<string> {

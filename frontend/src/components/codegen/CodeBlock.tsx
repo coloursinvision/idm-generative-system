@@ -5,7 +5,7 @@
  * TidalCycles (Haskell DSL) output.
  *
  * Features:
- *   - Solarized Dark background (#002b36) — night-use optimised
+ *   - Solarized Dark background (#002b36) - night-use optimised
  *   - Syntax highlighting: sclang keywords/UGens/symbols and
  *     Haskell keywords / Tidal functions / operators
  *   - Line numbers with separate gutter
@@ -16,9 +16,7 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import type { CodegenTarget } from "../../types/codegen";
 
-/* ------------------------------------------------------------------ */
 /* Solarized Dark palette                                              */
-/* ------------------------------------------------------------------ */
 
 const SOL = {
   base03: "#002b36",  // code background
@@ -36,18 +34,14 @@ const SOL = {
   lineNumBorder: "#0a3642",
 } as const;
 
-/* ------------------------------------------------------------------ */
 /* Token types                                                         */
-/* ------------------------------------------------------------------ */
 
 interface Token {
   text: string;
   color: string;
 }
 
-/* ------------------------------------------------------------------ */
 /* Keyword / function sets                                             */
-/* ------------------------------------------------------------------ */
 
 const SC_KEYWORDS = new Set([
   "var", "arg", "if", "else", "do", "while", "for", "forBy",
@@ -105,9 +99,7 @@ const TIDAL_FUNCTIONS = new Set([
   "whenmod", "within", "overlay",
 ]);
 
-/* ------------------------------------------------------------------ */
 /* Tokenisers                                                          */
-/* ------------------------------------------------------------------ */
 
 /**
  * Tokenise sclang source code.
@@ -203,7 +195,7 @@ function tokeniseSclang(code: string): Token[][] {
         i = j;
         continue;
       }
-      // Default — punctuation, whitespace, operators
+      // Default - punctuation, whitespace, operators
       tokens.push({ text: line[i], color: SOL.base0 });
       i++;
     }
@@ -231,7 +223,7 @@ function tokeniseTidal(code: string): Token[][] {
         tokens.push({ text: line.slice(i), color: SOL.comment });
         break;
       }
-      // Block comment ({- ... -}) — single-line simplified
+      // Block comment ({- ... -}) - single-line simplified
       if (line[i] === "{" && line[i + 1] === "-") {
         const end = line.indexOf("-}", i + 2);
         const slice = end >= 0 ? line.slice(i, end + 2) : line.slice(i);
@@ -314,9 +306,7 @@ function tokeniseTidal(code: string): Token[][] {
   });
 }
 
-/* ------------------------------------------------------------------ */
 /* Component                                                           */
-/* ------------------------------------------------------------------ */
 
 interface CodeBlockProps {
   code: string;
@@ -328,7 +318,7 @@ export function CodeBlock({ code, target, filename }: CodeBlockProps) {
   const [copied, setCopied] = useState(false);
   const copyTimeout = useRef<ReturnType<typeof setTimeout>>();
 
-  // Tokenise — memoised to avoid re-tokenising on unrelated re-renders
+  // Tokenise - memoised to avoid re-tokenising on unrelated re-renders
   const lines = useMemo(
     () =>
       target === "supercollider"

@@ -66,10 +66,8 @@ import numpy as np
 
 from engine.effects.base import BaseEffect
 
-# ---------------------------------------------------------------------------
-# XOR mask patterns — each produces a distinct corruption character
+# XOR mask patterns - each produces a distinct corruption character
 # Values target int16 PCM range (−32768 to +32767)
-# ---------------------------------------------------------------------------
 
 XOR_MASKS: dict[str, int] = {
     "subtle": 0x000F,  # 4 LSBs — gentle noise-floor corruption
@@ -212,15 +210,15 @@ class GlitchEngine(BaseEffect):
 
         wet = signal.copy()
 
-        # Stage 1 — Braindance stutter
+        # Stage 1 - Braindance stutter
         if self.stutter_density > 0.0:
             wet = self._apply_stutter(wet, rng)
 
-        # Stage 2 — ASR-10 loop modulation
+        # Stage 2 - ASR-10 loop modulation
         if self.loop_mod_depth > 0.0:
             wet = self._apply_loop_modulation(wet)
 
-        # Stage 3 — XOR bit mangle
+        # Stage 3 - XOR bit mangle
         if self.xor_density > 0.0:
             wet = self._apply_xor_mangle(wet, rng)
 
@@ -229,9 +227,7 @@ class GlitchEngine(BaseEffect):
     def reset(self) -> None:
         """Stateless effect — nothing to reset."""
 
-    # ------------------------------------------------------------------
-    # Stage 1 — Braindance stutter
-    # ------------------------------------------------------------------
+    # Stage 1 - Braindance stutter
 
     def _apply_stutter(self, signal: np.ndarray, rng: np.random.Generator) -> np.ndarray:
         """
@@ -279,9 +275,7 @@ class GlitchEngine(BaseEffect):
 
         return output
 
-    # ------------------------------------------------------------------
-    # Stage 2 — ASR-10 loop modulation
-    # ------------------------------------------------------------------
+    # Stage 2 - ASR-10 loop modulation
 
     def _apply_loop_modulation(self, signal: np.ndarray) -> np.ndarray:
         """
@@ -314,9 +308,7 @@ class GlitchEngine(BaseEffect):
 
         return signal[idx_floor] * (1.0 - frac) + signal[idx_ceil] * frac
 
-    # ------------------------------------------------------------------
-    # Stage 3 — XOR bit mangle
-    # ------------------------------------------------------------------
+    # Stage 3 - XOR bit mangle
 
     def _apply_xor_mangle(self, signal: np.ndarray, rng: np.random.Generator) -> np.ndarray:
         """

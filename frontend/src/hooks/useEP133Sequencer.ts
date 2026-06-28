@@ -11,9 +11,7 @@ import { postGenerate } from "../api/client";
 import type { SequencerTrack } from "./useSequencer";
 import { SCHEDULER_INTERVAL_MS } from "./useSequencer";
 
-/* ------------------------------------------------------------------ */
-/* Timing model — single source of truth for the EP-133 guide          */
-/* ------------------------------------------------------------------ */
+/* Timing model - single source of truth for the EP-133 guide          */
 
 export const TIMING_MODES = ["1/8", "1/16", "1/32"] as const;
 export type TimingMode = (typeof TIMING_MODES)[number];
@@ -41,12 +39,10 @@ function strideFor(timing: TimingMode): number {
   return MASTER_TICKS_PER_BAR / STEPS_PER_TIMING[timing];
 }
 
-/* ------------------------------------------------------------------ */
 /* Per-group state shape                                               */
-/* ------------------------------------------------------------------ */
 
 export interface GroupSequencerState {
-  /** Tracks for this group — reuses the PO-33 track shape (steps/buffer/loading). */
+  /** Tracks for this group - reuses the PO-33 track shape (steps/buffer/loading). */
   tracks: SequencerTrack[];
   /** Note interval active for this group (per-pattern, manual §4.7). */
   timing: TimingMode;
@@ -63,7 +59,7 @@ interface UseEP133SequencerOptions<G extends string> {
   groups: readonly G[];
   /** Track definitions per group. */
   groupTracks: Record<G, { name: string; generator: string }[]>;
-  /** Initial global BPM (manual §8.4 — project-global, 40–399). */
+  /** Initial global BPM (manual §8.4 - project-global, 40–399). */
   defaultBpm?: number;
 }
 
@@ -81,9 +77,7 @@ function isNonRunningState(state: string): state is NonRunningState {
   return state === "suspended" || state === "interrupted";
 }
 
-/* ------------------------------------------------------------------ */
 /* Initial state                                                       */
-/* ------------------------------------------------------------------ */
 
 function makeInitialGroups<G extends string>(
   groups: readonly G[],
@@ -108,9 +102,7 @@ function makeInitialGroups<G extends string>(
   }, {} as Record<G, GroupSequencerState>);
 }
 
-/* ------------------------------------------------------------------ */
 /* Hook                                                                */
-/* ------------------------------------------------------------------ */
 
 /**
  * Multi-group EP-133 sequencer. One AudioContext, one master clock; every
@@ -392,7 +384,7 @@ export function useEP133Sequencer<G extends string>({
     );
     if (!hasBuffers) return;
 
-    // Re-entrancy guard: a scheduler loop is already armed — don't spawn a
+    // Re-entrancy guard: a scheduler loop is already armed - don't spawn a
     // second one (a double play() would double-schedule every tick).
     if (timerRef.current !== null) return;
 

@@ -44,9 +44,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
 # Constants
-# ---------------------------------------------------------------------------
 
 _DATASET_PATH = Path("data/synthetic/dataset.parquet")
 _MODEL_DIR = Path("models/tuning_estimator")
@@ -54,9 +52,7 @@ _METRICS_PATH = Path("models/metrics.json")
 _IMPORTANCE_PATH = Path("models/feature_importance.json")
 
 
-# ---------------------------------------------------------------------------
 # Feature importance extraction
-# ---------------------------------------------------------------------------
 
 
 def _extract_feature_importance(
@@ -128,9 +124,7 @@ def _get_preprocessed_feature_names(pipeline: object) -> list[str]:
         return []
 
 
-# ---------------------------------------------------------------------------
 # Main
-# ---------------------------------------------------------------------------
 
 
 def main() -> None:

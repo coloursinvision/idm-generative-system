@@ -29,9 +29,7 @@ from fastapi.testclient import TestClient
 
 from api.main import GENERATORS, app
 
-# ---------------------------------------------------------------------------
 # Fixtures
-# ---------------------------------------------------------------------------
 
 
 @pytest.fixture(scope="module")
@@ -61,9 +59,7 @@ def stereo_wav_bytes() -> bytes:
     return buf.read()
 
 
-# ---------------------------------------------------------------------------
 # GET /health
-# ---------------------------------------------------------------------------
 
 
 class TestHealth:
@@ -79,9 +75,7 @@ class TestHealth:
         assert data["version"] == pkg_version("idm-generative-system")
 
 
-# ---------------------------------------------------------------------------
 # GET /effects
-# ---------------------------------------------------------------------------
 
 EXPECTED_KEYS = [
     "noise_floor",
@@ -136,9 +130,7 @@ class TestEffects:
                 assert "default" in pinfo, f"{block['key']}.{pname} missing 'default'"
 
 
-# ---------------------------------------------------------------------------
 # POST /generate
-# ---------------------------------------------------------------------------
 
 
 class TestGenerate:
@@ -236,9 +228,7 @@ class TestGenerate:
         assert "Invalid generator params" in resp.json()["detail"]
 
 
-# ---------------------------------------------------------------------------
 # POST /process
-# ---------------------------------------------------------------------------
 
 
 class TestProcess:
@@ -291,7 +281,7 @@ class TestProcess:
         assert bypassed.ndim == 1
 
         # Processed signal is longer due to 2s tail padding for
-        # reverb/delay decay — this confirms tail padding is active
+        # reverb/delay decay - this confirms tail padding is active
         assert len(processed) > len(bypassed), (
             f"Processed ({len(processed)}) should be longer than "
             f"bypassed ({len(bypassed)}) due to tail padding"

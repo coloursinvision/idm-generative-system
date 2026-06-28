@@ -20,10 +20,8 @@ Run:
 
 from __future__ import annotations
 
-# ---------------------------------------------------------------------------
-# Secrets bridge — Streamlit Cloud uses st.secrets, not .env
+# Secrets bridge - Streamlit Cloud uses st.secrets, not .env
 # Map secrets to env vars so knowledge/ modules work unchanged.
-# ---------------------------------------------------------------------------
 import contextlib
 import os
 import sys
@@ -52,9 +50,7 @@ load_dotenv()
 from engine.effects import CANONICAL_ORDER
 from knowledge.rag import RAGPipeline
 
-# ---------------------------------------------------------------------------
 # Page config
-# ---------------------------------------------------------------------------
 
 st.set_page_config(
     page_title="IDM Generative System",
@@ -63,9 +59,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# ---------------------------------------------------------------------------
-# Custom CSS — Sheffield / Designers Republic nod
-# ---------------------------------------------------------------------------
+# Custom CSS - Sheffield / Designers Republic nod
 
 st.markdown(
     """
@@ -165,9 +159,7 @@ st.markdown(
 )
 
 
-# ---------------------------------------------------------------------------
 # Init
-# ---------------------------------------------------------------------------
 
 
 @st.cache_resource
@@ -179,9 +171,7 @@ def get_rag() -> RAGPipeline:
 rag = get_rag()
 
 
-# ---------------------------------------------------------------------------
 # Header
-# ---------------------------------------------------------------------------
 
 st.markdown("# 🎛 IDM GENERATIVE SYSTEM")
 st.markdown(
@@ -194,9 +184,7 @@ st.markdown(
 st.markdown("---")
 
 
-# ---------------------------------------------------------------------------
 # Tabs
-# ---------------------------------------------------------------------------
 
 tab_advisor, tab_composer, tab_explorer = st.tabs(
     [
@@ -207,9 +195,7 @@ tab_advisor, tab_composer, tab_explorer = st.tabs(
 )
 
 
-# ---------------------------------------------------------------------------
-# Tab 1 — Sound Design Advisor
-# ---------------------------------------------------------------------------
+# Tab 1 - Sound Design Advisor
 
 with tab_advisor:
     st.markdown("### Sound Design Advisor")
@@ -261,9 +247,7 @@ with tab_advisor:
         )
 
 
-# ---------------------------------------------------------------------------
-# Tab 2 — Auto-Composer
-# ---------------------------------------------------------------------------
+# Tab 2 - Auto-Composer
 
 with tab_composer:
     st.markdown("### Auto-Composer")
@@ -331,9 +315,7 @@ with tab_composer:
         )
 
 
-# ---------------------------------------------------------------------------
-# Tab 3 — Effects Explorer
-# ---------------------------------------------------------------------------
+# Tab 3 - Effects Explorer
 
 with tab_explorer:
     st.markdown("### Effects Chain Explorer")

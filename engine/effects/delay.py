@@ -54,9 +54,7 @@ from scipy import signal as scipy_signal
 
 from engine.effects.base import BaseEffect
 
-# ---------------------------------------------------------------------------
 # Tape age HF cutoff frequencies (Hz)
-# ---------------------------------------------------------------------------
 
 TAPE_AGE_CUTOFF: dict[str, int] = {
     "new": 14000,
@@ -65,13 +63,11 @@ TAPE_AGE_CUTOFF: dict[str, int] = {
 }
 
 
-# ---------------------------------------------------------------------------
 # Numba-compiled DSP kernel
 #
 # Delay line with per-sample modulation offset, tanh tape saturation in
-# feedback path, and write-back. LLVM-compiled — eliminates ~88k Python
+# feedback path, and write-back. LLVM-compiled - eliminates ~88k Python
 # iterations for a typical 2s signal at 44.1 kHz.
-# ---------------------------------------------------------------------------
 
 
 @njit(cache=True)
@@ -214,7 +210,7 @@ class TapeDelay(BaseEffect):
         # Tape HF rolloff (age-dependent)
         sos_tape = self._build_tape_filter()
 
-        # Delay buffer — extra headroom for modulation offset
+        # Delay buffer - extra headroom for modulation offset
         max_mod_offset = int(self.wow_depth * self.sr) + 1
         buf_len = delay_samples + max_mod_offset + n + 1
         buf = np.zeros(buf_len)
@@ -241,9 +237,7 @@ class TapeDelay(BaseEffect):
     def reset(self) -> None:
         """Stateless effect — nothing to reset."""
 
-    # ------------------------------------------------------------------
     # Private helpers
-    # ------------------------------------------------------------------
 
     def _generate_wow_flutter(self, n: int) -> np.ndarray:
         """

@@ -116,9 +116,7 @@ class Saturation(BaseEffect):
     def reset(self) -> None:
         """Stateless effect — nothing to reset."""
 
-    # ------------------------------------------------------------------
     # Private helpers
-    # ------------------------------------------------------------------
 
     def _apply_saturation(self, x: np.ndarray) -> np.ndarray:
         """Dispatch to the selected saturation algorithm."""

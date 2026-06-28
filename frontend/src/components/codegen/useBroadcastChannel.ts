@@ -60,7 +60,7 @@ export function useBroadcastChannel<T extends { type: string }>(
       try {
         channelRef.current?.postMessage(message);
       } catch {
-        // Channel may be closed — silent fail
+        // Channel may be closed - silent fail
       }
     },
     [],

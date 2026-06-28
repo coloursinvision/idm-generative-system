@@ -28,9 +28,7 @@ from api.main import app
 from knowledge.qdrant_client import chunk_markdown
 from knowledge.rag import RAGPipeline
 
-# ---------------------------------------------------------------------------
 # Fixtures
-# ---------------------------------------------------------------------------
 
 
 @pytest.fixture(scope="module")
@@ -63,9 +61,7 @@ def _mock_openai_response(content: str) -> MagicMock:
     return mock
 
 
-# ---------------------------------------------------------------------------
 # /ask endpoint
-# ---------------------------------------------------------------------------
 
 
 class TestAskEndpoint:
@@ -131,9 +127,7 @@ class TestAskEndpoint:
         assert "RAG pipeline error" in resp.json()["detail"]
 
 
-# ---------------------------------------------------------------------------
 # /compose endpoint
-# ---------------------------------------------------------------------------
 
 
 class TestComposeEndpoint:
@@ -183,9 +177,7 @@ class TestComposeEndpoint:
         assert "RAG pipeline error" in resp.json()["detail"]
 
 
-# ---------------------------------------------------------------------------
 # RAGPipeline internal logic (unit tests, fully mocked)
-# ---------------------------------------------------------------------------
 
 
 class TestRAGPipelineInternal:
@@ -328,9 +320,7 @@ class TestRAGPipelineInternal:
         assert result["sources"] == []
 
 
-# ---------------------------------------------------------------------------
 # Markdown chunking
-# ---------------------------------------------------------------------------
 
 
 class TestChunking:
