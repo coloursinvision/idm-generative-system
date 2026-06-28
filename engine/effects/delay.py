@@ -66,7 +66,7 @@ TAPE_AGE_CUTOFF: dict[str, int] = {
 
 
 # ---------------------------------------------------------------------------
-# Numba-compiled DSP kernel (CR-04)
+# Numba-compiled DSP kernel
 #
 # Delay line with per-sample modulation offset, tanh tape saturation in
 # feedback path, and write-back. LLVM-compiled — eliminates ~88k Python

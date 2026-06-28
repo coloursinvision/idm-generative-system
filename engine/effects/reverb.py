@@ -61,7 +61,7 @@ COMB_DELAYS_MS: list[float] = [29.7, 37.1, 41.1, 43.7, 47.3, 53.1]
 
 
 # ---------------------------------------------------------------------------
-# Numba-compiled DSP kernels (CR-04)
+# Numba-compiled DSP kernels
 #
 # Per-sample loops extracted to module-level @njit functions.
 # LLVM-compiled on first call, cached to __pycache__ for subsequent loads.

@@ -28,8 +28,7 @@ Parse pipeline:
 Japan Tokyo/Osaka split:
     ``load_profile("JAPAN_IDM", sub_region="OSAKA")`` swaps ``sub_bass_hz``
     and ``noise_floor_hz`` from 50 Hz (Tokyo default) to 60 Hz. No separate
-    ``JAPAN_OSAKA_PROFILE.md`` spoke exists; the split is parameter-level
-    per the bootstrap Gotcha.
+    Osaka profile spoke exists; the split is parameter-level.
 
 Path resolution:
     Honours the ``IDM_VAULT_PATH`` environment variable. Falls back to

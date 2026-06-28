@@ -362,8 +362,7 @@ def split_train_val_test_by_group(
     ``val_size * (1 - test_size)`` of the whole dataset.
 
     The validation partition scores Optuna trials; the test partition is held
-    out for the single final metrics report (fixes HPO-on-test, V2_ROADMAP
-    backlog #3 / DECISIONS D-PIPE-06).
+    out for the single final metrics report (fixes HPO-on-test).
 
     Args:
         X: Feature matrix.
@@ -438,7 +437,7 @@ def train(
 
         # MLflow tag: DVC dataset hash for V2.3 endpoint provenance.
         # Sourced from DVC_DATASET_HASH env var exported by scripts/train_with_hash.sh
-        # (TODO-S13-E). Falls back to "unknown" when run outside DVC pipeline.
+        # Falls back to "unknown" when run outside DVC pipeline.
         mlflow.set_tag("dvc_dataset_hash", os.environ.get("DVC_DATASET_HASH", "unknown"))
 
         # --- Fit ---
@@ -465,13 +464,11 @@ def train(
 
         metrics["r2_mean"] = float(r2_score(y_test_arr, y_pred, multioutput="uniform_average"))
 
-        # --- Per-region RMSE diagnostic (S13 housekeeping Item 4/4) ---
-        # Stratified RMSE breakdown by region — V2_ROADMAP v3.0 §V2.2 lists
-        # "RMSE per-region (6 stratified subsets) ... at first-run review" as
-        # a recommended diagnostic. S12 baseline produced aggregate metrics
-        # only; from this run forward we log both aggregate-per-region (flat
-        # metrics, visible in MLflow UI metrics tab) and per-target × region
-        # (JSON artefact, full breakdown).
+        # Per-region RMSE diagnostic. Stratified RMSE breakdown by region is a
+        # recommended diagnostic. Earlier runs produced aggregate metrics only;
+        # from this run forward we log both aggregate-per-region (flat metrics,
+        # visible in the MLflow UI metrics tab) and per-target × region (JSON
+        # artefact, full breakdown).
         #
         # Aggregate-per-region is mean RMSE across all targets restricted to
         # rows where X_test["region"] == <region>. Per-region × per-target is
@@ -523,8 +520,8 @@ def train(
         # --- Log artifact, register, transition to Staging ---
         # Split log/register/transition for deterministic version handle. The
         # combined log_model(..., registered_model_name=...) call leaves the
-        # new version at default stage "None"; V2_ROADMAP §V2.2 AC#3 requires
-        # the post-train state to be stage="Staging". Promotion to "Production"
+        # new version at default stage "None"; the post-train state must be
+        # stage="Staging". Promotion to "Production"
         # remains a manual gate (human review of Staging metrics).
         mlflow.sklearn.log_model(
             pipeline,
@@ -576,7 +573,7 @@ def run_optuna_study(
     the **validation** set. The best trial's hyperparameters are then used to
     refit on train + validation, and final metrics are reported once on the
     held-out **test** set (so the metric optimised by HPO is never the metric
-    reported — fixes HPO-on-test, V2_ROADMAP backlog #3 / D-PIPE-06).
+    reported — fixes HPO-on-test).
 
     Args:
         X_train: Training feature matrix.

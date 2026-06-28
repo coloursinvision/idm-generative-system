@@ -19,7 +19,7 @@ Two pandera DataFrameSchemas live here.
 :data:`InferenceSchema`
     Validates the **narrow inference DataFrame** built by the V2.3
     ``/tuning`` endpoint handler from a single :class:`TuningRequest`,
-    after the ``swing_pct → swing`` boundary conversion (D-S7-04) and the
+    after the ``swing_pct → swing`` boundary conversion and the
     Pydantic-level cross-field validation. Five columns only; ``strict=True``
     to reject any accidental feature injection upstream.
 
@@ -33,7 +33,7 @@ Design principles:
       columns — those are model *targets*, not inputs.
     - **Declarative construction:** Both schemas built via direct
       :class:`pa.DataFrameSchema` constructor (no ``add_columns()`` /
-      mutation patterns — Gotcha #16: pandera 0.31 drops ``regex=True``
+      mutation patterns — pandera 0.31 drops ``regex=True``
       in ``add_columns``).
     - **DataFrame-level cross-column checks:** Sub-region scope rule
       enforced via ``pa.Check`` callables at the schema level on both
@@ -218,7 +218,7 @@ DATASET_SCHEMA: pa.DataFrameSchema = pa.DataFrameSchema(
 #   1. Pydantic field-level validation (bpm, pitch_midi, swing_pct, region,
 #      sub_region — each with its own range / Literal constraints)
 #   2. Pydantic @model_validator cross-field check (sub_region ↔ JAPAN_IDM)
-#   3. Boundary conversion swing = swing_pct / 100.0 (D-S7-04)
+#   3. Boundary conversion swing = swing_pct / 100.0
 #
 # Schema width vs DATASET_SCHEMA:
 #   - INCLUDES:  bpm, pitch_midi, swing, region, sub_region
@@ -268,7 +268,7 @@ InferenceSchema: pa.DataFrameSchema = pa.DataFrameSchema(
             nullable=False,
             description=(
                 "Internal swing ratio [0.0, 1.0] after boundary conversion "
-                "(swing = swing_pct / 100.0) per D-S7-04. NaN unreachable "
+                "(swing = swing_pct / 100.0). NaN unreachable "
                 "given Pydantic upstream constraints — tighter than "
                 "DATASET_SCHEMA's training-side counterpart."
             ),
@@ -279,7 +279,7 @@ InferenceSchema: pa.DataFrameSchema = pa.DataFrameSchema(
             description=(
                 "Regional profile identifier. Spoke-derived enum via "
                 "get_args(RegionCode) — no hard-coded list, mirrors "
-                "DATASET_SCHEMA.region (D-S7-02)."
+                "DATASET_SCHEMA.region."
             ),
         ),
         "sub_region": pa.Column(
@@ -287,7 +287,7 @@ InferenceSchema: pa.DataFrameSchema = pa.DataFrameSchema(
             nullable=True,
             description=(
                 "Sub-region discriminator. Non-NaN only for JAPAN_IDM "
-                "(TOKYO or OSAKA) — D-S3-05. Cross-field rule enforced "
+                "(TOKYO or OSAKA). Cross-field rule enforced "
                 "by the DataFrame-level check below; Pydantic "
                 "@model_validator provides upstream catch."
             ),
