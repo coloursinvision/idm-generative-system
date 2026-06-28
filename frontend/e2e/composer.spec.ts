@@ -1,6 +1,5 @@
 /**
  * T-03: Composer Tab
- * GUI_TEST_SPECIFICATION.md §T-03
  */
 
 import { test, expect } from "./fixtures";

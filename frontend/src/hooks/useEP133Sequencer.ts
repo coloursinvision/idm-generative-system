@@ -1,11 +1,10 @@
-/* ------------------------------------------------------------------ */
-/* hooks/useEP133Sequencer.ts                                          */
-/* EP-133 multi-group Web Audio sequencer — single master transport    */
-/* coordinating groups A/B/C/D so they play SIMULTANEOUSLY (CR-F12).   */
-/*                                                                      */
-/* Distinct from useSequencer.ts (single-pool, used by the PO-33 guide).*/
-/* The PO-33 hook is intentionally left UNCHANGED — see CR-F12 scope.   */
-/* ------------------------------------------------------------------ */
+/*
+ * EP-133 multi-group Web Audio sequencer: single master transport
+ * coordinating groups A/B/C/D so they play simultaneously.
+ *
+ * Distinct from useSequencer.ts (single-pool, used by the PO-33 guide),
+ * which is intentionally left unchanged.
+ */
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { postGenerate } from "../api/client";
@@ -68,15 +67,13 @@ interface UseEP133SequencerOptions<G extends string> {
   defaultBpm?: number;
 }
 
-/* ------------------------------------------------------------------ */
-/* AudioContext lifecycle                                              */
-/*                                                                     */
-/* NOTE (D-CRF13-12): the WebKit/Safari AudioContext lifecycle logic   */
-/* below is DUPLICATED from useSequencer.ts on purpose. CR-F12 must not */
-/* touch useSequencer.ts (it carries the just-closed CR-F13 fix), so a  */
-/* shared `useAudioContext` util is deferred to a separate refactor.    */
-/* Keep the two copies in sync until that util lands.                   */
-/* ------------------------------------------------------------------ */
+/*
+ * AudioContext lifecycle.
+ *
+ * The WebKit/Safari AudioContext lifecycle logic below is duplicated from
+ * useSequencer.ts on purpose: a shared `useAudioContext` util is deferred to
+ * a separate refactor. Keep the two copies in sync until that util lands.
+ */
 
 type NonRunningState = "suspended" | "interrupted";
 
@@ -154,8 +151,6 @@ export function useEP133Sequencer<G extends string>({
       if (audioCtxRef.current) audioCtxRef.current.close();
     };
   }, []);
-
-  /* ---- AudioContext lifecycle (duplicated per D-CRF13-12) ---- */
 
   /** Resume the AudioContext on tab-restore (incl. Safari BFCache). */
   useEffect(() => {

@@ -1,6 +1,5 @@
 /**
  * T-01: Navigation & Layout
- * GUI_TEST_SPECIFICATION.md §T-01
  */
 
 import { test, expect, navigateToTab } from "./fixtures";

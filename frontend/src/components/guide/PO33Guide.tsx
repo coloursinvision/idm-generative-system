@@ -97,7 +97,7 @@ export function PO33Guide() {
    * Click handlers wrap the async hook methods so that:
    *  - WebKit audio unlock fires on the first user gesture (idempotent)
    *  - Rejected Promises are surfaced to the console rather than left
-   *    unhandled, satisfying CR-F13 acceptance criterion 8.
+   *    unhandled.
    */
   const handleLoadSamples = useCallback(() => {
     unlockAudioContext().catch((err) =>

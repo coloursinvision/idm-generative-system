@@ -66,8 +66,8 @@ const EP133_FX = [
 export function EP133Guide() {
   /*
    * activeGroup selects the EDITING SURFACE only. Playback is global and
-   * unaffected by this value (CR-F12 AC3) — the sequencer plays all four
-   * groups from one master transport regardless of which is on screen.
+   * unaffected by this value: the sequencer plays all four groups from one
+   * master transport regardless of which is on screen.
    */
   const [activeGroup, setActiveGroup] = useState<Group>("A");
 
@@ -97,7 +97,7 @@ export function EP133Guide() {
    * Click handlers wrap the async hook methods so that:
    *  - WebKit audio unlock fires on the first user gesture (idempotent)
    *  - Rejected Promises are surfaced to the console rather than left
-   *    unhandled (CR-F13 acceptance criterion 8).
+   *    unhandled.
    */
   const handleLoadGroup = useCallback(() => {
     seq.unlockAudioContext().catch((err) =>
