@@ -161,7 +161,7 @@ ignore = [
 ]
 "knowledge/qdrant_client.py" = [
     "T201",   # print() in CLI __main__ block — intentional
-    "S324",   # MD5 for content hashing — not security (CR-15 pending)
+    "S324",   # MD5 for content hashing — not security
 ]
 "streamlit_app/**/*.py" = [
     "E402",   # import order — _bridge_secrets() must run before imports

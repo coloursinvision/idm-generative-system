@@ -3,10 +3,9 @@
 Pipeline layer:  6 — V2.4 Frontend LLM extraction boundary
 Targets:         api.main.tuning_extract handler + V2.4 Pydantic models
                  + RAGPipeline.extract_tuning_request mock contract
-Spec reference:  V2_ROADMAP.md §V2.4 (sealed v3.0)
 
 Architectural conventions:
-    - F.1: module-scoped TestClient fixture (mirrors test_tuning_api.py D-S13-09).
+    - F.1: module-scoped TestClient fixture (mirrors test_tuning_api.py).
     - F.2: synchronous TestClient (match V1 test convention).
     - F.3: GPT-4o calls fully mocked via monkeypatch on rag.extract_tuning_request.
            No real OpenAI traffic in unit tests — pinned to mock return values.

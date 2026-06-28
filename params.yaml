@@ -18,7 +18,7 @@ generate:
 
   # Number of TrackSpec combinations to generate per region.
   # Total rows ≈ specs_per_region × 6 regions × (1 + n_perturbations).
-  # Default: 150 × 6 × 11 = 9,900 rows (~10k target from V2_ROADMAP).
+  # Default: 150 × 6 × 11 = 9,900 rows (~10k target).
   specs_per_region: 150
 
   # Output path (must match dvc.yaml outs).
@@ -50,7 +50,7 @@ train:
   # test_size is the held-out test fraction; val_size is taken from the
   # post-test remainder (so val ≈ val_size * (1 - test_size) of the whole).
   # The validation split scores Optuna trials; the test split is held out for
-  # the single final metrics report (D-PIPE-06, fixes HPO-on-test).
+  # the single final metrics report (fixes HPO-on-test).
   test_size: 0.2
   val_size: 0.2
   random_state: 42

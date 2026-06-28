@@ -194,7 +194,7 @@ class TestRAGPipelineInternal:
     @patch("knowledge.rag.OpenAI")
     @patch("knowledge.rag.KnowledgeBase")
     def test_ask_calls_search_once(self, MockKB: MagicMock, MockOpenAI: MagicMock) -> None:
-        """CR-02: verify single search call, not double."""
+        """Verify single search call, not double."""
         mock_kb = MockKB.return_value
         mock_kb.search.return_value = _mock_search_results(2)
 
@@ -209,7 +209,7 @@ class TestRAGPipelineInternal:
 
         result = pipeline.ask("test question")
 
-        # search must be called exactly once (was 2 before CR-02)
+        # search must be called exactly once
         assert mock_kb.search.call_count == 1
         assert "answer" in result
         assert len(result["sources"]) == 2
@@ -217,7 +217,7 @@ class TestRAGPipelineInternal:
     @patch("knowledge.rag.OpenAI")
     @patch("knowledge.rag.KnowledgeBase")
     def test_compose_calls_search_once(self, MockKB: MagicMock, MockOpenAI: MagicMock) -> None:
-        """CR-02: verify single search call in compose."""
+        """Verify single search call in compose."""
         mock_kb = MockKB.return_value
         mock_kb.search.return_value = _mock_search_results(2)
 
@@ -252,7 +252,7 @@ class TestRAGPipelineInternal:
     def test_compose_handles_markdown_fences(
         self, MockKB: MagicMock, MockOpenAI: MagicMock
     ) -> None:
-        """CR-14: GPT-4o sometimes wraps JSON in ```json fences."""
+        """GPT-4o sometimes wraps JSON in ```json fences."""
         mock_kb = MockKB.return_value
         mock_kb.search.return_value = _mock_search_results(1)
 
@@ -271,7 +271,7 @@ class TestRAGPipelineInternal:
     @patch("knowledge.rag.OpenAI")
     @patch("knowledge.rag.KnowledgeBase")
     def test_compose_rejects_invalid_json(self, MockKB: MagicMock, MockOpenAI: MagicMock) -> None:
-        """CR-14: malformed JSON raises ValueError."""
+        """Malformed JSON raises ValueError."""
         mock_kb = MockKB.return_value
         mock_kb.search.return_value = _mock_search_results(1)
 
@@ -290,7 +290,7 @@ class TestRAGPipelineInternal:
     @patch("knowledge.rag.OpenAI")
     @patch("knowledge.rag.KnowledgeBase")
     def test_compose_rejects_missing_keys(self, MockKB: MagicMock, MockOpenAI: MagicMock) -> None:
-        """CR-14: valid JSON but missing required keys."""
+        """Valid JSON but missing required keys."""
         mock_kb = MockKB.return_value
         mock_kb.search.return_value = _mock_search_results(1)
 

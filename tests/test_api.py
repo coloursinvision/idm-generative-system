@@ -267,7 +267,7 @@ class TestProcess:
         unreliable across versions; query params are unambiguous.
 
         The processed (non-bypass) signal is longer than the input due to
-        2s tail padding for reverb/delay decay (DECISIONS.md 2026-03-26).
+        2s tail padding for reverb/delay decay.
         """
         # Request WITH chain processing (default)
         resp_processed = client.post(
