@@ -115,7 +115,7 @@ class TestFmBlipExpansion:
         assert not np.allclose(fm_blip(mod_index_end=8.0), fm_blip())
 
 
-# fm_analog - warm subtractive voice (direction A, D-DSP-02)
+# fm_analog - warm subtractive voice (direction A)
 
 _ANALOG_LENGTH = int(SAMPLE_RATE * 600.0 / 1000)  # 600 ms default
 

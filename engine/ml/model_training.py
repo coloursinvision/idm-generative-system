@@ -19,7 +19,8 @@ model. The pipeline:
        (``OrdinalEncoder`` for categoricals, ``StandardScaler`` for
        numerics).
     4. Wraps ``XGBRegressor`` in ``MultiOutputRegressor`` for
-       multi-target regression (``tuning_hz`` + ``freq_*`` columns).
+       multi-target regression (``freq_*`` columns; ``tuning_hz`` is a
+       deterministic A4 reference, not a target).
     5. Optimises hyperparameters via Optuna (TPE sampler,
        ``MedianPruner``).
     6. Logs params, metrics, and model artifacts to MLflow.
@@ -129,8 +130,9 @@ def extract_feature_target_columns(
     Feature columns: ``bpm``, ``pitch_midi``, ``swing``, ``region``,
     ``sub_region`` (input specification columns).
 
-    Target columns: ``tuning_hz`` + all ``freq_*`` columns (model
-    prediction targets).
+    Target columns: all ``freq_*`` columns (model prediction targets).
+    ``tuning_hz`` is reframed out of the target set — it is a
+    deterministic A4 reference, not a learned quantity.
 
     Columns in :data:`_EXCLUDE_COLUMNS` (metadata) are excluded from
     both sets.
@@ -142,7 +144,12 @@ def extract_feature_target_columns(
         Tuple of (feature_column_names, target_column_names).
     """
     feature_cols = _CATEGORICAL_FEATURES + _NUMERIC_FEATURES
-    target_cols = ["tuning_hz", *sorted(c for c in df.columns if c.startswith("freq_"))]
+    # tuning_hz is intentionally NOT a target: it is a deterministic
+    # A4 reference selected by the mapper (constant 440.0 for now),
+    # so as a target it carried zero variance and a meaningless rmse_tuning_hz=0.0.
+    # The real regression signal is the freq_* columns. tuning_hz stays emitted in
+    # the dataset for provenance but is dropped from both features and targets.
+    target_cols = sorted(c for c in df.columns if c.startswith("freq_"))
 
     # Validate presence.
     missing_features = [c for c in feature_cols if c not in df.columns]

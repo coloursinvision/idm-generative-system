@@ -1080,8 +1080,10 @@ class TuningResponse(BaseModel):
         ...,
         gt=0.0,
         description=(
-            "A4 reference frequency selected by the model. Discrete "
-            "value (typically 432.0 or 440.0)."
+            "A4 reference frequency. Deterministic value (440.0, ISO 16) "
+            "echoed from the mapper's tuning selection — NOT a model "
+            "prediction (reframed out of the regression targets). "
+            "Discrete 432.0/440.0 once 432 practice is wired."
         ),
     )
     resonant_points: list[ResonantPoint] = Field(
@@ -1191,6 +1193,15 @@ _RESONANT_POINT_MIN_HZ: float = 1.0
 # regression / conformal prediction would be the proper signal. Static 1.0
 # documents the gap transparently rather than fabricating false uncertainty.
 _RESONANT_POINT_DEFAULT_CONFIDENCE: float = 1.0
+
+# Deterministic A4 reference echoed in the /tuning response. tuning_hz is NOT a
+# model prediction: the mapper selects it deterministically (constant 440.0 -
+# ISO 16 - until 432 Hz practice is wired). Sourcing the echo
+# from this constant rather than predictions_df decouples the handler from the
+# model's target set, so it works for both the v1-era model (16 targets incl.
+# tuning_hz) and the reframed model (freq_* only). When tuning becomes
+# region-conditional, wire this to engine.ml.deterministic_mapper._select_tuning_hz.
+_DEFAULT_TUNING_HZ: float = 440.0
 
 
 if _HAS_MLFLOW:
@@ -1306,7 +1317,10 @@ if _HAS_MLFLOW:
             )
             predictions_df = pd.DataFrame(predictions_2d, columns=target_columns)
 
-            tuning_hz = float(predictions_df["tuning_hz"].iloc[0])
+            # tuning_hz is a deterministic A4 reference, not a model output.
+            # Echo the constant rather than reading predictions_df,
+            # which need not contain a "tuning_hz" column for the reframed model.
+            tuning_hz = _DEFAULT_TUNING_HZ
 
             resonant_points: list[ResonantPoint] = []
             for col in target_columns:
