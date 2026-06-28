@@ -387,7 +387,6 @@ export function CodeBlock({ code, target, filename }: CodeBlockProps) {
 
   return (
     <div style={{ border: "1px solid #27272a", overflow: "hidden" }}>
-      {/* Toolbar */}
       <div
         style={{
           display: "flex",
@@ -447,7 +446,6 @@ export function CodeBlock({ code, target, filename }: CodeBlockProps) {
         </div>
       </div>
 
-      {/* Code area */}
       <div
         style={{
           backgroundColor: SOL.base03,
@@ -462,7 +460,6 @@ export function CodeBlock({ code, target, filename }: CodeBlockProps) {
             key={idx}
             style={{ display: "flex", minHeight: "1.7em" }}
           >
-            {/* Line number gutter */}
             <span
               style={{
                 flexShrink: 0,
@@ -480,7 +477,6 @@ export function CodeBlock({ code, target, filename }: CodeBlockProps) {
               {idx + 1}
             </span>
 
-            {/* Code content */}
             <code
               style={{
                 paddingLeft: "12px",

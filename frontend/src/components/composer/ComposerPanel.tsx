@@ -40,7 +40,6 @@ export function ComposerPanel() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      {/* Header */}
       <div>
         <h1 className="font-display text-lg font-bold tracking-tight">
           AUTO-COMPOSER
@@ -51,7 +50,6 @@ export function ComposerPanel() {
         </p>
       </div>
 
-      {/* Input */}
       <div className="panel">
         <label className="label">Aesthetic description</label>
         <textarea
@@ -88,17 +86,14 @@ export function ComposerPanel() {
         </div>
       </div>
 
-      {/* Error */}
       {error && (
         <div className="panel border-accent-red/50">
           <span className="text-accent-red text-xs">{error}</span>
         </div>
       )}
 
-      {/* Result */}
       {result && (
         <div className="space-y-4">
-          {/* JSON Config */}
           <div className="panel">
             <div className="panel-header">Generated configuration</div>
 
@@ -120,7 +115,6 @@ export function ComposerPanel() {
             )}
           </div>
 
-          {/* Reasoning */}
           {result.reasoning && (
             <div className="panel">
               <div className="panel-header">Reasoning</div>
@@ -130,7 +124,6 @@ export function ComposerPanel() {
             </div>
           )}
 
-          {/* Sources */}
           <div className="panel">
             <SourceTags sources={result.sources} />
 

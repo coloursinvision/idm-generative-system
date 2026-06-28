@@ -117,7 +117,6 @@ export function EP133Guide() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      {/* Header */}
       <div>
         <h1 className="font-display text-lg font-bold tracking-tight">
           EP-133 K.O.II GUIDE
@@ -128,7 +127,6 @@ export function EP133Guide() {
         </p>
       </div>
 
-      {/* Device info */}
       <div className="panel">
         <div className="flex gap-6 text-[10px] text-text-muted tracking-widest">
           <span>EDITING {activeGroup}: {GROUP_ROLES[activeGroup].label}</span>
@@ -141,9 +139,7 @@ export function EP133Guide() {
         </div>
       </div>
 
-      {/* Group selector (editing view + per-group mixer) + Timing */}
       <div className="flex gap-4">
-        {/* Groups */}
         <div className="panel flex-1">
           <div className="panel-header">Groups — edit surface · mute / solo</div>
           <div className="grid grid-cols-4 gap-2">
@@ -176,7 +172,6 @@ export function EP133Guide() {
                     </div>
                   </button>
 
-                  {/* Per-group mixer: mute / solo */}
                   <div className="grid grid-cols-2 gap-0 border-t border-surface-3">
                     <button
                       onClick={() => seq.toggleMute(g)}
@@ -208,7 +203,6 @@ export function EP133Guide() {
           </div>
         </div>
 
-        {/* Timing (per active group) */}
         <div className="panel w-48">
           <div className="panel-header">Timing — group {activeGroup}</div>
           <div className="grid grid-cols-3 gap-0">
@@ -229,7 +223,6 @@ export function EP133Guide() {
         </div>
       </div>
 
-      {/* Transport (global) */}
       <div className="panel">
         <div className="panel-header">Transport — master (all groups)</div>
         <div className="flex items-end gap-4">
@@ -271,13 +264,11 @@ export function EP133Guide() {
         </div>
       </div>
 
-      {/* Step sequencer — active group's editing surface */}
       <div className="panel">
         <div className="panel-header">
           Step sequencer — Group {activeGroup} ({GROUP_ROLES[activeGroup].label})
         </div>
 
-        {/* Step numbers + playhead */}
         <div className="flex items-center gap-2 mb-1">
           <div className="w-16" />
           <div className="flex gap-0 flex-1">
@@ -296,7 +287,6 @@ export function EP133Guide() {
           </div>
         </div>
 
-        {/* Track rows */}
         <div className="space-y-0.5">
           {active.tracks.map((track, ti) => (
             <div key={ti} className="flex items-center gap-2">
@@ -338,7 +328,6 @@ export function EP133Guide() {
           ))}
         </div>
 
-        {/* Beat markers */}
         <div className="flex items-center gap-2 mt-0.5">
           <div className="w-16" />
           <div className="flex gap-0 flex-1">
@@ -354,14 +343,12 @@ export function EP133Guide() {
         </div>
       </div>
 
-      {/* Action buttons */}
       <div className="flex gap-3">
         <button className="btn-secondary" onClick={() => seq.clearGroup(activeGroup)}>
           CLEAR GROUP {activeGroup}
         </button>
       </div>
 
-      {/* FX Reference */}
       <div className="panel">
         <div className="panel-header">EP-133 Effects</div>
         <div className="grid grid-cols-6 gap-0">
@@ -376,7 +363,6 @@ export function EP133Guide() {
         </div>
       </div>
 
-      {/* Workflow reference */}
       <div className="panel">
         <div className="panel-header">EP-133 Workflow reference</div>
         <div className="space-y-1.5 text-[10px] text-text-secondary">
