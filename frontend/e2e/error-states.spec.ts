@@ -1,6 +1,5 @@
 /**
  * T-12: Error States + T-13: Console Audit
- * GUI_TEST_SPECIFICATION.md §T-12, §T-13
  */
 
 import { test as base, expect, type Page } from "@playwright/test";

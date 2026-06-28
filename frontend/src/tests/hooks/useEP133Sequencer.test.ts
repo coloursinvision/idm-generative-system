@@ -1,10 +1,9 @@
-/* ------------------------------------------------------------------ */
-/* hooks/useEP133Sequencer.test.ts                                     */
-/* CR-F12 — EP-133 simultaneous multi-group playback.                  */
-/* Covers acceptance criteria AC1–AC8 from EP133_BUG_SCOPE_2026-05-27. */
-/* (AC9 — PO-33 no regression — is covered by the useSequencer.test.ts  */
-/*  suite. Both hooks use the setTimeout-based scheduler clock.)         */
-/* ------------------------------------------------------------------ */
+/*
+ * EP-133 simultaneous multi-group playback.
+ *
+ * PO-33 no-regression is covered by the useSequencer.test.ts suite.
+ * Both hooks use the setTimeout-based scheduler clock.
+ */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, renderHook } from "@testing-library/react";
@@ -38,9 +37,7 @@ const GROUP_TRACKS: Record<Group, { name: string; generator: string }[]> = {
   D: [{ name: "D0", generator: "noise_burst" }],
 };
 
-/* ------------------------------------------------------------------ */
-/* AudioContext mock — function-form constructor (D-CRF13-02)          */
-/* ------------------------------------------------------------------ */
+/* AudioContext mock: function-form constructor (arrow fns lack [[Construct]]). */
 
 type MockState = "suspended" | "running" | "closed" | "interrupted";
 
@@ -194,7 +191,7 @@ function notesByGroup(): Record<string, number> {
 /* Tests                                                               */
 /* ------------------------------------------------------------------ */
 
-describe("useEP133Sequencer — CR-F12 multi-group playback", () => {
+describe("useEP133Sequencer multi-group playback", () => {
   it("initialises every group playhead to -1 and exposes all groups", () => {
     const { result } = render();
     expect(result.current.currentStepByGroup).toEqual({ A: -1, B: -1, C: -1, D: -1 });

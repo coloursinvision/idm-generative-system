@@ -11,10 +11,6 @@
  *   - Line numbers with separate gutter
  *   - Copy to clipboard (Clipboard API + fallback)
  *   - Download as .scd / .tidal
- *
- * Design reference:
- *   UX_UI_ALIGNMENT.md §2 with solarized dark override
- *   (see UX_UI_ALIGNMENT_PATCH.md)
  */
 
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";

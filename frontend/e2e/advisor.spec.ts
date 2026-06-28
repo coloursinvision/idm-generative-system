@@ -1,6 +1,5 @@
 /**
  * T-02: Advisor Tab
- * GUI_TEST_SPECIFICATION.md §T-02
  */
 
 import { test, expect } from "./fixtures";

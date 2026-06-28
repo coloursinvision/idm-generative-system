@@ -52,8 +52,7 @@ function isNonRunningState(state: string): state is NonRunningState {
  *   button click (LOAD SAMPLES or PLAY) to pre-warm Safari's audio output.
  *   The call is idempotent and cheap.
  * - `play()` returns a `Promise<void>`. Consumers must attach a `.catch(...)`
- *   handler at the call site to satisfy the no-unhandled-promise contract
- *   (see CR-F13 acceptance criterion 8).
+ *   handler at the call site to satisfy the no-unhandled-promise contract.
  *
  * @param options.numSteps   — step count for the active pattern grid
  * @param options.defaultBpm — initial BPM, default 120
@@ -94,8 +93,6 @@ export function useSequencer({ numSteps, defaultBpm = 120 }: UseSequencerOptions
    * fires on unmount, so a context left in `"suspended"` or WebKit-specific
    * `"interrupted"` state after backgrounding would otherwise stay non-running
    * and produce silent playback on the next PLAY click.
-   *
-   * Mitigation 4 from CR-F13.
    */
   useEffect(() => {
     const handleVisibilityChange = async () => {
@@ -126,8 +123,6 @@ export function useSequencer({ numSteps, defaultBpm = 120 }: UseSequencerOptions
    * MUST be called from within a user-gesture handler on the first invocation
    * of the session (Safari requirement). Subsequent calls are safe from any
    * context.
-   *
-   * Mitigation 1 from CR-F13.
    */
   const getAudioContext = useCallback(async (): Promise<AudioContext> => {
     if (!audioCtxRef.current || audioCtxRef.current.state === "closed") {
@@ -147,8 +142,6 @@ export function useSequencer({ numSteps, defaultBpm = 120 }: UseSequencerOptions
    *
    * Consumers should invoke this on the first interactive button click of the
    * Guide view (LOAD SAMPLES or PLAY — whichever fires first).
-   *
-   * Mitigation 3 from CR-F13.
    */
   const unlockAudioContext = useCallback(async (): Promise<void> => {
     const ctx = await getAudioContext();
@@ -311,11 +304,9 @@ export function useSequencer({ numSteps, defaultBpm = 120 }: UseSequencerOptions
    * context state has not transitioned to `"running"` — in that case we abort
    * with a single console warning rather than producing silent playback.
    *
-   * Mitigation 2 from CR-F13.
-   *
-   * Consumers MUST attach a `.catch(...)` at the call site (acceptance
-   * criterion 8). Returns once the scheduler is armed; the scheduler then
-   * runs via `requestAnimationFrame` independently.
+   * Consumers MUST attach a `.catch(...)` at the call site. Returns once the
+   * scheduler is armed; the scheduler then runs via `requestAnimationFrame`
+   * independently.
    */
   const play = useCallback(async (): Promise<void> => {
     const hasBuffers = tracksRef.current.some((t) => t.buffer !== null);

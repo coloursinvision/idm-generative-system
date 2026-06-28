@@ -1,15 +1,15 @@
-/* ------------------------------------------------------------------ */
-/* V2.3 + V2.4 tuning types — TS mirror of FastAPI Pydantic models    */
-/*                                                                    */
-/* Source contracts:                                                  */
-/*   api/main.py — TuningRequest, ResonantPoint, TuningResponse,      */
-/*                 TuningExtractRequest, TuningExtractResponse        */
-/*   engine/ml/regional_profiles.py — RegionCode, SubRegion           */
-/*                                                                    */
-/* Keep these aliases in lockstep with the Python type aliases per    */
-/* [[DECISIONS]] D-S7-02 (single source of truth: spoke filenames →   */
-/* Python RegionCode/SubRegion → these TS literals → frontend UI).    */
-/* ------------------------------------------------------------------ */
+/*
+ * Tuning types: TS mirror of FastAPI Pydantic models.
+ *
+ * Source contracts:
+ *   api/main.py: TuningRequest, ResonantPoint, TuningResponse,
+ *                TuningExtractRequest, TuningExtractResponse
+ *   engine/ml/regional_profiles.py: RegionCode, SubRegion
+ *
+ * Keep these aliases in lockstep with the Python type aliases. Python
+ * RegionCode/SubRegion are the single source of truth, mirrored to these TS
+ * literals and on to the frontend UI.
+ */
 
 export const REGION_CODES = [
   "DETROIT_FIRST_WAVE",

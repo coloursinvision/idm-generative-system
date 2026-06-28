@@ -1,6 +1,5 @@
 /**
  * T-05: Generator Tab
- * GUI_TEST_SPECIFICATION.md §T-05
  */
 
 import { test, expect } from "./fixtures";

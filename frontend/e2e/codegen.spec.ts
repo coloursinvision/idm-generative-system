@@ -1,6 +1,5 @@
 /**
  * T-08, T-09, T-10: Codegen Panel, Config Drawer, Popout Window
- * GUI_TEST_SPECIFICATION.md §T-08, §T-09, §T-10
  */
 
 import { test, expect, getCodeBlockText } from "./fixtures";
