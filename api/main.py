@@ -63,34 +63,28 @@ from engine.sample_maker import (
 )
 from knowledge.rag import RAGPipeline
 
-# ---------------------------------------------------------------------------
-# Logger (used by V2.3 lifespan and elsewhere)
-# ---------------------------------------------------------------------------
+# Logger
 
 logger = logging.getLogger(__name__)
 
 
-# ---------------------------------------------------------------------------
-# V2.3 — Model Serving lifespan (model loaded once at startup)
-#
-# Per V2_ROADMAP §V2.3 + DECISIONS.md (S12 Fix A: TuningEstimator v1
-# manually promoted Staging → Production before this lifespan can succeed).
+# Model-serving lifespan: the tuning model is loaded once at startup.
+# (TuningEstimator v1 must be promoted Staging -> Production before this
+# lifespan can succeed.)
 #
 # Behaviour:
 #   - Fail-soft on model load failure: V1 endpoints continue to serve.
-#     app.state.tuning_model = None signals to the /tuning handler
-#     (Sub-stage D) to return HTTP 503.
-#   - mlflow imported conditionally — CI installs [dev] only, not [ml]
-#     extras (D-S7-01, Gotcha #17). Lifespan runs always; no-ops gracefully
-#     when mlflow unavailable.
-#   - Model metadata (run_id, dataset_dvc_hash) extracted at startup from
-#     MLflow Model Registry; cached in app.state.tuning_model_metadata.
-#     Single source of truth — no per-request registry calls.
-#   - dataset_dvc_hash sourced from MLflow run tag "dvc_dataset_hash";
-#     placeholder "unknown" with WARNING log when the tag is absent (the
-#     S12 v1 baseline run predates training-side tag logging — see
-#     TODO-S13-E for retroactive fix to engine.ml.model_training.train()).
-# ---------------------------------------------------------------------------
+#     app.state.tuning_model = None signals the /tuning handler to return
+#     HTTP 503.
+#   - mlflow is imported conditionally (CI installs the [dev] extra only, not
+#     [ml]); the lifespan runs always and no-ops gracefully when mlflow is
+#     unavailable.
+#   - Model metadata (run_id, dataset_dvc_hash) is extracted at startup from
+#     the MLflow Model Registry and cached in app.state.tuning_model_metadata,
+#     so there are no per-request registry calls.
+#   - dataset_dvc_hash is sourced from the MLflow run tag "dvc_dataset_hash";
+#     a "unknown" placeholder is logged at WARNING when the tag is absent (the
+#     v1 baseline run predates training-side tag logging).
 
 try:
     import mlflow
@@ -123,7 +117,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     On any failure (mlflow not installed, no Production version in registry,
     network or artefact-store error) the lifespan logs a WARNING and leaves
-    ``app.state.tuning_model = None`` — the Sub-stage D /tuning handler
+    ``app.state.tuning_model = None`` — the /tuning handler
     will then return HTTP 503 Service Unavailable. V1 endpoints are
     unaffected.
 
@@ -509,8 +503,6 @@ def _process_through_chain(
     Pads the input with silence so reverb/delay tails decay naturally,
     then trims trailing silence from the output. This is the canonical
     processing path — both /generate and /process must use it.
-
-    Decision ref: DECISIONS.md 2026-03-26 (2-second tail padding).
 
     Args:
         signal:               Input audio array.
@@ -973,21 +965,14 @@ async def compose(req: ComposeRequest) -> dict:
     return result
 
 
-# ---------------------------------------------------------------------------
-# V2 — /tuning endpoint (Model Serving)
+# /tuning endpoint (Model Serving): Pydantic API contract.
 #
-# Pydantic API contract. Implementation references:
-#   - V2_ROADMAP.md §V2.3 (authoritative spec)
-#   - DECISIONS.md D-S7-02/03/04 (feature schema), D-S3-05 (sub_region scope)
-#   - PROJECT_PROTOCOL.md §3 #11 (extra="forbid"), #16 (pandera declarative)
-#
-# Field origin (vs V2_ROADMAP v2.0):
-#   pitch_class:int[0,11]     → pitch_midi:float[0,127]   (D-S3-05, D-S7-04)
-#   swing_pct retained at API → internal swing [0,1] via /100.0 (D-S7-04)
-#   genre_profile             → region (+ sub_region for JAPAN_IDM) (D-S7-02)
-#   sample_mapping_category   → REMOVED (D-S7-03)
-#   effects_density           → REMOVED (D-S7-03)
-# ---------------------------------------------------------------------------
+# Field origin (vs the v2.0 contract):
+#   pitch_class:int[0,11]     -> pitch_midi:float[0,127]
+#   swing_pct retained at API -> internal swing [0,1] via /100.0
+#   genre_profile             -> region (+ sub_region for JAPAN_IDM)
+#   sample_mapping_category   -> REMOVED
+#   effects_density           -> REMOVED
 
 
 class TuningRequest(BaseModel):
@@ -998,7 +983,7 @@ class TuningRequest(BaseModel):
     (``model_training``). The ``region`` and ``sub_region`` fields use
     type aliases from ``engine.ml.regional_profiles`` rather than
     hardcoded Literal unions — single source of truth, no drift risk
-    (same pattern as ``engine.ml.dataset_schema`` per D-S7-02).
+    (same pattern as ``engine.ml.dataset_schema``).
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -1100,12 +1085,11 @@ class TuningResponse(BaseModel):
     Returns the predicted A4 tuning reference plus a variable-cardinality
     list of resonant frequency points. Cardinality of ``resonant_points``
     corresponds to the non-NaN ``freq_*`` columns in the trained model's
-    output schema, which varies per region (per V2_ROADMAP §V2.1).
+    output schema, which varies per region.
 
     ``protected_namespaces=()`` is set explicitly to allow the
     ``model_version`` field name (Pydantic v2 reserves the ``model_``
-    prefix by default). The field name is locked by V2_ROADMAP §V2.3
-    spec — we permit it here without renaming.
+    prefix by default); we permit it here without renaming.
     """
 
     model_config = ConfigDict(extra="forbid", protected_namespaces=())
@@ -1200,21 +1184,17 @@ class TuningExtractResponse(BaseModel):
     )
 
 
-# ---------------------------------------------------------------------------
-# V2.3 — /tuning endpoint handler (Sub-stage D)
+# /tuning endpoint handler.
 #
-# 5-step flow per V2_ROADMAP §V2.3:
-#   1. 503 gate — model loaded? (fail-soft from lifespan honored here)
-#   2. Boundary conversion swing_pct → swing (D-S7-04)
-#   3. Build inference DataFrame; pandera InferenceSchema validates
-#   4. NaN sentinel for sub_region (mirror prepare_data); predict
-#   5. Response shaping — scalar tuning_hz + variable list[ResonantPoint]
+# Flow: 503 gate (model loaded?) -> boundary conversion swing_pct -> swing ->
+# build inference DataFrame (pandera InferenceSchema validates) -> NaN sentinel
+# for sub_region, predict -> response shaping (scalar tuning_hz + variable
+# list[ResonantPoint]).
 #
-# Registration is gated on _HAS_MLFLOW. When [ml] extras are absent (CI /
-# local dev without `pip install .[ml,monitoring]`), /tuning is NOT
-# registered and FastAPI returns 404 for that path. Production droplet
-# always has [ml] installed, so 404 is unreachable there.
-# ---------------------------------------------------------------------------
+# Registration is gated on _HAS_MLFLOW. When the [ml] extra is absent (CI /
+# local dev without `pip install .[ml,monitoring]`), /tuning is NOT registered
+# and FastAPI returns 404 for that path. The production droplet always has
+# [ml] installed, so 404 is unreachable there.
 
 # Minimum hz to keep as resonant point in response. Filters out XGBoost
 # regression predictions for "absent" freq_* columns — those train as 0.0
@@ -1228,9 +1208,8 @@ _RESONANT_POINT_MIN_HZ: float = 1.0
 
 # Placeholder confidence value for resonant point predictions. XGBoost
 # regression does NOT natively expose prediction confidence; quantile
-# regression / conformal prediction would be the proper signal.
-# See TODO-S13-F for that future iteration. Static 1.0 documents the gap
-# transparently rather than fabricating false uncertainty.
+# regression / conformal prediction would be the proper signal. Static 1.0
+# documents the gap transparently rather than fabricating false uncertainty.
 _RESONANT_POINT_DEFAULT_CONFIDENCE: float = 1.0
 
 
@@ -1240,14 +1219,14 @@ if _HAS_MLFLOW:
     async def tuning(request: TuningRequest) -> TuningResponse:
         """Predict A4 tuning + resonant frequency points for a generative context.
 
-        Five-step flow per V2_ROADMAP §V2.3. Returns a fully shaped
+        Five-step flow. Returns a fully shaped
         :class:`TuningResponse` on success; raises HTTPException(503) when
         the model is unavailable (lifespan fail-soft path) and
         HTTPException(422) on pandera schema violations from the inference
         DataFrame (defence in depth — TuningRequest @model_validator
         catches the same case earlier).
         """
-        # Step 1 — 503 gate. Lifespan fail-soft sets tuning_model = None when
+        # 503 gate. Lifespan fail-soft sets tuning_model = None when
         # MLflow Registry / S3 / network blip prevents model load. Handler
         # honors that signal and returns Service Unavailable.
         if app.state.tuning_model is None:
@@ -1275,7 +1254,7 @@ if _HAS_MLFLOW:
                 ),
             )
 
-        # Step 2 — boundary conversion (D-S7-04). External API speaks
+        # Boundary conversion. External API speaks
         # swing_pct in [0, 100]; internal model speaks swing in [0.0, 1.0].
         payload = request.model_dump()
         payload["swing"] = payload.pop("swing_pct") / 100.0
@@ -1312,7 +1291,7 @@ if _HAS_MLFLOW:
                 trace_span = None
 
         try:
-            # Step 3 — build inference DataFrame; pandera InferenceSchema
+            # Build inference DataFrame; pandera InferenceSchema
             # validate. Pydantic @model_validator already enforced the
             # sub_region cross-field rule at request parsing; this is defence
             # in depth at the DataFrame level.
@@ -1325,7 +1304,7 @@ if _HAS_MLFLOW:
                     detail=f"Inference schema violation: {e}",
                 ) from e
 
-            # Step 4 — NaN sentinel for sub_region (mirror prepare_data
+            # NaN sentinel for sub_region (mirror prepare_data
             # in engine.ml.model_training); model.predict with latency timing.
             # The OrdinalEncoder in the trained pipeline expects "__NaN__" as
             # the sentinel category for missing sub_region; pandera tolerates
@@ -1337,7 +1316,7 @@ if _HAS_MLFLOW:
             raw_predictions = app.state.tuning_model.predict(df_predict)
             latency_ms = (time.monotonic() - t0) * 1000.0
 
-            # Step 5 — response shaping. raw_predictions is np.ndarray of
+            # Response shaping. raw_predictions is np.ndarray of
             # shape (1, n_targets) because the model was logged without an
             # mlflow signature (engine.ml.model_training.train logs without one).
             # Coerce to DataFrame using target_columns captured at lifespan
@@ -1371,7 +1350,7 @@ if _HAS_MLFLOW:
 
             # Rank by confidence descending; tie-break by hz ascending for
             # deterministic output. With placeholder confidence=1.0 for all
-            # points (TODO-S13-F), ordering reduces to hz ascending. When
+            # points, ordering reduces to hz ascending. When
             # real confidence is wired (quantile regression / conformal
             # prediction), this primary sort key takes effect naturally.
             resonant_points.sort(key=lambda rp: (-rp.confidence, rp.hz))
@@ -1423,7 +1402,7 @@ if _HAS_MLFLOW:
 # does NOT require the trained model; it produces a TuningRequest payload
 # that the frontend submits separately to /tuning.
 #
-# Langfuse tracing: same fail-open pattern as /tuning handler (Sub-stage E).
+# Langfuse tracing: same fail-open pattern as /tuning handler.
 # Span captures input text + extracted output + model metadata.
 # ---------------------------------------------------------------------------
 
