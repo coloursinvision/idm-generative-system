@@ -6,6 +6,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.10.0] — 2026-06-19 — FM analog voice + pipeline integrity (leakage / HPO / tuning_hz reframe)
+
+### Added
+- **`fm_analog` generator** — warm analog voice: two detuned FM oscillators → soft tanh saturation → resonant TPT state-variable low-pass (cutoff on an attack/decay envelope) → amplitude envelope. New additive generator; existing generators unchanged. Wired into `/generate` and `batch_export`; the lo-fi effects chain is intentionally NOT its default path (raw voice is the deliverable).
+- **`fm_blip` FM expansion** — four additive, keyword-only, backward-compatible timbral controls (`mod_index_end`, `attack_ms`, `ratio`, `feedback`); a bare `fm_blip()` is bit-identical to the prior signal.
+
+### Changed
+- **`/compose` `reasoning`** returned as a top-level response field (was nested).
+- **`/tuning/extract`** response field `model_version` → `model`.
+- **Audio scheduler** in both sequencer hooks driven by `setTimeout`, not `requestAnimationFrame` — keeps note scheduling alive in background tabs; `play()` re-entrancy guard added.
+- **ML pipeline integrity (training-time only; serving unchanged):**
+  - Spec-level train/test leakage removed — group split by `spec_id` / `GroupShuffleSplit`.
+  - HPO-on-test fixed — held-out three-way group split; Optuna scores on validation, refit on train+val, metrics reported once on the held-out test.
+  - `tuning_hz` reframed out of the regression targets — deterministic A4 reference (constant 440.0), not a learned quantity; `/tuning` echoes the reference rather than predicting it. `TuningEstimator` v6 @ Staging.
+- **CI** now gates pull requests targeting `develop` (was `main`-only).
+- **README** rewritten to current technical project content (v0.9.0-era).
+
+### Notes
+- Serving path is unchanged: `/tuning` still loads `TuningEstimator/Production` v1; the pipeline changes above produce new Staging candidates (v5/v6) and do not alter production inference.
+- Audio sample rate unchanged (44.1 kHz / 24-bit).
+
 ## [0.9.0] — 2026-06-11 — EP-133 Simultaneous Multi-Group Transport + Global Play
 
 ### Fixed
