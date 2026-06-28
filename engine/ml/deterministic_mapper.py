@@ -69,9 +69,7 @@ from engine.ml.resonance_rules import (
     solfeggio_cutoff_seed,
 )
 
-# ---------------------------------------------------------------------------
 # Constants
-# ---------------------------------------------------------------------------
 
 _REGION_TO_GRID: dict[RegionCode, GridRegion] = {
     "DETROIT_FIRST_WAVE": "US",
@@ -106,9 +104,7 @@ _MIDI_MAX: float = 127.0
 """Upper bound of the standard MIDI note number range."""
 
 
-# ---------------------------------------------------------------------------
 # Private helpers
-# ---------------------------------------------------------------------------
 
 
 def _select_tuning_hz(profile: RegionalProfile) -> float:
@@ -172,7 +168,7 @@ def _build_mains_points(
     regional_grid = _resolve_grid(region, sub_region)
 
     if _is_uk_region(region):
-        # Single stack — UK is both reference and regional.
+        # Single stack - UK is both reference and regional.
         mains = mains_hum_profile(
             regional_grid,
             n_harmonics=_MAINS_N_HARMONICS,
@@ -194,7 +190,7 @@ def _build_mains_points(
             for h in mains.harmonics[1:]
         )
     else:
-        # Dual stack — UK reference first, then regional.
+        # Dual stack - UK reference first, then regional.
         uk_mains = mains_hum_profile(
             _UK_GRID,
             n_harmonics=_MAINS_N_HARMONICS,
@@ -274,9 +270,7 @@ def _apply_effects_filter(
     return points
 
 
-# ---------------------------------------------------------------------------
 # Public dataclasses
-# ---------------------------------------------------------------------------
 
 
 @dataclass(frozen=True)
@@ -330,9 +324,7 @@ class DeterministicMapping:
     resonant_points: tuple[ResonantPoint, ...]
 
 
-# ---------------------------------------------------------------------------
 # Public API
-# ---------------------------------------------------------------------------
 
 
 def deterministic_map(

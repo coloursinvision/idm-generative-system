@@ -1,7 +1,5 @@
-/* ------------------------------------------------------------------ */
 /* hooks/useSequencer.ts                                               */
-/* Web Audio step sequencer — shared between PO-33 and EP-133 guides  */
-/* ------------------------------------------------------------------ */
+/* Web Audio step sequencer - shared between PO-33 and EP-133 guides  */
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { postGenerate } from "../api/client";
@@ -9,7 +7,7 @@ import { postGenerate } from "../api/client";
 /**
  * Scheduler pump interval (ms) for the setTimeout-based lookahead clock.
  *
- * setTimeout — not requestAnimationFrame — drives the scheduler: rAF is paused
+ * setTimeout - not requestAnimationFrame - drives the scheduler: rAF is paused
  * or throttled in background tabs, which would stall note scheduling and break
  * the very background-tab robustness the visibilitychange handler protects.
  * Canonical "A Tale of Two Clocks" pattern: a coarse setTimeout pump advances a
@@ -31,7 +29,7 @@ interface UseSequencerOptions {
 }
 
 /**
- * WebKit-specific `AudioContext` state — present on Safari (desktop + iOS)
+ * WebKit-specific `AudioContext` state - present on Safari (desktop + iOS)
  * but absent from the standard lib.dom.d.ts `AudioContextState` union.
  * Narrowed via a string-level predicate below so callers do not need to cast.
  */
@@ -42,7 +40,7 @@ function isNonRunningState(state: string): state is NonRunningState {
 }
 
 /**
- * Web Audio step sequencer hook — shared between PO-33 and EP-133 guides.
+ * Web Audio step sequencer hook - shared between PO-33 and EP-133 guides.
  *
  * IMPORTANT (WebKit / Safari):
  * - The first call to `play()` MUST originate from a synchronous user gesture
@@ -54,8 +52,8 @@ function isNonRunningState(state: string): state is NonRunningState {
  * - `play()` returns a `Promise<void>`. Consumers must attach a `.catch(...)`
  *   handler at the call site to satisfy the no-unhandled-promise contract.
  *
- * @param options.numSteps   — step count for the active pattern grid
- * @param options.defaultBpm — initial BPM, default 120
+ * @param options.numSteps   - step count for the active pattern grid
+ * @param options.defaultBpm - initial BPM, default 120
  */
 export function useSequencer({ numSteps, defaultBpm = 120 }: UseSequencerOptions) {
   const [bpm, setBpm] = useState(defaultBpm);
@@ -88,7 +86,7 @@ export function useSequencer({ numSteps, defaultBpm = 120 }: UseSequencerOptions
   }, []);
 
   /**
-   * Visibility-change listener — resumes the AudioContext on tab-restore
+   * Visibility-change listener - resumes the AudioContext on tab-restore
    * (including BFCache restore on Safari). The cleanup `useEffect` above only
    * fires on unmount, so a context left in `"suspended"` or WebKit-specific
    * `"interrupted"` state after backgrounding would otherwise stay non-running
@@ -135,13 +133,13 @@ export function useSequencer({ numSteps, defaultBpm = 120 }: UseSequencerOptions
   }, []);
 
   /**
-   * One-time Safari audio unlock — plays a single-sample silent buffer to
+   * One-time Safari audio unlock - plays a single-sample silent buffer to
    * fully release WebKit's audio output gate. Idempotent: once the context is
    * `"running"` further calls are no-ops aside from a single zero-length
    * source node that is GC'd immediately.
    *
    * Consumers should invoke this on the first interactive button click of the
-   * Guide view (LOAD SAMPLES or PLAY — whichever fires first).
+   * Guide view (LOAD SAMPLES or PLAY - whichever fires first).
    */
   const unlockAudioContext = useCallback(async (): Promise<void> => {
     const ctx = await getAudioContext();
@@ -301,7 +299,7 @@ export function useSequencer({ numSteps, defaultBpm = 120 }: UseSequencerOptions
    * before the first note is scheduled (Safari requirement).
    *
    * Guards against the WebKit failure mode where `resume()` resolves but the
-   * context state has not transitioned to `"running"` — in that case we abort
+   * context state has not transitioned to `"running"` - in that case we abort
    * with a single console warning rather than producing silent playback.
    *
    * Consumers MUST attach a `.catch(...)` at the call site. Returns once the
@@ -312,7 +310,7 @@ export function useSequencer({ numSteps, defaultBpm = 120 }: UseSequencerOptions
     const hasBuffers = tracksRef.current.some((t) => t.buffer !== null);
     if (!hasBuffers) return;
 
-    // Re-entrancy guard: a scheduler loop is already armed — don't spawn a
+    // Re-entrancy guard: a scheduler loop is already armed - don't spawn a
     // second one (a double play() would double-schedule every note).
     if (timerRef.current !== null) return;
 

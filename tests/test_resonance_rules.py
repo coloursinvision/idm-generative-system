@@ -38,9 +38,7 @@ from engine.ml.resonance_rules import (
     tuning_difference_hz,
 )
 
-# ===========================================================================
-# Rule 1 — bpm_to_hz + AudibleHarmonic
-# ===========================================================================
+# Rule 1 - bpm_to_hz + AudibleHarmonic
 
 
 class TestBpmToHz:
@@ -74,9 +72,9 @@ class TestBpmToHz:
 
     def test_locked_threshold_at_5_cents(self) -> None:
         """``harmonically_locked`` is True iff ``|cents_deviation| <= 5``."""
-        # 103.125 BPM × 128 = exactly 220 Hz (A3, 0 cents) — locked
+        # 103.125 BPM × 128 = exactly 220 Hz (A3, 0 cents) - locked
         assert bpm_to_hz(103.125, octave_multiplier=128).harmonically_locked is True
-        # 128 BPM × 64 = 136.53 Hz (C#3, -26 cents) — not locked
+        # 128 BPM × 64 = 136.53 Hz (C#3, -26 cents) - not locked
         assert bpm_to_hz(128.0, octave_multiplier=64).harmonically_locked is False
 
     def test_zero_bpm_raises(self) -> None:
@@ -97,9 +95,7 @@ class TestBpmToHz:
         assert h.nearest_note  # non-empty string
 
 
-# ===========================================================================
-# Rule 2 — Schumann
-# ===========================================================================
+# Rule 2 - Schumann
 
 
 class TestSchumann:
@@ -140,9 +136,7 @@ class TestSchumann:
         assert bpm == pytest.approx(7.83 * 60 / divisor, abs=1e-6)
 
 
-# ===========================================================================
-# Rule 3 — 432 / 440 tuning arithmetic
-# ===========================================================================
+# Rule 3 - 432 / 440 tuning arithmetic
 
 
 class TestTuningArithmetic:
@@ -193,9 +187,7 @@ class TestTuningArithmetic:
         assert tuning_difference_hz(440.0, 440.0) == 0.0
 
 
-# ===========================================================================
-# Rule 4 — Regional mains hum
-# ===========================================================================
+# Rule 4 - Regional mains hum
 
 
 class TestMainsHum:
@@ -291,9 +283,7 @@ class TestMainsHum:
             assert floor.tonal_centre == floor.harmonics[0].nearest_note
 
 
-# ===========================================================================
-# Rule 5 — Solfeggio (AESTHETIC / NON-PHYSICAL)
-# ===========================================================================
+# Rule 5 - Solfeggio (AESTHETIC / NON-PHYSICAL)
 
 
 class TestSolfeggio:

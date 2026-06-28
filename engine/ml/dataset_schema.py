@@ -49,16 +49,12 @@ import pandera.pandas as pa
 
 from engine.ml.regional_profiles import RegionCode, SubRegion
 
-# ---------------------------------------------------------------------------
 # Spoke-derived enumerations (no hard-coded region lists)
-# ---------------------------------------------------------------------------
 
 _VALID_REGIONS: tuple[str, ...] = get_args(RegionCode)
 _VALID_SUB_REGIONS: tuple[str, ...] = get_args(SubRegion)
 
-# ---------------------------------------------------------------------------
-# DATASET_SCHEMA — wide-format training DataFrame (Layer 5 generator output)
-# ---------------------------------------------------------------------------
+# DATASET_SCHEMA - wide-format training DataFrame (Layer 5 generator output)
 
 DATASET_SCHEMA: pa.DataFrameSchema = pa.DataFrameSchema(
     columns={
@@ -209,20 +205,18 @@ DATASET_SCHEMA: pa.DataFrameSchema = pa.DataFrameSchema(
 )
 
 
-# ---------------------------------------------------------------------------
-# InferenceSchema — narrow inference DataFrame (V2.3 /tuning endpoint input)
-# ---------------------------------------------------------------------------
+# InferenceSchema - narrow inference DataFrame (V2.3 /tuning endpoint input)
 #
 # Validates the single-row DataFrame built by the V2.3 endpoint handler
 # from a TuningRequest payload, AFTER:
 #   1. Pydantic field-level validation (bpm, pitch_midi, swing_pct, region,
-#      sub_region — each with its own range / Literal constraints)
+#      sub_region - each with its own range / Literal constraints)
 #   2. Pydantic @model_validator cross-field check (sub_region ↔ JAPAN_IDM)
 #   3. Boundary conversion swing = swing_pct / 100.0
 #
 # Schema width vs DATASET_SCHEMA:
 #   - INCLUDES:  bpm, pitch_midi, swing, region, sub_region
-#                (the 5 features consumed by the trained model — see
+#                (the 5 features consumed by the trained model - see
 #                 _CATEGORICAL_FEATURES + _NUMERIC_FEATURES in
 #                 engine.ml.model_training)
 #   - EXCLUDES:  tuning_hz, freq_*           (model targets, not inputs)
@@ -233,7 +227,7 @@ DATASET_SCHEMA: pa.DataFrameSchema = pa.DataFrameSchema(
 #
 # Strict mode (vs DATASET_SCHEMA.strict=False):
 #   strict=True locks the inference DataFrame to exactly the 5 input
-#   columns — rejects any accidental feature injection from upstream
+#   columns - rejects any accidental feature injection from upstream
 #   code paths. The V2.3 handler builds this DataFrame programmatically
 #   from a validated TuningRequest, so extra columns indicate a bug or
 #   misuse, never legitimate input drift.
@@ -243,7 +237,6 @@ DATASET_SCHEMA: pa.DataFrameSchema = pa.DataFrameSchema(
 #   conversion (swing_pct / 100.0). NaN swing at this point is unreachable
 #   given the Pydantic Field(..., ge=0, le=100) constraint upstream.
 #   Tighter constraint catches programming errors earlier in the pipeline.
-# ---------------------------------------------------------------------------
 
 InferenceSchema: pa.DataFrameSchema = pa.DataFrameSchema(
     columns={
@@ -298,14 +291,14 @@ InferenceSchema: pa.DataFrameSchema = pa.DataFrameSchema(
     coerce=False,
     checks=[
         # Cross-column checks (bidirectional): sub_region scope tied to
-        # JAPAN_IDM. Defence in depth — TuningRequest.@_validate_sub_region
+        # JAPAN_IDM. Defence in depth - TuningRequest.@_validate_sub_region
         # catches both directions earlier in the request lifecycle, but a
         # hand-built inference DataFrame (e.g., from internal callers
         # bypassing the Pydantic layer) still goes through these guards.
         #
         # Two checks (not one) because the rule has two directions and a
         # single boolean check would either (a) collapse the error message
-        # for both cases — bad for debugging — or (b) miss one direction
+        # for both cases - bad for debugging - or (b) miss one direction
         # entirely if naively written. Splitting yields precise error
         # messages and full coverage.
         pa.Check(

@@ -4,9 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { useSequencer } from "../../hooks/useSequencer";
 
-/* ------------------------------------------------------------------ */
 /* AudioContext mock                                                   */
-/* ------------------------------------------------------------------ */
 
 /**
  * Minimal AudioContext mock with a controllable state machine.
@@ -55,7 +53,7 @@ function createMockAudioContext(initialState: MockState = "suspended"): MockAudi
     },
   };
 
-  // Default resume behaviour — transitions to next queued state, or "running".
+  // Default resume behaviour - transitions to next queued state, or "running".
   ctx.resume.mockImplementation(async () => {
     const next = ctx.__resumeQueue.shift() ?? "running";
     ctx.state = next;
@@ -81,9 +79,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-/* ------------------------------------------------------------------ */
 /* Tests                                                               */
-/* ------------------------------------------------------------------ */
 
 describe("useSequencer AudioContext lifecycle", () => {
   it("unlockAudioContext awaits resume() before completing (H1)", async () => {
@@ -91,7 +87,7 @@ describe("useSequencer AudioContext lifecycle", () => {
 
     let resumeResolved = false;
     currentMockCtx.resume.mockImplementation(async () => {
-      // Simulate async resume — state transitions only after the awaited tick.
+      // Simulate async resume - state transitions only after the awaited tick.
       await Promise.resolve();
       currentMockCtx.state = "running";
       resumeResolved = true;
@@ -139,7 +135,7 @@ describe("useSequencer AudioContext lifecycle", () => {
   it("play() aborts with warning if context fails to reach 'running' state", async () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    // Configure resume() to NOT transition state — simulating WebKit gesture-scope failure
+    // Configure resume() to NOT transition state - simulating WebKit gesture-scope failure
     currentMockCtx.resume.mockImplementation(async () => {
       // state remains "suspended"
     });

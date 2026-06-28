@@ -6,9 +6,7 @@ import {
 } from "../../hooks/useEP133Sequencer";
 import type { TimingMode } from "../../hooks/useEP133Sequencer";
 
-/* ------------------------------------------------------------------ */
 /* EP-133 K.O.II constants from manual                                 */
-/* ------------------------------------------------------------------ */
 
 const GROUPS = ["A", "B", "C", "D"] as const;
 type Group = (typeof GROUPS)[number];
@@ -59,9 +57,7 @@ const EP133_FX = [
   "DELAY", "REVERB", "DISTORTION", "CHORUS", "FILTER", "COMPRESSOR",
 ];
 
-/* ------------------------------------------------------------------ */
 /* Component                                                           */
-/* ------------------------------------------------------------------ */
 
 export function EP133Guide() {
   /*

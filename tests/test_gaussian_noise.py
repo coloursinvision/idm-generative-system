@@ -32,9 +32,7 @@ from engine.ml.regional_profiles import (
     SwingSpec,
 )
 
-# ---------------------------------------------------------------------------
 # Fixtures
-# ---------------------------------------------------------------------------
 
 
 @pytest.fixture
@@ -140,9 +138,7 @@ def zero_config() -> PerturbationConfig:
     return PerturbationConfig()
 
 
-# ---------------------------------------------------------------------------
 # Properties and construction
-# ---------------------------------------------------------------------------
 
 
 class TestGaussianNoiseInjectorProperties:
@@ -170,9 +166,7 @@ class TestGaussianNoiseInjectorProperties:
         assert config.mapper_sigma == 0.0
 
 
-# ---------------------------------------------------------------------------
 # Reproducibility
-# ---------------------------------------------------------------------------
 
 
 class TestReproducibility:
@@ -213,9 +207,7 @@ class TestReproducibility:
         assert result_a != result_b
 
 
-# ---------------------------------------------------------------------------
 # Zero-sigma pass-through
-# ---------------------------------------------------------------------------
 
 
 class TestZeroSigmaPassThrough:
@@ -252,9 +244,7 @@ class TestZeroSigmaPassThrough:
         assert result.noise is None
 
 
-# ---------------------------------------------------------------------------
-# perturb_profile — field-level tests
-# ---------------------------------------------------------------------------
+# perturb_profile - field-level tests
 
 
 class TestPerturbProfile:
@@ -377,7 +367,7 @@ class TestPerturbProfile:
             harmonic=HarmonicContentSpec(primary_synthesis="fm"),
             reverb=reverb,
         )
-        # Large reverb_sigma — diffusion_sigma = reverb_sigma / 1000
+        # Large reverb_sigma - diffusion_sigma = reverb_sigma / 1000
         # so 50000 → diffusion_sigma = 50 → guaranteed to hit boundary
         config = PerturbationConfig(reverb_sigma=50000.0)
         injector = GaussianNoiseInjector(config, seed=42)
@@ -485,9 +475,7 @@ class TestPerturbProfile:
         assert profile.swing.swing_amount == original_swing_amount
 
 
-# ---------------------------------------------------------------------------
-# perturb_mapping — source-tag-aware fixed points
-# ---------------------------------------------------------------------------
+# perturb_mapping - source-tag-aware fixed points
 
 
 class TestPerturbMappingFixedSources:
@@ -528,9 +516,7 @@ class TestPerturbMappingFixedSources:
         assert {"mains_fundamental", "mains_ref_fundamental"} == _FIXED_SOURCES
 
 
-# ---------------------------------------------------------------------------
-# perturb_mapping — perturbable sources
-# ---------------------------------------------------------------------------
+# perturb_mapping - perturbable sources
 
 
 class TestPerturbMappingPerturbableSources:
@@ -603,9 +589,7 @@ class TestPerturbMappingPerturbableSources:
                 assert len(point.nearest_note) >= 2  # e.g. "A4", "C#3"
 
 
-# ---------------------------------------------------------------------------
-# perturb_mapping — clamping
-# ---------------------------------------------------------------------------
+# perturb_mapping - clamping
 
 
 class TestPerturbMappingClamping:
@@ -640,9 +624,7 @@ class TestPerturbMappingClamping:
             assert point.frequency_hz >= 1.0
 
 
-# ---------------------------------------------------------------------------
-# perturb_mapping — structural invariants
-# ---------------------------------------------------------------------------
+# perturb_mapping - structural invariants
 
 
 class TestPerturbMappingStructure:
@@ -706,9 +688,7 @@ class TestPerturbMappingStructure:
         assert mapping.resonant_points == original_points
 
 
-# ---------------------------------------------------------------------------
 # RNG draw-order determinism
-# ---------------------------------------------------------------------------
 
 
 class TestRNGDrawOrder:

@@ -57,9 +57,7 @@ from engine.ml.regional_profiles import RegionCode, SubRegion
 
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
 # Constants
-# ---------------------------------------------------------------------------
 
 _VALID_REGIONS: list[str] = list(get_args(RegionCode))
 _VALID_SUB_REGIONS: list[str] = list(get_args(SubRegion))
@@ -76,9 +74,7 @@ _NUMERIC_FEATURES: list[str] = [
 _EXCLUDE_COLUMNS: set[str] = {"spec_id", "is_perturbed", "perturbation_idx"}
 
 
-# ---------------------------------------------------------------------------
 # Configuration
-# ---------------------------------------------------------------------------
 
 
 @dataclass(frozen=True)
@@ -122,9 +118,7 @@ class OptunaConfig:
     xgboost_ranges: dict[str, Any] = field(default_factory=dict)
 
 
-# ---------------------------------------------------------------------------
 # Feature / target extraction
-# ---------------------------------------------------------------------------
 
 
 def extract_feature_target_columns(
@@ -164,9 +158,7 @@ def extract_feature_target_columns(
     return feature_cols, target_cols
 
 
-# ---------------------------------------------------------------------------
 # Pipeline construction
-# ---------------------------------------------------------------------------
 
 
 def build_preprocessor() -> ColumnTransformer:
@@ -250,9 +242,7 @@ def build_pipeline(
     )
 
 
-# ---------------------------------------------------------------------------
 # Data preparation
-# ---------------------------------------------------------------------------
 
 
 def prepare_data(
@@ -290,9 +280,7 @@ def prepare_data(
     return X, y
 
 
-# ---------------------------------------------------------------------------
 # Train/test split
-# ---------------------------------------------------------------------------
 
 
 def split_by_group(
@@ -396,9 +384,7 @@ def split_train_val_test_by_group(
     return X_train, X_val, X_test, y_train, y_val, y_test
 
 
-# ---------------------------------------------------------------------------
 # Training
-# ---------------------------------------------------------------------------
 
 
 def train(
@@ -551,9 +537,7 @@ def train(
     return pipeline, metrics
 
 
-# ---------------------------------------------------------------------------
 # Optuna HPO
-# ---------------------------------------------------------------------------
 
 
 def run_optuna_study(

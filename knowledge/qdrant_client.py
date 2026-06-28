@@ -50,9 +50,7 @@ from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_ex
 
 from qdrant_client import QdrantClient
 
-# ---------------------------------------------------------------------------
 # Constants
-# ---------------------------------------------------------------------------
 
 COLLECTION_NAME = "master_dataset"
 EMBEDDING_MODEL = "text-embedding-3-large"
@@ -64,9 +62,7 @@ MAX_CHUNK_CHARS = 2000  # Soft limit — split further on ### if exceeded
 MIN_CHUNK_CHARS = 100  # Skip trivially small chunks
 
 
-# ---------------------------------------------------------------------------
 # Chunking
-# ---------------------------------------------------------------------------
 
 
 def chunk_markdown(text: str) -> list[dict[str, Any]]:
@@ -131,7 +127,7 @@ def chunk_markdown(text: str) -> list[dict[str, Any]]:
                 )
             continue
 
-        # Section too large — split on ### subsections
+        # Section too large - split on ### subsections
         sub_chunks = _split_on_h3(lines[start:end], part, title)
         chunks.extend(sub_chunks)
 
@@ -152,7 +148,7 @@ def _split_on_h3(lines: list[str], part: str, parent_title: str) -> list[dict[st
             h3_positions.append((i, line.strip("# ").strip()))
 
     if not h3_positions:
-        # No ### headers — keep as single large chunk
+        # No ### headers - keep as single large chunk
         text = "\n".join(lines).strip()
         if len(text) >= MIN_CHUNK_CHARS:
             chunks.append(
@@ -212,9 +208,7 @@ def _deterministic_id(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()[:32]
 
 
-# ---------------------------------------------------------------------------
 # KnowledgeBase
-# ---------------------------------------------------------------------------
 
 
 class KnowledgeBase:
@@ -247,9 +241,7 @@ class KnowledgeBase:
         self.openai = OpenAI()  # Uses OPENAI_API_KEY from env
         self.collection = collection
 
-    # ------------------------------------------------------------------
     # Collection management
-    # ------------------------------------------------------------------
 
     def ensure_collection(self) -> None:
         """Create the collection if it doesn't exist."""
@@ -278,9 +270,7 @@ class KnowledgeBase:
             "status": info.status.value,
         }
 
-    # ------------------------------------------------------------------
     # Embedding
-    # ------------------------------------------------------------------
 
     @retry(
         stop=stop_after_attempt(3),
@@ -306,9 +296,7 @@ class KnowledgeBase:
         )
         return [item.embedding for item in response.data]
 
-    # ------------------------------------------------------------------
     # Ingestion
-    # ------------------------------------------------------------------
 
     def ingest_markdown(self, filepath: str | Path) -> dict[str, Any]:
         """
@@ -365,9 +353,7 @@ class KnowledgeBase:
             "collection_info": self.collection_info(),
         }
 
-    # ------------------------------------------------------------------
     # Search
-    # ------------------------------------------------------------------
 
     def search(
         self,
@@ -419,9 +405,7 @@ class KnowledgeBase:
         ]
 
 
-# ---------------------------------------------------------------------------
 # CLI
-# ---------------------------------------------------------------------------
 
 
 def _cli() -> None:

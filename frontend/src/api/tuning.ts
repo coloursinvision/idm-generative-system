@@ -1,11 +1,9 @@
-/* ------------------------------------------------------------------ */
 /* V2.3 + V2.4 tuning API client                                      */
 /*                                                                    */
 /* Mirrors the existing pattern in frontend/src/api/client.ts:        */
 /*   - thin fetch wrapper over /api/* (Vite proxy in dev,             */
 /*     FastAPI StaticFiles mount + nginx /api/* strip in prod)        */
 /*   - JSON error body surfaced as Error.message                      */
-/* ------------------------------------------------------------------ */
 
 import type {
   TuningRequest,

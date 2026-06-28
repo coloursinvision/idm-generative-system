@@ -25,9 +25,7 @@ from engine.ml.dataset_schema import (
 )
 from engine.ml.regional_profiles import RegionCode, SubRegion
 
-# ---------------------------------------------------------------------------
 # Fixtures
-# ---------------------------------------------------------------------------
 
 
 def _make_valid_df(**overrides: Any) -> pd.DataFrame:
@@ -61,9 +59,7 @@ def _make_valid_df(**overrides: Any) -> pd.DataFrame:
     return pd.DataFrame(base)
 
 
-# ---------------------------------------------------------------------------
 # Spoke-derived enumeration tests
-# ---------------------------------------------------------------------------
 
 
 class TestSpokeEnumerations:
@@ -87,9 +83,7 @@ class TestSpokeEnumerations:
         assert set(_VALID_REGIONS) == expected
 
 
-# ---------------------------------------------------------------------------
 # Valid DataFrame acceptance
-# ---------------------------------------------------------------------------
 
 
 class TestSchemaAcceptsValid:
@@ -172,9 +166,7 @@ class TestSchemaAcceptsValid:
         DATASET_SCHEMA.validate(df)
 
 
-# ---------------------------------------------------------------------------
 # Invalid DataFrame rejection
-# ---------------------------------------------------------------------------
 
 
 class TestSchemaRejectsInvalid:
@@ -254,9 +246,7 @@ class TestSchemaRejectsInvalid:
             DATASET_SCHEMA.validate(df)
 
 
-# ---------------------------------------------------------------------------
 # Cross-column checks
-# ---------------------------------------------------------------------------
 
 
 class TestCrossColumnChecks:

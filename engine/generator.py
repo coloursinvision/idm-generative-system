@@ -17,9 +17,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-# ---------------------------------------------------------------------------
 # Constants
-# ---------------------------------------------------------------------------
 
 DEFAULT_TRACKS: list[str] = ["kick", "snare", "hat", "glitch"]
 DEFAULT_STEPS: int = 16
@@ -32,9 +30,7 @@ DEFAULT_PROBABILITIES: dict[str, float] = {
 }
 
 
-# ---------------------------------------------------------------------------
 # Euclidean rhythm
-# ---------------------------------------------------------------------------
 
 
 def euclidean_rhythm(k: int, n: int) -> list[int]:
@@ -98,9 +94,7 @@ def euclidean_rhythm(k: int, n: int) -> list[int]:
     return pattern[i:] + pattern[:i]
 
 
-# ---------------------------------------------------------------------------
 # Pattern generators
-# ---------------------------------------------------------------------------
 
 
 def generate_pattern(
@@ -172,9 +166,7 @@ def generate_euclidean_pattern(
     return pd.DataFrame(data).T.rename(columns={i: i for i in range(steps)})
 
 
-# ---------------------------------------------------------------------------
 # Pattern evolution
-# ---------------------------------------------------------------------------
 
 
 def mutate_pattern(
@@ -230,9 +222,7 @@ def markov_evolve(
     return evolved
 
 
-# ---------------------------------------------------------------------------
 # Visualisation
-# ---------------------------------------------------------------------------
 
 
 def plot_pattern(

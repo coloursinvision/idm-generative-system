@@ -25,7 +25,7 @@ export type RegionCode = (typeof REGION_CODES)[number];
 export const SUB_REGIONS = ["TOKYO", "OSAKA"] as const;
 export type SubRegion = (typeof SUB_REGIONS)[number];
 
-/* ---- V2.3 — /tuning ---- */
+/* ---- V2.3 - /tuning ---- */
 
 export interface TuningRequest {
   bpm: number;
@@ -49,7 +49,7 @@ export interface TuningResponse {
   inference_latency_ms: number;
 }
 
-/* ---- V2.4 — /tuning/extract ---- */
+/* ---- V2.4 - /tuning/extract ---- */
 
 export interface TuningExtractRequest {
   text: string;
