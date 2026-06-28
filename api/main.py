@@ -99,7 +99,7 @@ except ImportError:
 
 # Langfuse is in [monitoring] extras — separately gated from [ml].
 # Either can be installed independently; observability is decoupled from
-# model serving. (Decision: B + fail-open, S13 sub-stage E planning.)
+# model serving; it is fail-open by design.
 try:
     from langfuse import Langfuse
 
@@ -188,8 +188,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
                     logger.warning(
                         "V2.3 /tuning loaded, but 'dvc_dataset_hash' tag "
                         "missing from MLflow run %s — TuningResponse "
-                        "provenance field will read 'unknown'. See "
-                        "TODO-S13-E for retroactive tag addition.",
+                        "provenance field will read 'unknown'.",
                         mv.run_id,
                     )
 
@@ -209,11 +208,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
                 e,
             )
 
-    # -----------------------------------------------------------------------
-    # Langfuse tracing client init (separate fail-soft block — observability
-    # is independent from model serving; either can succeed without the other,
-    # per decision "B + fail-open" from S13 sub-stage C planning).
-    # -----------------------------------------------------------------------
+    # Langfuse tracing client init (separate fail-soft block: observability is
+    # independent from model serving; either can succeed without the other,
+    # fail-open by design).
     app.state.langfuse_client = None
     if not _HAS_LANGFUSE:
         logger.warning(
@@ -999,8 +996,7 @@ class TuningRequest(BaseModel):
         ge=0.0,
         le=127.0,
         description=(
-            "MIDI note number (A4 = 69). Replaces pitch_class:int[0,11] "
-            "from V2_ROADMAP v2.0 (D-S3-05, D-S7-04)."
+            "MIDI note number (A4 = 69). Replaces pitch_class:int[0,11] from the v2.0 contract."
         ),
     )
     swing_pct: float = Field(
@@ -1010,24 +1006,24 @@ class TuningRequest(BaseModel):
         description=(
             "Swing percentage [0, 100] for API ergonomics. Converted to "
             "internal swing [0.0, 1.0] at the handler boundary "
-            "(swing = swing_pct / 100.0) per D-S7-04 before model.predict."
+            "(swing = swing_pct / 100.0) before model.predict."
         ),
     )
     region: RegionCode = Field(
         ...,
         description=(
             "Regional profile identifier. Mirrors the RegionCode type "
-            "alias in engine/ml/regional_profiles.py (D-S7-02). Renamed "
-            "from genre_profile (V2_ROADMAP v2.0)."
+            "alias in engine/ml/regional_profiles.py. Renamed "
+            "from genre_profile."
         ),
     )
     sub_region: SubRegion | None = Field(
         default=None,
         description=(
             "Sub-region discriminator. Required when region == "
-            "'JAPAN_IDM', MUST be None otherwise (D-S3-05, D-S7-02). "
+            "'JAPAN_IDM', MUST be None otherwise. "
             "Cross-field validation enforced by _validate_sub_region "
-            "below; pandera InferenceSchema (Sub-stage B) provides "
+            "below; pandera InferenceSchema provides "
             "DataFrame-level defence in depth."
         ),
     )
@@ -1099,14 +1095,14 @@ class TuningResponse(BaseModel):
         gt=0.0,
         description=(
             "A4 reference frequency selected by the model. Discrete "
-            "value (typically 432.0 or 440.0) per D-S5-01."
+            "value (typically 432.0 or 440.0)."
         ),
     )
     resonant_points: list[ResonantPoint] = Field(
         ...,
         description=(
             "Resonant frequency points. Variable cardinality per region "
-            "(NOT fixed-8 as in V2_ROADMAP v2.0); count corresponds to "
+            "(NOT fixed-8 as in the v2.0 contract); count corresponds to "
             "non-NaN freq_* columns in the trained model output. Ranked "
             "by confidence descending."
         ),
@@ -1116,7 +1112,7 @@ class TuningResponse(BaseModel):
         description=(
             "MLflow run_id of the loaded model. Populated from "
             "app.state.tuning_model_metadata at request time "
-            "(Sub-stage C — lifespan)."
+            "(cached at startup by the lifespan)."
         ),
     )
     dataset_dvc_hash: str = Field(
