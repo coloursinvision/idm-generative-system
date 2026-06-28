@@ -251,7 +251,7 @@ class TestMainsHum:
         B1 by the ~1.3 cent advantage. If the :file:`MAINS_HUM_REGIONAL.md`
         spoke's §5 Examples explicitly records A♯1, this assertion must
         flip and the rounding policy in :func:`_hz_to_note_and_cents`
-        must change accordingly — flag for DECISIONS review.
+        must change accordingly.
         """
         floor = mains_hum_profile("US")
         assert floor.tonal_centre == "B1"

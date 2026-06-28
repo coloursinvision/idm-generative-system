@@ -2,7 +2,7 @@
 
 Covers all 6 regional profiles via synthetic RegionalProfile injection
 (``profile=`` parameter), input validation, source-tag provenance,
-dual-stack mains emission (D-S5-01), Solfeggio seed presence/absence,
+dual-stack mains emission, Solfeggio seed presence/absence,
 Schumann BPM anchor, sub-bass emission, and effects filtering.
 
 No spoke filesystem access required — all profiles are constructed
@@ -381,7 +381,7 @@ class TestBpmHarmonic:
 
 
 # ---------------------------------------------------------------------------
-# Step 4 — mains stack (D-S5-01 dual-stack)
+# Mains stack (dual-stack)
 # ---------------------------------------------------------------------------
 
 

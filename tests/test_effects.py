@@ -11,7 +11,7 @@ Coverage:
     - Edge cases: all-zeros, single sample, very short signal
     - Parameter extremes: max drive, min bit depth, high feedback
     - Bypass behaviour: effects at neutral settings
-    - Numba kernel regression (CR-04): output parity vs pure-Python reference
+    - Numba kernel regression: output parity vs pure-Python reference
     - Vectorised RMS envelope: output parity vs sequential reference
 
 Run:
@@ -179,7 +179,7 @@ class TestEdgeCases:
 
 
 # ---------------------------------------------------------------------------
-# Parameter validation (CR-05)
+# Parameter validation
 # ---------------------------------------------------------------------------
 
 
@@ -496,7 +496,7 @@ class TestReproducibility:
 
 
 # ===========================================================================
-# CR-04 — Numba kernel regression tests
+# Numba kernel regression tests
 #
 # Each test class provides a pure-Python reference implementation of the
 # original pre-Numba loop, then asserts that the Numba-compiled kernel

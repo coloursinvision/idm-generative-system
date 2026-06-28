@@ -413,7 +413,7 @@ class TestSplitByGroup:
 
 
 # ---------------------------------------------------------------------------
-# Group-aware three-way split (HPO validation split — #3 / D-PIPE-06)
+# Group-aware three-way split (HPO validation split)
 # ---------------------------------------------------------------------------
 
 
