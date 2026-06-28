@@ -123,7 +123,6 @@ export function GeneratorPanel() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      {/* Header */}
       <div>
         <h1 className="font-display text-lg font-bold tracking-tight">
           GENERATOR
@@ -133,10 +132,8 @@ export function GeneratorPanel() {
         </p>
       </div>
 
-      {/* Controls */}
       <div className="panel">
         <div className="flex items-end gap-6">
-          {/* Generator selector */}
           <div className="flex-1">
             <label className="label">Generator</label>
             <div className="flex gap-0">
@@ -156,7 +153,6 @@ export function GeneratorPanel() {
             </div>
           </div>
 
-          {/* Bypass */}
           <div>
             <label className="label">Chain</label>
             <button
@@ -171,7 +167,6 @@ export function GeneratorPanel() {
             </button>
           </div>
 
-          {/* Generate button */}
           <button
             className="btn-primary"
             onClick={handleGenerate}
@@ -182,14 +177,12 @@ export function GeneratorPanel() {
         </div>
       </div>
 
-      {/* Error */}
       {error && (
         <div className="panel border-accent-red/50">
           <span className="text-accent-red text-xs">{error}</span>
         </div>
       )}
 
-      {/* Waveform */}
       <div className="panel">
         <div className="panel-header">Waveform</div>
         <canvas
@@ -200,7 +193,6 @@ export function GeneratorPanel() {
           style={{ imageRendering: "pixelated" }}
         />
 
-        {/* Playback controls */}
         {audioUrl && (
           <div className="flex items-center gap-3 mt-3">
             <button className="btn-primary" onClick={handlePlayStop}>
@@ -215,7 +207,6 @@ export function GeneratorPanel() {
           </div>
         )}
 
-        {/* Hidden audio element */}
         {audioUrl && (
           <audio
             ref={audioRef}

@@ -15,7 +15,6 @@ export function NavBar() {
   return (
     <nav className="border-b border-surface-3 bg-surface-1">
       <div className="flex items-center justify-between px-4 py-0">
-        {/* Logo */}
         <div className="flex items-center gap-3 py-3">
           <span className="font-display text-base font-bold tracking-tight text-text-primary">
             IDM
@@ -25,7 +24,6 @@ export function NavBar() {
           </span>
         </div>
 
-        {/* Tabs */}
         <div className="flex flex-wrap justify-end">
           {TABS.map(({ to, label }) => (
             <NavLink
