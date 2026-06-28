@@ -94,7 +94,7 @@ COMPRESSOR_PRESETS: dict[str, dict] = {
 
 
 # ---------------------------------------------------------------------------
-# Numba-compiled DSP kernels (CR-04)
+# Numba-compiled DSP kernels
 #
 # Envelope smoothing loops extracted to module-level @njit functions.
 # These are the compressor's tightest inner loops — per-sample attack/release
@@ -449,7 +449,7 @@ class Compressor(BaseEffect):
         This produces natural, breathing compression that doesn't pump
         on transients but recovers quickly during sustained passages.
 
-        Inner loops delegated to Numba-compiled kernels (CR-04).
+        Inner loops delegated to Numba-compiled kernels.
         """
         n = len(gr_db)
         attack_coeff = np.exp(-1.0 / (self.attack_ms * self.sr / 1000))
