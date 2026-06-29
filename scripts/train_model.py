@@ -44,9 +44,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
 # Constants
-# ---------------------------------------------------------------------------
 
 _DATASET_PATH = Path("data/synthetic/dataset.parquet")
 _MODEL_DIR = Path("models/tuning_estimator")
@@ -54,9 +52,7 @@ _METRICS_PATH = Path("models/metrics.json")
 _IMPORTANCE_PATH = Path("models/feature_importance.json")
 
 
-# ---------------------------------------------------------------------------
 # Feature importance extraction
-# ---------------------------------------------------------------------------
 
 
 def _extract_feature_importance(
@@ -128,9 +124,7 @@ def _get_preprocessed_feature_names(pipeline: object) -> list[str]:
         return []
 
 
-# ---------------------------------------------------------------------------
 # Main
-# ---------------------------------------------------------------------------
 
 
 def main() -> None:
@@ -172,7 +166,7 @@ def main() -> None:
     # TrackSpec's rows share a spec_id and stay wholly on one side, so near-duplicate
     # perturbations cannot straddle partitions. The validation split scores Optuna
     # trials; the test split is held out for the single final metrics report
-    # (fixes HPO-on-test — V2_ROADMAP backlog #3 / D-PIPE-06). Region stratification
+    # (fixes HPO-on-test). Region stratification
     # is dropped (GroupShuffleSplit cannot stratify); region balance is verified
     # post-hoc.
     X_train, X_val, X_test, y_train, y_val, y_test = split_train_val_test_by_group(  # noqa: N806

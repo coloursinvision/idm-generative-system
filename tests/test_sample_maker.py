@@ -24,11 +24,9 @@ import numpy as np
 
 from engine.sample_maker import SAMPLE_RATE, fm_analog, fm_blip
 
-# ---------------------------------------------------------------------------
-# Golden values — captured from the current fm_blip() default output on engine
+# Golden values - captured from the current fm_blip() default output on engine
 # `idm` at the start of feat/fm_blip-fm-expansion. If a change here is
 # intentional, re-capture and update these constants deliberately.
-# ---------------------------------------------------------------------------
 
 _DEFAULT_LENGTH = int(SAMPLE_RATE * 500.0 / 1000)  # 500 ms default -> 22050
 _GOLDEN_MIN = -0.99309236
@@ -71,10 +69,8 @@ class TestFmBlipCharacterization:
         assert np.allclose(sampled, _GOLDEN_SAMPLE_VAL, atol=_ATOL)
 
 
-# ---------------------------------------------------------------------------
 # FM-expansion parameters (feat/fm_blip-fm-expansion): each is off by default
 # and has a real effect when engaged.
-# ---------------------------------------------------------------------------
 
 
 class TestFmBlipExpansion:
@@ -119,9 +115,7 @@ class TestFmBlipExpansion:
         assert not np.allclose(fm_blip(mod_index_end=8.0), fm_blip())
 
 
-# ---------------------------------------------------------------------------
-# fm_analog — warm subtractive voice (direction A, D-DSP-02)
-# ---------------------------------------------------------------------------
+# fm_analog - warm subtractive voice (direction A)
 
 _ANALOG_LENGTH = int(SAMPLE_RATE * 600.0 / 1000)  # 600 ms default
 

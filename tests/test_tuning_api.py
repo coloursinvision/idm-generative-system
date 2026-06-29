@@ -2,11 +2,9 @@
 
 Pipeline layer:  6 — V2.3 Model Serving boundary
 Targets:         api.main.tuning handler + lifespan + V2 Pydantic models
-Spec reference:  V2_ROADMAP.md §V2.3 (sealed v3.0)
-Decisions:       D-S7-02/03/04 (feature schema), D-S3-05 (sub_region rule),
-                 D-S7-01 (lazy ml imports — these tests require [ml] extras)
+Note:            these tests require the [ml] extras (lazy mlflow imports).
 
-Architectural conventions (S13 Sub-stage F mikro-decisions):
+Architectural conventions:
     - F.1: module-scoped TestClient fixture — lifespan + model load runs
       once per file (real Langfuse + real MLflow Registry connection).
     - F.2: synchronous TestClient (match V1 test convention).
@@ -42,7 +40,7 @@ pytest.importorskip("pandera")
 pytest.importorskip("xgboost")
 
 # OPENAI_API_KEY must be set for api.main to import (V1 RAGPipeline checks
-# at construction). Any non-empty value works for these tests — no actual
+# at construction). Any non-empty value works for these tests - no actual
 # OpenAI calls are made.
 os.environ.setdefault("OPENAI_API_KEY", "dummy-key-for-tests-only")
 
@@ -52,9 +50,7 @@ if TYPE_CHECKING:
     from fastapi import FastAPI
 
 
-# ---------------------------------------------------------------------------
 # Module fixtures
-# ---------------------------------------------------------------------------
 
 
 @pytest.fixture(scope="module")
@@ -87,7 +83,7 @@ def _valid_payload(**overrides: Any) -> dict[str, Any]:
     """Construct a baseline valid TuningRequest payload, with field overrides.
 
     The baseline is a UK_IDM request known to pass all validations and
-    return HTTP 200 (verified empirically in S13 Sub-stage D integration
+    return HTTP 200 (verified empirically in integration
     smoke tests).
     """
     base = {
@@ -101,9 +97,7 @@ def _valid_payload(**overrides: Any) -> dict[str, Any]:
     return base
 
 
-# ---------------------------------------------------------------------------
-# Pydantic field-level validation — boundary cases
-# ---------------------------------------------------------------------------
+# Pydantic field-level validation - boundary cases
 
 
 class TestPydanticFieldValidation:
@@ -149,8 +143,8 @@ class TestPydanticFieldValidation:
     def test_swing_pct_range(self, client: Any, swing_pct: float, expected_status: int) -> None:
         """swing_pct must be in [0.0, 100.0]; boundaries inclusive.
 
-        Internal scale is [0.0, 1.0] after boundary conversion in handler
-        per D-S7-04; this test verifies the external API constraint.
+        Internal scale is [0.0, 1.0] after boundary conversion in the
+        handler; this test verifies the external API constraint.
         """
         r = client.post("/tuning", json=_valid_payload(swing_pct=swing_pct))
         assert r.status_code == expected_status
@@ -161,9 +155,7 @@ class TestPydanticFieldValidation:
         assert r.status_code == 422
 
 
-# ---------------------------------------------------------------------------
-# Cross-field rule: sub_region ↔ JAPAN_IDM (D-S3-05)
-# ---------------------------------------------------------------------------
+# Cross-field rule: sub_region ↔ JAPAN_IDM
 
 
 class TestCrossFieldRule:
@@ -197,16 +189,14 @@ class TestCrossFieldRule:
         assert r.status_code == 200
 
 
-# ---------------------------------------------------------------------------
 # Happy path: each of the 6 RegionCode values returns 200
-# ---------------------------------------------------------------------------
 
 
 class TestHappyPathAllRegions:
     """One end-to-end happy-path request per region.
 
-    Variable resonant_points cardinality per region is expected (per
-    V2_ROADMAP §V2.1 invariant #3); the test asserts cardinality > 0 only,
+    Variable resonant_points cardinality per region is expected; the test
+    asserts cardinality > 0 only,
     not a specific count — exact counts are an emergent property of the
     trained model and Layer 2 spokes.
     """
@@ -232,7 +222,7 @@ class TestHappyPathAllRegions:
         )
         assert r.status_code == 200
         body = r.json()
-        # tuning_hz is discrete 432/440 per D-S5-01; defensive range check.
+        # tuning_hz is discrete 432/440; defensive range check.
         assert body["tuning_hz"] > 0.0
         # At least one resonant point per region (none has zero spoke targets).
         assert len(body["resonant_points"]) > 0
@@ -242,9 +232,7 @@ class TestHappyPathAllRegions:
         assert body["inference_latency_ms"] >= 0.0
 
 
-# ---------------------------------------------------------------------------
 # Response shape integrity
-# ---------------------------------------------------------------------------
 
 
 class TestResponseShape:
@@ -252,7 +240,7 @@ class TestResponseShape:
 
     def test_resonant_points_sorted_by_confidence_desc_then_hz_asc(self, client: Any) -> None:
         """resonant_points sorted by (-confidence, hz). With placeholder
-        confidence=1.0 for all points (TODO-S13-F), ordering collapses to
+        confidence=1.0 for all points, ordering collapses to
         hz ascending. Test verifies the secondary sort key.
         """
         r = client.post("/tuning", json=_valid_payload())
@@ -277,9 +265,7 @@ class TestResponseShape:
             assert 0.0 <= p["confidence"] <= 1.0
 
 
-# ---------------------------------------------------------------------------
-# Fail-soft 503 paths (D-S13 Sub-stage C decision β)
-# ---------------------------------------------------------------------------
+# Fail-soft 503 paths
 
 
 class TestFailSoft:
@@ -314,9 +300,7 @@ class TestFailSoft:
         assert "target_columns" in r.text
 
 
-# ---------------------------------------------------------------------------
-# Pydantic extra="forbid" (Gotcha #11)
-# ---------------------------------------------------------------------------
+# Pydantic extra="forbid"
 
 
 class TestExtraFieldsRejected:
@@ -325,14 +309,12 @@ class TestExtraFieldsRejected:
     def test_unknown_field_rejected(self, client: Any) -> None:
         """Extra field in payload → 422 (not silent acceptance)."""
         payload = _valid_payload()
-        payload["effects_density"] = 0.5  # dropped per D-S7-03
+        payload["effects_density"] = 0.5  # dropped field
         r = client.post("/tuning", json=payload)
         assert r.status_code == 422
 
 
-# ---------------------------------------------------------------------------
 # Latency + metadata provenance integrity
-# ---------------------------------------------------------------------------
 
 
 class TestLatencyAndMetadata:
@@ -355,16 +337,14 @@ class TestLatencyAndMetadata:
         assert body["model_version"] == expected_version
 
         # Provenance: dataset_dvc_hash either real hash or "unknown" placeholder
-        # (per TODO-S13-E — S12 v1 baseline predates training-side tag).
+        # (the v1 baseline predates training-side tag logging).
         assert (
             body["dataset_dvc_hash"] in ({"unknown"} | {expected_version})
             or len(body["dataset_dvc_hash"]) > 0
         )
 
 
-# ---------------------------------------------------------------------------
 # Langfuse fail-open: trace breaks → request still succeeds
-# ---------------------------------------------------------------------------
 
 
 class TestLangfuseFailOpen:

@@ -5,7 +5,7 @@
 # Extracts the md5 hash of data/synthetic/dataset.parquet from dvc.lock
 # (under the generate stage's outs), exports it as DVC_DATASET_HASH, and
 # invokes the training script. engine.ml.model_training.train() reads the
-# env var and logs it as an MLflow tag (TODO-S13-E — closes V2.3 endpoint
+# env var and logs it as an MLflow tag (closes the V2.3 endpoint
 # `TuningResponse.dataset_dvc_hash` provenance gap).
 #
 # Standalone-runnable for testing:

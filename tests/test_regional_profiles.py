@@ -39,9 +39,7 @@ from engine.ml.regional_profiles import (
     load_profile,
 )
 
-# ===========================================================================
-# Synthetic spoke YAML bodies — verbatim from bootstrap §7.1 embedded input
-# ===========================================================================
+# Synthetic spoke YAML bodies - verbatim from bootstrap §7.1 embedded input
 
 
 DETROIT_FIRST_WAVE_YAML = """\
@@ -163,9 +161,7 @@ _SYNTHETIC_SPOKES: dict[str, str] = {
 }
 
 
-# ===========================================================================
 # Fixture helpers
-# ===========================================================================
 
 
 def _build_spoke_markdown(yaml_body: str) -> str:
@@ -224,9 +220,7 @@ def _reset_load_profile_cache() -> None:
     load_profile.cache_clear()
 
 
-# ===========================================================================
-# Parsing — all 6 profiles produce correct RegionalProfile values
-# ===========================================================================
+# Parsing - all 6 profiles produce correct RegionalProfile values
 
 
 class TestProfileParsing:
@@ -323,9 +317,7 @@ class TestProfileParsing:
         assert p.velocity_curves == "nonlinear"
 
 
-# ===========================================================================
-# Optional subgroups — None when the spoke has no fields for that group
-# ===========================================================================
+# Optional subgroups - None when the spoke has no fields for that group
 
 
 class TestOptionalSubgroups:
@@ -364,9 +356,7 @@ class TestOptionalSubgroups:
             assert isinstance(p.harmonic, HarmonicContentSpec)
 
 
-# ===========================================================================
 # Japan Tokyo / Osaka parameter-level split
-# ===========================================================================
 
 
 class TestJapanTokyoOsaka:
@@ -434,9 +424,7 @@ class TestJapanTokyoOsaka:
         load_profile("DETROIT_UR", profiles_dir=synthetic_profiles_dir)
 
 
-# ===========================================================================
 # all_profiles()
-# ===========================================================================
 
 
 class TestAllProfiles:
@@ -466,9 +454,7 @@ class TestAllProfiles:
         assert all(isinstance(p, RegionalProfile) for p in profiles.values())
 
 
-# ===========================================================================
 # Error paths
-# ===========================================================================
 
 
 class TestErrorPaths:
@@ -526,9 +512,7 @@ class TestErrorPaths:
         assert excinfo.value.cause is not None
 
 
-# ===========================================================================
-# Caching — @lru_cache behaviour
-# ===========================================================================
+# Caching - @lru_cache behaviour
 
 
 class TestCaching:
@@ -569,9 +553,7 @@ class TestCaching:
         assert p1 == p2
 
 
-# ===========================================================================
-# Integration — real vault (skipped when unreachable)
-# ===========================================================================
+# Integration - real vault (skipped when unreachable)
 
 
 def _real_vault_profiles_dir() -> Path | None:

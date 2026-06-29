@@ -44,9 +44,6 @@ Signature expansions from the stated spec, each justified below:
    Provenance is essential for Layer 6 XGBoost training-label audit and
    for Layer 4 Gaussian noise injection to selectively perturb points
    by source.
-
-Implementation completed in S5 (2026-04-25) per the 7-step plan defined
-in the S3 stub docstring. See SESSION_2026-04-25_S5.md for decisions.
 """
 
 from __future__ import annotations
@@ -72,9 +69,7 @@ from engine.ml.resonance_rules import (
     solfeggio_cutoff_seed,
 )
 
-# ---------------------------------------------------------------------------
 # Constants
-# ---------------------------------------------------------------------------
 
 _REGION_TO_GRID: dict[RegionCode, GridRegion] = {
     "DETROIT_FIRST_WAVE": "US",
@@ -92,7 +87,7 @@ runtime via ``sub_region``.
 """
 
 _UK_GRID: GridRegion = "UK"
-"""Reference grid for the dual-stack mains emission (D-S5-01).
+"""Reference grid for the dual-stack mains emission.
 
 UK_IDM is the conceptual baseline of the system. Non-UK regions receive
 both a UK 50 Hz reference stack and their physical regional stack.
@@ -109,9 +104,7 @@ _MIDI_MAX: float = 127.0
 """Upper bound of the standard MIDI note number range."""
 
 
-# ---------------------------------------------------------------------------
 # Private helpers
-# ---------------------------------------------------------------------------
 
 
 def _select_tuning_hz(profile: RegionalProfile) -> float:
@@ -157,7 +150,7 @@ def _build_mains_points(
     sub_region: SubRegion | None,
     tuning_hz: float,
 ) -> list[ResonantPoint]:
-    """Build the mains-hum resonant points, applying the dual-stack rule (D-S5-01).
+    """Build the mains-hum resonant points, applying the dual-stack rule.
 
     For UK regions, emits a single stack (regional = reference).
     For non-UK regions, emits the UK 50 Hz reference stack first, then the
@@ -175,7 +168,7 @@ def _build_mains_points(
     regional_grid = _resolve_grid(region, sub_region)
 
     if _is_uk_region(region):
-        # Single stack — UK is both reference and regional.
+        # Single stack - UK is both reference and regional.
         mains = mains_hum_profile(
             regional_grid,
             n_harmonics=_MAINS_N_HARMONICS,
@@ -197,7 +190,7 @@ def _build_mains_points(
             for h in mains.harmonics[1:]
         )
     else:
-        # Dual stack — UK reference first, then regional.
+        # Dual stack - UK reference first, then regional.
         uk_mains = mains_hum_profile(
             _UK_GRID,
             n_harmonics=_MAINS_N_HARMONICS,
@@ -277,9 +270,7 @@ def _apply_effects_filter(
     return points
 
 
-# ---------------------------------------------------------------------------
 # Public dataclasses
-# ---------------------------------------------------------------------------
 
 
 @dataclass(frozen=True)
@@ -295,8 +286,8 @@ class ResonantPoint:
             - ``"bpm_harmonic"`` — audible harmonic from :func:`bpm_to_hz`
             - ``"mains_fundamental"`` — regional grid fundamental (50 / 60 Hz)
             - ``"mains_harmonic_<k>"`` — ``k``-th regional mains harmonic
-            - ``"mains_ref_fundamental"`` — UK 50 Hz reference fundamental (D-S5-01)
-            - ``"mains_ref_harmonic_<k>"`` — ``k``-th UK reference harmonic (D-S5-01)
+            - ``"mains_ref_fundamental"`` — UK 50 Hz reference fundamental
+            - ``"mains_ref_harmonic_<k>"`` — ``k``-th UK reference harmonic
             - ``"solfeggio_seed"`` — aesthetic Solfeggio seed
             - ``"schumann_bpm_anchor"`` — BPM-anchor derived from Schumann mode 1
             - ``"sub_bass"`` — profile sub-bass fundamental
@@ -333,9 +324,7 @@ class DeterministicMapping:
     resonant_points: tuple[ResonantPoint, ...]
 
 
-# ---------------------------------------------------------------------------
 # Public API
-# ---------------------------------------------------------------------------
 
 
 def deterministic_map(
@@ -355,7 +344,7 @@ def deterministic_map(
     Step 1: Resolve profile via :func:`load_profile` if not supplied.
     Step 2: Emit ``pitch_ref`` resonant point from ``pitch_midi`` + tuning.
     Step 3: Call :func:`bpm_to_hz` for the tempo's audible harmonic.
-    Step 4: Build mains-hum stacks (dual-stack for non-UK regions per D-S5-01).
+    Step 4: Build mains-hum stacks (dual-stack for non-UK regions).
     Step 5: Call :func:`solfeggio_cutoff_seed` when the region has an aesthetic seed.
     Step 6: Anchor to :func:`schumann_bpm_anchor` when BPM is within tolerance.
     Step 7: Filter resonant stack based on signal-chain ``effects``.
@@ -425,7 +414,7 @@ def deterministic_map(
         )
     )
 
-    # --- Step 4: Mains-hum stacks (dual-stack for non-UK, D-S5-01) ----------
+    # Step 4: Mains-hum stacks (dual-stack for non-UK).
     points.extend(_build_mains_points(region, sub_region, tuning_hz))
 
     # --- Step 5: Solfeggio aesthetic seed -----------------------------------

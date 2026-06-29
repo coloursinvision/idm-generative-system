@@ -4,14 +4,12 @@
  * TypeScript interfaces for the code generation endpoints.
  * Mirrors CodegenRequest / CodegenResponse Pydantic models in api/main.py.
  *
- * These types are the contract between frontend and backend — any change
+ * These types are the contract between frontend and backend - any change
  * to the Pydantic models MUST be reflected here. The CI type-check step
  * catches drift if the frontend consumes a field that no longer exists.
  */
 
-/* ------------------------------------------------------------------ */
 /* Enums                                                               */
-/* ------------------------------------------------------------------ */
 
 /**
  * Target language for code generation.
@@ -29,14 +27,12 @@ export type CodegenTarget = "supercollider" | "tidalcycles";
  */
 export type CodegenMode = "studio" | "live";
 
-/* ------------------------------------------------------------------ */
 /* Pattern configuration                                               */
-/* ------------------------------------------------------------------ */
 
 /**
- * Pattern configuration — tagged union on `type`.
+ * Pattern configuration - tagged union on `type`.
  *
- * - euclidean:     Bjorklund algorithm — `pulses` per voice, `steps` total.
+ * - euclidean:     Bjorklund algorithm - `pulses` per voice, `steps` total.
  * - probabilistic: Per-step trigger probability.
  * - density:       Fractional density → probabilistic grid.
  */
@@ -63,9 +59,7 @@ export type PatternConfig =
   | PatternConfigProbabilistic
   | PatternConfigDensity;
 
-/* ------------------------------------------------------------------ */
 /* Request                                                             */
-/* ------------------------------------------------------------------ */
 
 /** POST body for /synthdef and /tidal. */
 export interface CodegenRequest {
@@ -76,13 +70,11 @@ export interface CodegenRequest {
   mode?: CodegenMode;
   include_pattern?: boolean;
   bpm?: number;
-  /** Starting private bus number — SuperCollider only. */
+  /** Starting private bus number - SuperCollider only. */
   bus_offset?: number;
 }
 
-/* ------------------------------------------------------------------ */
 /* Response                                                            */
-/* ------------------------------------------------------------------ */
 
 /** Response from /synthdef and /tidal. */
 export interface CodegenResponse {
@@ -94,7 +86,7 @@ export interface CodegenResponse {
   mode: CodegenMode;
   /** Mapping approximation warnings. */
   warnings: string[];
-  /** Parameters with no target equivalent — keys are effect block names. */
+  /** Parameters with no target equivalent - keys are effect block names. */
   unmapped_params: Record<string, string[]>;
   /** Target-specific metadata (SynthDef names, bus allocation, etc.). */
   metadata: Record<string, unknown>;
@@ -102,9 +94,7 @@ export interface CodegenResponse {
   setup_notes: string[];
 }
 
-/* ------------------------------------------------------------------ */
 /* BroadcastChannel message types                                      */
-/* ------------------------------------------------------------------ */
 
 /**
  * Messages exchanged between main app and popout window

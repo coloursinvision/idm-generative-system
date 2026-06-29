@@ -1,13 +1,10 @@
 /**
  * T-08, T-09, T-10: Codegen Panel, Config Drawer, Popout Window
- * GUI_TEST_SPECIFICATION.md §T-08, §T-09, §T-10
  */
 
 import { test, expect, getCodeBlockText } from "./fixtures";
 
-/* ================================================================== */
 /* T-08: Codegen Core Flow                                             */
-/* ================================================================== */
 
 test.describe("T-08: Codegen Core Flow", () => {
   test.beforeEach(async ({ page }) => {
@@ -35,7 +32,7 @@ test.describe("T-08: Codegen Core Flow", () => {
     // Wait for code toolbar to appear (proves CodeBlock rendered)
     await expect(page.getByText(/SCLANG/i).first()).toBeVisible({ timeout: 5000 });
 
-    // CodeBlock renders lines in separate <code> elements — collect all
+    // CodeBlock renders lines in separate <code> elements - collect all
     const fullText = await getCodeBlockText(page);
     expect(fullText).toContain("SynthDef");
   });
@@ -130,9 +127,7 @@ test.describe("T-08: Codegen Core Flow", () => {
   });
 });
 
-/* ================================================================== */
 /* T-09: Config Drawer                                                 */
-/* ================================================================== */
 
 test.describe("T-09: Codegen Config Drawer", () => {
   test.beforeEach(async ({ page }) => {
@@ -184,14 +179,12 @@ test.describe("T-09: Codegen Config Drawer", () => {
   });
 });
 
-/* ================================================================== */
 /* T-10: Codegen Popout Window                                         */
-/* ================================================================== */
 
 test.describe("T-10: Codegen Popout", () => {
   test("T-10.1 — popout route renders standalone", async ({ page }) => {
     await page.goto("/codegen-popout");
-    // CodegenPopout renders inside AppShell — verify GENERATE button is present
+    // CodegenPopout renders inside AppShell - verify GENERATE button is present
     await expect(
       page.locator("button").filter({ hasText: /generate/i }).first()
     ).toBeVisible({ timeout: 5000 });

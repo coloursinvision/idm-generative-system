@@ -19,7 +19,7 @@ Two pandera DataFrameSchemas live here.
 :data:`InferenceSchema`
     Validates the **narrow inference DataFrame** built by the V2.3
     ``/tuning`` endpoint handler from a single :class:`TuningRequest`,
-    after the ``swing_pct → swing`` boundary conversion (D-S7-04) and the
+    after the ``swing_pct → swing`` boundary conversion and the
     Pydantic-level cross-field validation. Five columns only; ``strict=True``
     to reject any accidental feature injection upstream.
 
@@ -33,7 +33,7 @@ Design principles:
       columns — those are model *targets*, not inputs.
     - **Declarative construction:** Both schemas built via direct
       :class:`pa.DataFrameSchema` constructor (no ``add_columns()`` /
-      mutation patterns — Gotcha #16: pandera 0.31 drops ``regex=True``
+      mutation patterns — pandera 0.31 drops ``regex=True``
       in ``add_columns``).
     - **DataFrame-level cross-column checks:** Sub-region scope rule
       enforced via ``pa.Check`` callables at the schema level on both
@@ -49,16 +49,12 @@ import pandera.pandas as pa
 
 from engine.ml.regional_profiles import RegionCode, SubRegion
 
-# ---------------------------------------------------------------------------
 # Spoke-derived enumerations (no hard-coded region lists)
-# ---------------------------------------------------------------------------
 
 _VALID_REGIONS: tuple[str, ...] = get_args(RegionCode)
 _VALID_SUB_REGIONS: tuple[str, ...] = get_args(SubRegion)
 
-# ---------------------------------------------------------------------------
-# DATASET_SCHEMA — wide-format training DataFrame (Layer 5 generator output)
-# ---------------------------------------------------------------------------
+# DATASET_SCHEMA - wide-format training DataFrame (Layer 5 generator output)
 
 DATASET_SCHEMA: pa.DataFrameSchema = pa.DataFrameSchema(
     columns={
@@ -209,20 +205,18 @@ DATASET_SCHEMA: pa.DataFrameSchema = pa.DataFrameSchema(
 )
 
 
-# ---------------------------------------------------------------------------
-# InferenceSchema — narrow inference DataFrame (V2.3 /tuning endpoint input)
-# ---------------------------------------------------------------------------
+# InferenceSchema - narrow inference DataFrame (V2.3 /tuning endpoint input)
 #
 # Validates the single-row DataFrame built by the V2.3 endpoint handler
 # from a TuningRequest payload, AFTER:
 #   1. Pydantic field-level validation (bpm, pitch_midi, swing_pct, region,
-#      sub_region — each with its own range / Literal constraints)
+#      sub_region - each with its own range / Literal constraints)
 #   2. Pydantic @model_validator cross-field check (sub_region ↔ JAPAN_IDM)
-#   3. Boundary conversion swing = swing_pct / 100.0 (D-S7-04)
+#   3. Boundary conversion swing = swing_pct / 100.0
 #
 # Schema width vs DATASET_SCHEMA:
 #   - INCLUDES:  bpm, pitch_midi, swing, region, sub_region
-#                (the 5 features consumed by the trained model — see
+#                (the 5 features consumed by the trained model - see
 #                 _CATEGORICAL_FEATURES + _NUMERIC_FEATURES in
 #                 engine.ml.model_training)
 #   - EXCLUDES:  tuning_hz, freq_*           (model targets, not inputs)
@@ -233,7 +227,7 @@ DATASET_SCHEMA: pa.DataFrameSchema = pa.DataFrameSchema(
 #
 # Strict mode (vs DATASET_SCHEMA.strict=False):
 #   strict=True locks the inference DataFrame to exactly the 5 input
-#   columns — rejects any accidental feature injection from upstream
+#   columns - rejects any accidental feature injection from upstream
 #   code paths. The V2.3 handler builds this DataFrame programmatically
 #   from a validated TuningRequest, so extra columns indicate a bug or
 #   misuse, never legitimate input drift.
@@ -243,7 +237,6 @@ DATASET_SCHEMA: pa.DataFrameSchema = pa.DataFrameSchema(
 #   conversion (swing_pct / 100.0). NaN swing at this point is unreachable
 #   given the Pydantic Field(..., ge=0, le=100) constraint upstream.
 #   Tighter constraint catches programming errors earlier in the pipeline.
-# ---------------------------------------------------------------------------
 
 InferenceSchema: pa.DataFrameSchema = pa.DataFrameSchema(
     columns={
@@ -268,7 +261,7 @@ InferenceSchema: pa.DataFrameSchema = pa.DataFrameSchema(
             nullable=False,
             description=(
                 "Internal swing ratio [0.0, 1.0] after boundary conversion "
-                "(swing = swing_pct / 100.0) per D-S7-04. NaN unreachable "
+                "(swing = swing_pct / 100.0). NaN unreachable "
                 "given Pydantic upstream constraints — tighter than "
                 "DATASET_SCHEMA's training-side counterpart."
             ),
@@ -279,7 +272,7 @@ InferenceSchema: pa.DataFrameSchema = pa.DataFrameSchema(
             description=(
                 "Regional profile identifier. Spoke-derived enum via "
                 "get_args(RegionCode) — no hard-coded list, mirrors "
-                "DATASET_SCHEMA.region (D-S7-02)."
+                "DATASET_SCHEMA.region."
             ),
         ),
         "sub_region": pa.Column(
@@ -287,7 +280,7 @@ InferenceSchema: pa.DataFrameSchema = pa.DataFrameSchema(
             nullable=True,
             description=(
                 "Sub-region discriminator. Non-NaN only for JAPAN_IDM "
-                "(TOKYO or OSAKA) — D-S3-05. Cross-field rule enforced "
+                "(TOKYO or OSAKA). Cross-field rule enforced "
                 "by the DataFrame-level check below; Pydantic "
                 "@model_validator provides upstream catch."
             ),
@@ -298,14 +291,14 @@ InferenceSchema: pa.DataFrameSchema = pa.DataFrameSchema(
     coerce=False,
     checks=[
         # Cross-column checks (bidirectional): sub_region scope tied to
-        # JAPAN_IDM. Defence in depth — TuningRequest.@_validate_sub_region
+        # JAPAN_IDM. Defence in depth - TuningRequest.@_validate_sub_region
         # catches both directions earlier in the request lifecycle, but a
         # hand-built inference DataFrame (e.g., from internal callers
         # bypassing the Pydantic layer) still goes through these guards.
         #
         # Two checks (not one) because the rule has two directions and a
         # single boolean check would either (a) collapse the error message
-        # for both cases — bad for debugging — or (b) miss one direction
+        # for both cases - bad for debugging - or (b) miss one direction
         # entirely if naively written. Splitting yields precise error
         # messages and full coverage.
         pa.Check(

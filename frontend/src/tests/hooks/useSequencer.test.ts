@@ -1,15 +1,10 @@
-/* ------------------------------------------------------------------ */
-/* hooks/useSequencer.test.ts                                          */
-/* Vitest unit coverage for CR-F13 AudioContext lifecycle behaviour    */
-/* ------------------------------------------------------------------ */
+/* Unit coverage for AudioContext lifecycle behaviour. */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { useSequencer } from "../../hooks/useSequencer";
 
-/* ------------------------------------------------------------------ */
 /* AudioContext mock                                                   */
-/* ------------------------------------------------------------------ */
 
 /**
  * Minimal AudioContext mock with a controllable state machine.
@@ -18,10 +13,10 @@ import { useSequencer } from "../../hooks/useSequencer";
  * inspect side-effects (`ctx.resume` is a vi.fn that resolves after applying
  * the next queued state, or "running" by default).
  *
- * Modelled to cover the three CR-F13 hypotheses:
- *  H1 — unawaited resume() → silent playback
- *  H2 — gesture-scoped unlock failure (context stuck in "suspended")
- *  H3 — WebKit "interrupted" state after BFCache / visibility change
+ * Modelled to cover the three lifecycle hypotheses:
+ *  H1 - unawaited resume() -> silent playback
+ *  H2 - gesture-scoped unlock failure (context stuck in "suspended")
+ *  H3 - WebKit "interrupted" state after BFCache / visibility change
  */
 type MockState = "suspended" | "running" | "closed" | "interrupted";
 
@@ -58,7 +53,7 @@ function createMockAudioContext(initialState: MockState = "suspended"): MockAudi
     },
   };
 
-  // Default resume behaviour — transitions to next queued state, or "running".
+  // Default resume behaviour - transitions to next queued state, or "running".
   ctx.resume.mockImplementation(async () => {
     const next = ctx.__resumeQueue.shift() ?? "running";
     ctx.state = next;
@@ -84,17 +79,15 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-/* ------------------------------------------------------------------ */
 /* Tests                                                               */
-/* ------------------------------------------------------------------ */
 
-describe("useSequencer — CR-F13 AudioContext lifecycle", () => {
+describe("useSequencer AudioContext lifecycle", () => {
   it("unlockAudioContext awaits resume() before completing (H1)", async () => {
     const { result } = renderHook(() => useSequencer({ numSteps: 16 }));
 
     let resumeResolved = false;
     currentMockCtx.resume.mockImplementation(async () => {
-      // Simulate async resume — state transitions only after the awaited tick.
+      // Simulate async resume - state transitions only after the awaited tick.
       await Promise.resolve();
       currentMockCtx.state = "running";
       resumeResolved = true;
@@ -142,7 +135,7 @@ describe("useSequencer — CR-F13 AudioContext lifecycle", () => {
   it("play() aborts with warning if context fails to reach 'running' state", async () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    // Configure resume() to NOT transition state — simulating WebKit gesture-scope failure
+    // Configure resume() to NOT transition state - simulating WebKit gesture-scope failure
     currentMockCtx.resume.mockImplementation(async () => {
       // state remains "suspended"
     });

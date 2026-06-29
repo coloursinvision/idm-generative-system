@@ -33,7 +33,6 @@ export function EffectsExplorer() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {/* Header */}
       <div>
         <h1 className="font-display text-lg font-bold tracking-tight">
           EFFECTS CHAIN
@@ -43,7 +42,6 @@ export function EffectsExplorer() {
         </p>
       </div>
 
-      {/* Signal chain diagram */}
       <div className="panel overflow-x-auto">
         <div className="flex items-center gap-0 text-[9px] tracking-[0.1em] whitespace-nowrap">
           <span className="text-text-muted px-2">INPUT</span>
@@ -67,7 +65,6 @@ export function EffectsExplorer() {
         </div>
       </div>
 
-      {/* Block details */}
       {blocks.map((block, i) => (
         <div
           key={block.key}
@@ -78,7 +75,6 @@ export function EffectsExplorer() {
           }`}
           onClick={() => setExpanded(expanded === i ? null : i)}
         >
-          {/* Block header */}
           <div className="flex items-baseline justify-between">
             <div className="flex items-baseline gap-3">
               <span className="text-text-muted text-[10px] font-bold">
@@ -96,17 +92,14 @@ export function EffectsExplorer() {
             </span>
           </div>
 
-          {/* Expanded detail */}
           {expanded === i && (
             <div className="mt-4 space-y-3">
-              {/* Docstring */}
               {block.docstring && (
                 <p className="text-text-secondary text-xs leading-relaxed italic">
                   {block.docstring}
                 </p>
               )}
 
-              {/* Parameters */}
               <div>
                 <span className="label">Parameters</span>
                 <div className="grid grid-cols-1 gap-1 mt-1">

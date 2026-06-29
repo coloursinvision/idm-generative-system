@@ -1,15 +1,15 @@
 /**
  * components/codegen/CodegenPanel.tsx
  *
- * Code generation panel — main app tab (docked mode).
+ * Code generation panel - main app tab (docked mode).
  *
- * Layout (v4 — live-ready):
+ * Layout (v4 - live-ready):
  *   ┌─────────────────────────────────────┐
  *   │  SC │ TIDAL            ⧉  GENERATE  │  ← top bar
  *   ├─────────────────────────────────────┤
  *   │  ▸ CONFIG  ─── GLITCH / STUDIO / …  │  ← collapsed drawer
  *   ├─────────────────────────────────────┤
- *   │  SCLANG .SCD — 48 LINES   COPY SAVE │  ← code toolbar
+ *   │  SCLANG .SCD - 48 LINES   COPY SAVE │  ← code toolbar
  *   │  1 │ // IDM Generative System …      │
  *   │  2 │ // glitch_click | studio | 120  │  ← code output
  *   │  … │ …                               │     (85% of panel)
@@ -39,9 +39,7 @@ import type {
   CodegenBroadcastMessage,
 } from "../../types/codegen";
 
-/* ------------------------------------------------------------------ */
 /* Constants                                                           */
-/* ------------------------------------------------------------------ */
 
 const GENERATORS = ["glitch_click", "noise_burst", "fm_blip"] as const;
 
@@ -57,9 +55,7 @@ const POPOUT_URL = "/codegen-popout";
 const POPOUT_FEATURES =
   "width=780,height=720,menubar=no,toolbar=no,status=no,scrollbars=yes";
 
-/* ------------------------------------------------------------------ */
 /* Collapsible info strip                                              */
-/* ------------------------------------------------------------------ */
 
 function InfoStrip({
   title,
@@ -99,9 +95,7 @@ function InfoStrip({
   );
 }
 
-/* ------------------------------------------------------------------ */
 /* CodegenPanel                                                        */
-/* ------------------------------------------------------------------ */
 
 export function CodegenPanel() {
   /* --- State: config --- */
@@ -280,9 +274,7 @@ export function CodegenPanel() {
   /* --- Main render --- */
   return (
     <div className="max-w-3xl mx-auto space-y-0">
-      {/* ── Top bar ── */}
       <div className="flex items-stretch border border-surface-3">
-        {/* SC / TIDAL tabs */}
         {(["supercollider", "tidalcycles"] as const).map((t) => (
           <button
             key={t}
@@ -301,10 +293,8 @@ export function CodegenPanel() {
           </button>
         ))}
 
-        {/* Spacer */}
         <div className="flex-1 bg-surface-0" />
 
-        {/* Popout button */}
         <button
           onClick={handlePopout}
           className="px-3 text-text-muted hover:text-text-secondary bg-surface-0 border-l border-surface-3 transition-colors duration-100 text-sm"
@@ -314,7 +304,6 @@ export function CodegenPanel() {
           ⧉
         </button>
 
-        {/* Generate button */}
         <button
           onClick={handleGenerate}
           disabled={loading}
@@ -325,7 +314,6 @@ export function CodegenPanel() {
         </button>
       </div>
 
-      {/* ── Config drawer toggle ── */}
       <button
         onClick={() => setConfigOpen(!configOpen)}
         className="w-full flex items-center gap-2 px-3 py-1.5 bg-surface-0 border border-surface-3 border-t-0 cursor-pointer transition-colors hover:bg-surface-1"
@@ -347,10 +335,8 @@ export function CodegenPanel() {
         </span>
       </button>
 
-      {/* ── Config drawer body ── */}
       {configOpen && (
         <div className="border border-surface-3 border-t-0 px-3 py-2.5 space-y-3">
-          {/* Generator + Mode + BPM */}
           <div className="flex flex-wrap items-end gap-3">
             <div>
               <span className="block text-[9px] tracking-[0.12em] uppercase text-text-muted mb-1">
@@ -412,7 +398,6 @@ export function CodegenPanel() {
             </div>
           </div>
 
-          {/* Effects chain */}
           <div>
             <span className="block text-[9px] tracking-[0.12em] uppercase text-text-muted mb-1">
               Effects chain
@@ -440,14 +425,12 @@ export function CodegenPanel() {
         </div>
       )}
 
-      {/* ── Error ── */}
       {error && (
         <div className="px-3 py-2 border border-accent-red/50 border-t-0">
           <span className="text-accent-red text-xs">{error}</span>
         </div>
       )}
 
-      {/* ── Code output ── */}
       {result && (
         <>
           <div className="border-t-0">
@@ -460,7 +443,6 @@ export function CodegenPanel() {
             />
           </div>
 
-          {/* Warnings */}
           {warningCount > 0 && (
             <InfoStrip title="WARNINGS" badge={warningCount} defaultOpen>
               <div className="space-y-0.5">
@@ -473,7 +455,6 @@ export function CodegenPanel() {
             </InfoStrip>
           )}
 
-          {/* Unmapped params */}
           {unmappedCount > 0 && (
             <InfoStrip title="UNMAPPED" badge={unmappedCount}>
               {Object.entries(result.unmapped_params).map(([block, params]) => (
@@ -496,7 +477,6 @@ export function CodegenPanel() {
             </InfoStrip>
           )}
 
-          {/* Setup notes */}
           {result.setup_notes.length > 0 && (
             <InfoStrip title="SETUP">
               <div className="space-y-0.5">
@@ -509,7 +489,6 @@ export function CodegenPanel() {
             </InfoStrip>
           )}
 
-          {/* Footer */}
           <div className="flex justify-end gap-4 text-[9px] tracking-[0.1em] text-text-muted pt-1.5">
             <span>{result.target === "supercollider" ? "SUPERCOLLIDER" : "TIDALCYCLES"}</span>
             <span>{result.mode.toUpperCase()}</span>

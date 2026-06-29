@@ -49,17 +49,13 @@ from engine.codegen.mappings import (
     transform_param,
 )
 
-# ---------------------------------------------------------------------------
 # Constants
-# ---------------------------------------------------------------------------
 
 _INDENT = "    "  # 4-space indent for SC code
 _HEADER_SEPARATOR = "// " + "=" * 67
 
 
-# ---------------------------------------------------------------------------
 # SuperCollider code generator
-# ---------------------------------------------------------------------------
 
 
 class SuperColliderCodegen(BaseCodegen):
@@ -135,9 +131,7 @@ class SuperColliderCodegen(BaseCodegen):
             setup_notes=setup_notes,
         )
 
-    # ------------------------------------------------------------------
     # Header
-    # ------------------------------------------------------------------
 
     def _build_header(self, codegen_input: CodegenInput) -> str:
         gen_name = codegen_input.generator
@@ -154,9 +148,7 @@ class SuperColliderCodegen(BaseCodegen):
             f"{_HEADER_SEPARATOR}"
         )
 
-    # ------------------------------------------------------------------
     # Generator SynthDef
-    # ------------------------------------------------------------------
 
     def _build_generator_code(
         self,
@@ -262,9 +254,7 @@ class SuperColliderCodegen(BaseCodegen):
             f"}}).add;"
         )
 
-    # ------------------------------------------------------------------
     # Effect SynthDefs
-    # ------------------------------------------------------------------
 
     def _build_effects_code(
         self,
@@ -773,9 +763,7 @@ class SuperColliderCodegen(BaseCodegen):
             f"}}).add;"
         )
 
-    # ------------------------------------------------------------------
     # Bus allocation & instantiation
-    # ------------------------------------------------------------------
 
     def _build_bus_allocation(
         self,
@@ -827,9 +815,7 @@ class SuperColliderCodegen(BaseCodegen):
         )
         return "\n".join(lines)
 
-    # ------------------------------------------------------------------
     # Pattern
-    # ------------------------------------------------------------------
 
     def _build_pattern_code(
         self,
@@ -972,9 +958,7 @@ class SuperColliderCodegen(BaseCodegen):
         i = pattern.index(1) if 1 in pattern else 0
         return pattern[i:] + pattern[:i]
 
-    # ------------------------------------------------------------------
     # Wrappers & helpers
-    # ------------------------------------------------------------------
 
     def _build_cleanup(self) -> str:
         return "// --- Cleanup (evaluate to stop) ---\n// CmdPeriod.run;"
@@ -1009,9 +993,7 @@ class SuperColliderCodegen(BaseCodegen):
         return notes
 
 
-# ---------------------------------------------------------------------------
 # Formatting helper
-# ---------------------------------------------------------------------------
 
 
 def _fmt(value: Any) -> str:

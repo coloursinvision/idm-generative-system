@@ -61,9 +61,7 @@ from scipy import signal as scipy_signal
 
 from engine.effects.base import BaseEffect
 
-# ---------------------------------------------------------------------------
-# Preset configurations — calibrated against hardware behaviour
-# ---------------------------------------------------------------------------
+# Preset configurations - calibrated against hardware behaviour
 
 COMPRESSOR_PRESETS: dict[str, dict] = {
     "ssl_glue": {
@@ -93,13 +91,11 @@ COMPRESSOR_PRESETS: dict[str, dict] = {
 }
 
 
-# ---------------------------------------------------------------------------
-# Numba-compiled DSP kernels (CR-04)
+# Numba-compiled DSP kernels
 #
 # Envelope smoothing loops extracted to module-level @njit functions.
-# These are the compressor's tightest inner loops — per-sample attack/release
+# These are the compressor's tightest inner loops - per-sample attack/release
 # ballistics that cannot be vectorised (each sample depends on the previous).
-# ---------------------------------------------------------------------------
 
 
 @njit(cache=True)
@@ -286,7 +282,7 @@ class Compressor(BaseEffect):
         self.mix = np.clip(mix, 0.0, 1.0)
         self.sr = sr
 
-        # Envelope follower state — persists across calls, cleared by reset()
+        # Envelope follower state - persists across calls, cleared by reset()
         self._env_state: float = 0.0
 
     def __call__(self, signal: np.ndarray) -> np.ndarray:
@@ -308,7 +304,7 @@ class Compressor(BaseEffect):
 
         dry = signal.copy()
 
-        # Sidechain path — HPF removes sub-bass from detection
+        # Sidechain path - HPF removes sub-bass from detection
         sidechain = self._apply_sidechain_hpf(signal)
 
         # RMS envelope detection (in dB)
@@ -328,7 +324,7 @@ class Compressor(BaseEffect):
         makeup_linear = self._compute_makeup_gain()
         wet = wet * makeup_linear
 
-        # Soft clip — only engage when makeup gain pushes peaks above ±1.0
+        # Soft clip - only engage when makeup gain pushes peaks above ±1.0
         # Transparent otherwise (no colouration at unity or below)
         if np.max(np.abs(wet)) > 1.0:
             wet = np.tanh(wet)
@@ -339,9 +335,7 @@ class Compressor(BaseEffect):
         """Reset envelope follower state."""
         self._env_state = 0.0
 
-    # ------------------------------------------------------------------
     # Private helpers
-    # ------------------------------------------------------------------
 
     def _apply_sidechain_hpf(self, signal: np.ndarray) -> np.ndarray:
         """
@@ -372,7 +366,7 @@ class Compressor(BaseEffect):
         n = len(signal)
         window_samp = max(int(self.rms_window_ms * self.sr / 1000), 1)
 
-        # Squared signal — cumulative sum for efficient windowed RMS
+        # Squared signal - cumulative sum for efficient windowed RMS
         sq = signal**2
         cumsum = np.cumsum(sq)
         cumsum = np.insert(cumsum, 0, 0.0)
@@ -410,13 +404,13 @@ class Compressor(BaseEffect):
         if self.knee_db > 0.01:
             # --- Soft knee: three regions ---
 
-            # Region 1: below knee — no compression
+            # Region 1: below knee - no compression
             below = env_db < (threshold - half_knee)
 
-            # Region 2: within knee — quadratic interpolation
+            # Region 2: within knee - quadratic interpolation
             in_knee = (~below) & (env_db < (threshold + half_knee))
 
-            # Region 3: above knee — full compression
+            # Region 3: above knee - full compression
             above = env_db >= (threshold + half_knee)
 
             # Quadratic knee (peaking at threshold ± half_knee)
@@ -449,7 +443,7 @@ class Compressor(BaseEffect):
         This produces natural, breathing compression that doesn't pump
         on transients but recovers quickly during sustained passages.
 
-        Inner loops delegated to Numba-compiled kernels (CR-04).
+        Inner loops delegated to Numba-compiled kernels.
         """
         n = len(gr_db)
         attack_coeff = np.exp(-1.0 / (self.attack_ms * self.sr / 1000))

@@ -53,7 +53,6 @@ export function TuningForm({
     <div className="panel space-y-5">
       <div className="panel-header">Tuning request</div>
 
-      {/* BPM */}
       <div>
         <label className="label">BPM: {value.bpm.toFixed(1)}</label>
         <input
@@ -71,7 +70,6 @@ export function TuningForm({
         </div>
       </div>
 
-      {/* Pitch MIDI */}
       <div>
         <label className="label">
           Pitch MIDI: {value.pitch_midi.toFixed(0)} (
@@ -93,7 +91,6 @@ export function TuningForm({
         </div>
       </div>
 
-      {/* Swing % */}
       <div>
         <label className="label">Swing: {value.swing_pct.toFixed(0)}%</label>
         <input
@@ -107,7 +104,6 @@ export function TuningForm({
         />
       </div>
 
-      {/* Region */}
       <div>
         <label className="label">Region</label>
         <select
@@ -126,7 +122,6 @@ export function TuningForm({
         </div>
       </div>
 
-      {/* Sub-region — conditional */}
       {value.region === "JAPAN_IDM" && (
         <div>
           <label className="label">Sub-region</label>
@@ -147,12 +142,10 @@ export function TuningForm({
         </div>
       )}
 
-      {/* Error */}
       {error && (
         <div className="text-accent-red text-xs">{error}</div>
       )}
 
-      {/* Submit */}
       <button
         className="btn-primary"
         onClick={onSubmit}

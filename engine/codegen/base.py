@@ -20,9 +20,7 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any
 
-# ---------------------------------------------------------------------------
 # Enums
-# ---------------------------------------------------------------------------
 
 
 class CodegenTarget(StrEnum):
@@ -49,9 +47,7 @@ class CodegenMode(StrEnum):
     LIVE = "live"
 
 
-# ---------------------------------------------------------------------------
 # Data classes
-# ---------------------------------------------------------------------------
 
 
 @dataclass(frozen=True, slots=True)
@@ -134,9 +130,7 @@ class CodegenInput:
     options: CodegenOptions = field(default_factory=CodegenOptions)
 
 
-# ---------------------------------------------------------------------------
 # Abstract base class
-# ---------------------------------------------------------------------------
 
 
 class BaseCodegen(ABC):
