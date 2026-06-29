@@ -6,6 +6,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.10.1] — 2026-06-29 — Repo-wide comment & reference hygiene (no behaviour change)
+
+### Changed
+- Repo-wide comment & reference hygiene: internal vault/ticket identifiers, self-evident and narration comments, banner-divider lines, and comment em-dashes removed across the tree; OpenAPI field descriptions, the changelog, and the readme stripped of internal IDs. Hardware references and functional directives retained.
+- The public `CLAUDE.md` no longer documents the local age-key file location.
+
+### Notes
+- Documentation- and comment-only release. No functional change; production behaviour identical to `v0.10.0`. CI green (Lint / mypy / Test Suite / Docker).
+
+---
+
 ## [0.10.0] — 2026-06-19 — FM analog voice + pipeline integrity (leakage / HPO / tuning_hz reframe)
 
 ### Added
