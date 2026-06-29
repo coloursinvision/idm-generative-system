@@ -20,7 +20,7 @@ model. The pipeline:
        numerics).
     4. Wraps ``XGBRegressor`` in ``MultiOutputRegressor`` for
        multi-target regression (``freq_*`` columns; ``tuning_hz`` is a
-       deterministic A4 reference, not a target — D-PIPE-07).
+       deterministic A4 reference, not a target).
     5. Optimises hyperparameters via Optuna (TPE sampler,
        ``MedianPruner``).
     6. Logs params, metrics, and model artifacts to MLflow.
@@ -58,9 +58,7 @@ from engine.ml.regional_profiles import RegionCode, SubRegion
 
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
 # Constants
-# ---------------------------------------------------------------------------
 
 _VALID_REGIONS: list[str] = list(get_args(RegionCode))
 _VALID_SUB_REGIONS: list[str] = list(get_args(SubRegion))
@@ -77,9 +75,7 @@ _NUMERIC_FEATURES: list[str] = [
 _EXCLUDE_COLUMNS: set[str] = {"spec_id", "is_perturbed", "perturbation_idx"}
 
 
-# ---------------------------------------------------------------------------
 # Configuration
-# ---------------------------------------------------------------------------
 
 
 @dataclass(frozen=True)
@@ -123,9 +119,7 @@ class OptunaConfig:
     xgboost_ranges: dict[str, Any] = field(default_factory=dict)
 
 
-# ---------------------------------------------------------------------------
 # Feature / target extraction
-# ---------------------------------------------------------------------------
 
 
 def extract_feature_target_columns(
@@ -137,7 +131,7 @@ def extract_feature_target_columns(
     ``sub_region`` (input specification columns).
 
     Target columns: all ``freq_*`` columns (model prediction targets).
-    ``tuning_hz`` is reframed out of the target set (D-PIPE-07) — it is a
+    ``tuning_hz`` is reframed out of the target set — it is a
     deterministic A4 reference, not a learned quantity.
 
     Columns in :data:`_EXCLUDE_COLUMNS` (metadata) are excluded from
@@ -150,8 +144,8 @@ def extract_feature_target_columns(
         Tuple of (feature_column_names, target_column_names).
     """
     feature_cols = _CATEGORICAL_FEATURES + _NUMERIC_FEATURES
-    # tuning_hz is intentionally NOT a target (D-PIPE-07): it is a deterministic
-    # A4 reference selected by the mapper (constant 440.0 until TODO-3 resolves),
+    # tuning_hz is intentionally NOT a target: it is a deterministic
+    # A4 reference selected by the mapper (constant 440.0 for now),
     # so as a target it carried zero variance and a meaningless rmse_tuning_hz=0.0.
     # The real regression signal is the freq_* columns. tuning_hz stays emitted in
     # the dataset for provenance but is dropped from both features and targets.
@@ -171,9 +165,7 @@ def extract_feature_target_columns(
     return feature_cols, target_cols
 
 
-# ---------------------------------------------------------------------------
 # Pipeline construction
-# ---------------------------------------------------------------------------
 
 
 def build_preprocessor() -> ColumnTransformer:
@@ -257,9 +249,7 @@ def build_pipeline(
     )
 
 
-# ---------------------------------------------------------------------------
 # Data preparation
-# ---------------------------------------------------------------------------
 
 
 def prepare_data(
@@ -297,9 +287,7 @@ def prepare_data(
     return X, y
 
 
-# ---------------------------------------------------------------------------
 # Train/test split
-# ---------------------------------------------------------------------------
 
 
 def split_by_group(
@@ -369,8 +357,7 @@ def split_train_val_test_by_group(
     ``val_size * (1 - test_size)`` of the whole dataset.
 
     The validation partition scores Optuna trials; the test partition is held
-    out for the single final metrics report (fixes HPO-on-test, V2_ROADMAP
-    backlog #3 / DECISIONS D-PIPE-06).
+    out for the single final metrics report (fixes HPO-on-test).
 
     Args:
         X: Feature matrix.
@@ -404,9 +391,7 @@ def split_train_val_test_by_group(
     return X_train, X_val, X_test, y_train, y_val, y_test
 
 
-# ---------------------------------------------------------------------------
 # Training
-# ---------------------------------------------------------------------------
 
 
 def train(
@@ -445,7 +430,7 @@ def train(
 
         # MLflow tag: DVC dataset hash for V2.3 endpoint provenance.
         # Sourced from DVC_DATASET_HASH env var exported by scripts/train_with_hash.sh
-        # (TODO-S13-E). Falls back to "unknown" when run outside DVC pipeline.
+        # Falls back to "unknown" when run outside DVC pipeline.
         mlflow.set_tag("dvc_dataset_hash", os.environ.get("DVC_DATASET_HASH", "unknown"))
 
         # --- Fit ---
@@ -472,13 +457,11 @@ def train(
 
         metrics["r2_mean"] = float(r2_score(y_test_arr, y_pred, multioutput="uniform_average"))
 
-        # --- Per-region RMSE diagnostic (S13 housekeeping Item 4/4) ---
-        # Stratified RMSE breakdown by region — V2_ROADMAP v3.0 §V2.2 lists
-        # "RMSE per-region (6 stratified subsets) ... at first-run review" as
-        # a recommended diagnostic. S12 baseline produced aggregate metrics
-        # only; from this run forward we log both aggregate-per-region (flat
-        # metrics, visible in MLflow UI metrics tab) and per-target × region
-        # (JSON artefact, full breakdown).
+        # Per-region RMSE diagnostic. Stratified RMSE breakdown by region is a
+        # recommended diagnostic. Earlier runs produced aggregate metrics only;
+        # from this run forward we log both aggregate-per-region (flat metrics,
+        # visible in the MLflow UI metrics tab) and per-target × region (JSON
+        # artefact, full breakdown).
         #
         # Aggregate-per-region is mean RMSE across all targets restricted to
         # rows where X_test["region"] == <region>. Per-region × per-target is
@@ -530,8 +513,8 @@ def train(
         # --- Log artifact, register, transition to Staging ---
         # Split log/register/transition for deterministic version handle. The
         # combined log_model(..., registered_model_name=...) call leaves the
-        # new version at default stage "None"; V2_ROADMAP §V2.2 AC#3 requires
-        # the post-train state to be stage="Staging". Promotion to "Production"
+        # new version at default stage "None"; the post-train state must be
+        # stage="Staging". Promotion to "Production"
         # remains a manual gate (human review of Staging metrics).
         mlflow.sklearn.log_model(
             pipeline,
@@ -561,9 +544,7 @@ def train(
     return pipeline, metrics
 
 
-# ---------------------------------------------------------------------------
 # Optuna HPO
-# ---------------------------------------------------------------------------
 
 
 def run_optuna_study(
@@ -583,7 +564,7 @@ def run_optuna_study(
     the **validation** set. The best trial's hyperparameters are then used to
     refit on train + validation, and final metrics are reported once on the
     held-out **test** set (so the metric optimised by HPO is never the metric
-    reported — fixes HPO-on-test, V2_ROADMAP backlog #3 / D-PIPE-06).
+    reported — fixes HPO-on-test).
 
     Args:
         X_train: Training feature matrix.

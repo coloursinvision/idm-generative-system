@@ -62,7 +62,7 @@ __all__ = [
     "save_sample",
     "batch_export",
     "SAMPLE_RATE",
-    # effects — primary entry points
+    # effects - primary entry points
     "build_chain",
     "CANONICAL_ORDER",
     "effects",

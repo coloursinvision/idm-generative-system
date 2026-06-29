@@ -58,9 +58,7 @@ from engine.ml.regional_profiles import (
 )
 from engine.ml.resonance_rules import hz_to_nearest_note
 
-# ---------------------------------------------------------------------------
 # Constants
-# ---------------------------------------------------------------------------
 
 _FIXED_SOURCES: frozenset[str] = frozenset(
     {
@@ -88,9 +86,7 @@ are unrepresentable in the downstream DSP chain.
 """
 
 
-# ---------------------------------------------------------------------------
 # Public dataclasses
-# ---------------------------------------------------------------------------
 
 
 @dataclass(frozen=True)
@@ -123,9 +119,7 @@ class PerturbationConfig:
     mapper_sigma: float = 0.0
 
 
-# ---------------------------------------------------------------------------
 # Private helpers
-# ---------------------------------------------------------------------------
 
 
 def _draw(rng: np.random.Generator, sigma: float) -> float:
@@ -270,9 +264,7 @@ def _perturb_noise(
     )
 
 
-# ---------------------------------------------------------------------------
 # Public API
-# ---------------------------------------------------------------------------
 
 
 class GaussianNoiseInjector:

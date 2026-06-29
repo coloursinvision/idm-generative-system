@@ -33,9 +33,7 @@ import numpy as np
 
 from engine.effects.base import BaseEffect
 
-# ---------------------------------------------------------------------------
 # Hardware presets
-# ---------------------------------------------------------------------------
 
 HARDWARE_PRESETS: dict[str, dict] = {
     "sp1200": {

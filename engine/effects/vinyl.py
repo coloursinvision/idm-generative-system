@@ -76,9 +76,7 @@ from scipy import signal as scipy_signal
 
 from engine.effects.base import BaseEffect
 
-# ---------------------------------------------------------------------------
-# RIAA time constants (seconds) — 1954 standard
-# ---------------------------------------------------------------------------
+# RIAA time constants (seconds) - 1954 standard
 
 RIAA_TAU: dict[str, float] = {
     "tau1": 3180e-6,  # 50.05 Hz  — bass shelf
@@ -87,9 +85,7 @@ RIAA_TAU: dict[str, float] = {
 }
 
 
-# ---------------------------------------------------------------------------
-# Vinyl condition presets — noise floor and crackle characteristics
-# ---------------------------------------------------------------------------
+# Vinyl condition presets - noise floor and crackle characteristics
 
 VINYL_CONDITION: dict[str, dict[str, float]] = {
     "mint": {
@@ -115,9 +111,7 @@ VINYL_CONDITION: dict[str, dict[str, float]] = {
 }
 
 
-# ---------------------------------------------------------------------------
 # DAT bandwidth ceiling presets (Hz)
-# ---------------------------------------------------------------------------
 
 DAT_BANDWIDTH: dict[str, int] = {
     "dat_lp": 16000,  # DAT long-play 32 kHz mode — 16 kHz ceiling
@@ -235,19 +229,19 @@ class VinylMastering(BaseEffect):
 
         wet = signal.copy()
 
-        # Stage 1 — RIAA pre-emphasis EQ
+        # Stage 1 - RIAA pre-emphasis EQ
         if self.riaa_intensity > 0.0:
             wet = self._apply_riaa(wet)
 
-        # Stage 2 — DAT brick-wall bandwidth ceiling
+        # Stage 2 - DAT brick-wall bandwidth ceiling
         if self.dat_mode != "none":
             wet = self._apply_dat_ceiling(wet)
 
-        # Stage 3 — Vinyl surface noise
+        # Stage 3 - Vinyl surface noise
         if self.noise_mix > 0.0:
             wet = self._apply_surface_noise(wet, rng)
 
-        # Stage 4 — Final peak limiter
+        # Stage 4 - Final peak limiter
         wet = self._apply_limiter(wet)
 
         return dry * (1.0 - self.mix) + wet * self.mix
@@ -255,9 +249,7 @@ class VinylMastering(BaseEffect):
     def reset(self) -> None:
         """Stateless effect — nothing to reset."""
 
-    # ------------------------------------------------------------------
-    # Stage 1 — RIAA pre-emphasis
-    # ------------------------------------------------------------------
+    # Stage 1 - RIAA pre-emphasis
 
     def _apply_riaa(self, signal: np.ndarray) -> np.ndarray:
         """
@@ -279,11 +271,11 @@ class VinylMastering(BaseEffect):
         f3 = 1.0 / (2.0 * np.pi * RIAA_TAU["tau3"])  # ~2122 Hz
         nyquist = self.sr / 2.0
 
-        # Bass shelf — attenuate below f1 (RIAA bass roll-off)
+        # Bass shelf - attenuate below f1 (RIAA bass roll-off)
         f1_norm = np.clip(f1 / nyquist, 0.001, 0.999)
         sos_bass = scipy_signal.butter(1, f1_norm, btype="high", output="sos")
 
-        # Treble shelf — boost above f3 (RIAA treble pre-emphasis)
+        # Treble shelf - boost above f3 (RIAA treble pre-emphasis)
         f3_norm = np.clip(f3 / nyquist, 0.001, 0.999)
         sos_treble = scipy_signal.butter(1, f3_norm, btype="high", output="sos")
 
@@ -299,9 +291,7 @@ class VinylMastering(BaseEffect):
         # Cross-fade between dry and RIAA-processed
         return signal * (1.0 - intensity) + processed * intensity
 
-    # ------------------------------------------------------------------
-    # Stage 2 — DAT brick-wall filter
-    # ------------------------------------------------------------------
+    # Stage 2 - DAT brick-wall filter
 
     def _apply_dat_ceiling(self, signal: np.ndarray) -> np.ndarray:
         """
@@ -332,9 +322,7 @@ class VinylMastering(BaseEffect):
         )
         return scipy_signal.sosfilt(sos, signal)
 
-    # ------------------------------------------------------------------
-    # Stage 3 — Vinyl surface noise
-    # ------------------------------------------------------------------
+    # Stage 3 - Vinyl surface noise
 
     def _apply_surface_noise(self, signal: np.ndarray, rng: np.random.Generator) -> np.ndarray:
         """
@@ -393,9 +381,7 @@ class VinylMastering(BaseEffect):
         # Mix noise into signal
         return signal + noise * self.noise_mix
 
-    # ------------------------------------------------------------------
-    # Stage 4 — Final peak limiter
-    # ------------------------------------------------------------------
+    # Stage 4 - Final peak limiter
 
     def _apply_limiter(self, signal: np.ndarray) -> np.ndarray:
         """

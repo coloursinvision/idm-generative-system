@@ -43,7 +43,7 @@ dataset_generator.py        ← Layer 5: synthetic DataFrame
 
 ## Testing
 
-Tests live in `tests/` at the repo root (per D-S3-08):
+Tests live in `tests/` at the repo root:
 
 - `tests/test_regional_profiles.py` — spoke parsing, validation, Osaka override
 - `tests/test_resonance_rules.py` — 12 doctests + unit tests

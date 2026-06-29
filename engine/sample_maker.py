@@ -20,16 +20,12 @@ from pathlib import Path
 import numpy as np
 import soundfile as sf
 
-# ---------------------------------------------------------------------------
 # Constants
-# ---------------------------------------------------------------------------
 
 SAMPLE_RATE: int = 44100
 
 
-# ---------------------------------------------------------------------------
 # Utilities
-# ---------------------------------------------------------------------------
 
 
 def normalize(x: np.ndarray) -> np.ndarray:
@@ -48,9 +44,7 @@ def normalize(x: np.ndarray) -> np.ndarray:
     return x / peak
 
 
-# ---------------------------------------------------------------------------
 # Sample generators
-# ---------------------------------------------------------------------------
 
 
 def glitch_click(
@@ -193,9 +187,7 @@ def fm_blip(
     return normalize(carrier * envelope).astype(np.float32)
 
 
-# ---------------------------------------------------------------------------
-# Analog voice — subtractive layer over the FM core
-# ---------------------------------------------------------------------------
+# Analog voice - subtractive layer over the FM core
 
 
 def _soft_saturate(x: np.ndarray, drive: float) -> np.ndarray:
@@ -292,9 +284,7 @@ def fm_analog(
     return normalize(filtered * shape).astype(np.float32)
 
 
-# ---------------------------------------------------------------------------
 # Export
-# ---------------------------------------------------------------------------
 
 
 def save_sample(

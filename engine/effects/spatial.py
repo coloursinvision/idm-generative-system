@@ -146,7 +146,7 @@ class SpatialProcessor(BaseEffect):
         # Apply stereo width to side channel
         side_wide = side * self.width
 
-        # Bass mono enforcement — split at bass_mono_hz
+        # Bass mono enforcement - split at bass_mono_hz
         sos_lp = scipy_signal.butter(
             4, self.bass_mono_hz / (self.sr / 2.0), btype="low", output="sos"
         )
@@ -158,7 +158,7 @@ class SpatialProcessor(BaseEffect):
         mid_high = scipy_signal.sosfilt(sos_hp, mid)
         side_high = scipy_signal.sosfilt(sos_hp, side_wide)
 
-        # Haas-zone phase decorrelation (up to 23ms — Haas effect boundary)
+        # Haas-zone phase decorrelation (up to 23ms - Haas effect boundary)
         if self.decorrelation > 0.0:
             side_high = self._apply_decorrelation(side_high)
 
@@ -176,9 +176,7 @@ class SpatialProcessor(BaseEffect):
     def reset(self) -> None:
         """Stateless effect — nothing to reset."""
 
-    # ------------------------------------------------------------------
     # Private helpers
-    # ------------------------------------------------------------------
 
     def _apply_decorrelation(self, side: np.ndarray) -> np.ndarray:
         """

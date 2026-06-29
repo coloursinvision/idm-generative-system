@@ -102,9 +102,7 @@ class NoiseFloor(BaseEffect):
     def reset(self) -> None:
         """Stateless effect — nothing to reset."""
 
-    # ------------------------------------------------------------------
     # Private helpers
-    # ------------------------------------------------------------------
 
     def _generate_noise(self, n: int, rms_linear: float) -> np.ndarray:
         """Generate noise of the configured type at the target RMS level."""

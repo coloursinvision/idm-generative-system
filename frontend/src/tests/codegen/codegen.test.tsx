@@ -6,12 +6,12 @@
  * Test runner: Vitest + React Testing Library + jsdom
  *
  * Coverage:
- *   - Type contracts (compile-time — validated by tsc, listed here for documentation)
- *   - API helpers: postSynthdef, postTidal — request/response, error handling
- *   - useBroadcastChannel hook — message passing, heartbeat, cleanup
- *   - CodeBlock component — render, syntax highlighting, copy, download
- *   - CodegenPanel component — tab switching, config drawer, generate flow
- *   - CodegenPopout component — standalone render, BroadcastChannel reception
+ *   - Type contracts (compile-time - validated by tsc, listed here for documentation)
+ *   - API helpers: postSynthdef, postTidal - request/response, error handling
+ *   - useBroadcastChannel hook - message passing, heartbeat, cleanup
+ *   - CodeBlock component - render, syntax highlighting, copy, download
+ *   - CodegenPanel component - tab switching, config drawer, generate flow
+ *   - CodegenPopout component - standalone render, BroadcastChannel reception
  *
  * Run:
  *   cd frontend && npx vitest run src/tests/codegen/
@@ -21,10 +21,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
-/* ------------------------------------------------------------------ */
-/* 1. Type contract tests (compile-time — tsc validates these)         */
+/* 1. Type contract tests (compile-time - tsc validates these)         */
 /*    Listed explicitly so test coverage report shows intent.          */
-/* ------------------------------------------------------------------ */
 
 import type {
   CodegenTarget,
@@ -122,9 +120,7 @@ describe("Type contracts", () => {
   });
 });
 
-/* ------------------------------------------------------------------ */
 /* 2. API helper tests                                                 */
-/* ------------------------------------------------------------------ */
 
 import { postSynthdef, postTidal } from "../../api/codegen";
 
@@ -232,9 +228,7 @@ describe("API helpers", () => {
   });
 });
 
-/* ------------------------------------------------------------------ */
 /* 3. useBroadcastChannel hook tests                                   */
-/* ------------------------------------------------------------------ */
 
 import { renderHook } from "@testing-library/react";
 import { useBroadcastChannel } from "../../components/codegen/useBroadcastChannel";
@@ -398,9 +392,7 @@ describe("useBroadcastChannel", () => {
   });
 });
 
-/* ------------------------------------------------------------------ */
 /* 4. CodeBlock component tests                                        */
-/* ------------------------------------------------------------------ */
 
 import { CodeBlock } from "../../components/codegen/CodeBlock";
 
@@ -501,9 +493,7 @@ d1 $ sound "bd" # lpf 800`;
   });
 });
 
-/* ------------------------------------------------------------------ */
 /* 5. CodegenPanel component tests                                     */
-/* ------------------------------------------------------------------ */
 
 import { CodegenPanel } from "../../components/codegen/CodegenPanel";
 
@@ -635,9 +625,7 @@ describe("CodegenPanel", () => {
   });
 });
 
-/* ------------------------------------------------------------------ */
 /* 6. CodegenPopout component tests                                    */
-/* ------------------------------------------------------------------ */
 
 import { CodegenPopout } from "../../components/codegen/CodegenPopout";
 

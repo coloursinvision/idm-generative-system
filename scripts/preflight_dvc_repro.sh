@@ -6,7 +6,7 @@
 # IDM Generative System V2 ML pipeline (Layer 6). Designed to be invoked
 # from the repository root on a Tailscale-connected workstation host.
 #
-# Per DECISIONS D-S8-01: training execution host is the workstation
+# Training execution host is the workstation
 # (preferred — has GPU) or MacBook (acceptable — CPU-only, longer wall time).
 # The droplet hosts the MLflow tracking server only and is reached via
 # the Tailscale-restricted vhost https://mlflow.idm.coloursinvision.ai.
@@ -263,8 +263,7 @@ check_09_tailscale_active() {
     # Tailscale presence is workstation/macOS-specific. The droplet itself
     # also runs tailscaled but does not need this check (loopback MLflow
     # access works without Tailscale on the droplet). On a non-Tailscale
-    # node, the MLflow vhost is unreachable by IP allowlist policy
-    # (DECISIONS 2026-04-10).
+    # node, the MLflow vhost is unreachable by IP allowlist policy.
     if ! command -v tailscale >/dev/null 2>&1; then
         warn "09-tailscale" "tailscale CLI not installed; check 05 covers reachability"
         return

@@ -1,10 +1,9 @@
-/* ------------------------------------------------------------------ */
-/* Region profile metadata — display labels + philosophical captions  */
-/*                                                                    */
-/* Source: V2_ROADMAP.md §V2.4 — captions per region encode the       */
-/* underlying generative aesthetic intent. Single source of truth for */
-/* user-facing region selector copy.                                  */
-/* ------------------------------------------------------------------ */
+/*
+ * Region profile metadata: display labels + philosophical captions.
+ *
+ * Captions per region encode the underlying generative aesthetic intent.
+ * Single source of truth for user-facing region selector copy.
+ */
 
 import type { RegionCode, SubRegion } from "../../types";
 

@@ -76,7 +76,7 @@ Files in `notebooks/archive/` are **not authoritative reference for current work
 
 Naming convention for archived notebooks: `<purpose>_<YYYY-MM-DD>_<short-descriptor>.ipynb` (e.g., `exploration_2026-02-03_pattern_genesis.ipynb`).
 
-Disposition principle adapted from vault `DECISIONS.md` D-S9-02 (vault-to-archive rule for code-equivalent files), applied here to repo notebooks. See vault `07-Archive/idm_project_01_genesis_2026-02-03.ipynb` for cross-domain counterpart.
+Disposition principle: the vault-to-archive rule for code-equivalent files, applied here to repo notebooks.
 
 ## Running notebooks
 

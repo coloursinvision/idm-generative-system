@@ -42,10 +42,8 @@ from scipy import signal as scipy_signal
 
 from engine.effects.base import BaseEffect
 
-# ---------------------------------------------------------------------------
 # Decay multipliers per reverb type (relative to base decay_s)
 # Calibrated against Quadraverb factory presets
-# ---------------------------------------------------------------------------
 
 REVERB_TYPE_DECAY: dict[str, float] = {
     "room": 0.4,
@@ -55,18 +53,16 @@ REVERB_TYPE_DECAY: dict[str, float] = {
     "spring": 0.7,
 }
 
-# Comb filter delay times in ms — tuned to Quadraverb plate character
+# Comb filter delay times in ms - tuned to Quadraverb plate character
 # (prime-number ratios to avoid resonant beating)
 COMB_DELAYS_MS: list[float] = [29.7, 37.1, 41.1, 43.7, 47.3, 53.1]
 
 
-# ---------------------------------------------------------------------------
-# Numba-compiled DSP kernels (CR-04)
+# Numba-compiled DSP kernels
 #
 # Per-sample loops extracted to module-level @njit functions.
 # LLVM-compiled on first call, cached to __pycache__ for subsequent loads.
-# No Python object overhead — operates directly on NumPy memory buffers.
-# ---------------------------------------------------------------------------
+# No Python object overhead - operates directly on NumPy memory buffers.
 
 
 @njit(cache=True)
@@ -235,9 +231,7 @@ class Reverb(BaseEffect):
     def reset(self) -> None:
         """Stateless effect — nothing to reset."""
 
-    # ------------------------------------------------------------------
     # Private helpers
-    # ------------------------------------------------------------------
 
     def _apply_pre_delay(self, signal: np.ndarray, n: int) -> np.ndarray:
         """Shift signal by pre_delay_ms samples."""

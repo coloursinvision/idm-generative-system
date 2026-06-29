@@ -1,5 +1,5 @@
 # Dropbox ignore — prevent sync of Python bytecode and other generated artifacts
-# that conflict with Dropbox versioning (TODO-S13-D resolution).
+# that conflict with Dropbox versioning.
 #
 # Pattern syntax: gitignore-style, evaluated relative to this file's directory.
 # Source: https://help.dropbox.com/sync/extension-syncing

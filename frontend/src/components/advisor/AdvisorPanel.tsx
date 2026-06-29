@@ -28,7 +28,6 @@ export function AdvisorPanel() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      {/* Header */}
       <div>
         <h1 className="font-display text-lg font-bold tracking-tight">
           SOUND DESIGN ADVISOR
@@ -39,7 +38,6 @@ export function AdvisorPanel() {
         </p>
       </div>
 
-      {/* Input */}
       <div className="panel">
         <label className="label">Question</label>
         <textarea
@@ -76,14 +74,12 @@ export function AdvisorPanel() {
         </div>
       </div>
 
-      {/* Error */}
       {error && (
         <div className="panel border-accent-red/50">
           <span className="text-accent-red text-xs">{error}</span>
         </div>
       )}
 
-      {/* Result */}
       {result && (
         <div className="panel space-y-4">
           <div className="panel-header">Answer</div>
@@ -94,7 +90,6 @@ export function AdvisorPanel() {
 
           <SourceTags sources={result.sources} />
 
-          {/* Token usage */}
           <div className="divider" />
           <div className="flex justify-end gap-4 text-[10px] text-text-muted tracking-wider">
             <span>
