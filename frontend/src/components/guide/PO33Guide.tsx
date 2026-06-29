@@ -1,9 +1,7 @@
 import { useCallback, useEffect } from "react";
 import { useSequencer } from "../../hooks/useSequencer";
 
-/* ------------------------------------------------------------------ */
 /* PO-33 K.O! constants from manual                                    */
-/* ------------------------------------------------------------------ */
 
 const STEPS = 16;
 
@@ -25,9 +23,7 @@ const TRACK_DEFS = [
   { name: "GLITCH 2", generator: "fm_blip" },
 ];
 
-/* ------------------------------------------------------------------ */
 /* Instruction generator                                               */
-/* ------------------------------------------------------------------ */
 
 function generateInstructions(
   tracks: { name: string; steps: boolean[] }[]
@@ -65,9 +61,7 @@ function generateInstructions(
   return instructions;
 }
 
-/* ------------------------------------------------------------------ */
 /* Component                                                           */
-/* ------------------------------------------------------------------ */
 
 export function PO33Guide() {
   const {
@@ -97,7 +91,7 @@ export function PO33Guide() {
    * Click handlers wrap the async hook methods so that:
    *  - WebKit audio unlock fires on the first user gesture (idempotent)
    *  - Rejected Promises are surfaced to the console rather than left
-   *    unhandled, satisfying CR-F13 acceptance criterion 8.
+   *    unhandled.
    */
   const handleLoadSamples = useCallback(() => {
     unlockAudioContext().catch((err) =>
@@ -119,7 +113,6 @@ export function PO33Guide() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {/* Header */}
       <div>
         <h1 className="font-display text-lg font-bold tracking-tight">
           PO-33 K.O! GUIDE
@@ -130,7 +123,6 @@ export function PO33Guide() {
         </p>
       </div>
 
-      {/* Device info */}
       <div className="panel">
         <div className="flex gap-6 text-[10px] text-text-muted tracking-widest">
           <span>16 STEPS</span>
@@ -140,7 +132,6 @@ export function PO33Guide() {
         </div>
       </div>
 
-      {/* Transport + BPM */}
       <div className="panel">
         <div className="panel-header">Transport</div>
         <div className="flex items-end gap-4">
@@ -179,11 +170,9 @@ export function PO33Guide() {
         </div>
       </div>
 
-      {/* Step sequencer — all tracks */}
       <div className="panel">
         <div className="panel-header">Step sequencer</div>
 
-        {/* Step numbers + playhead */}
         <div className="flex items-center gap-2 mb-1">
           <div className="w-16" />
           <div className="flex gap-0 flex-1">
@@ -202,7 +191,6 @@ export function PO33Guide() {
           </div>
         </div>
 
-        {/* Track rows */}
         <div className="space-y-0.5">
           {tracks.map((track, ti) => (
             <div key={ti} className="flex items-center gap-2">
@@ -244,7 +232,6 @@ export function PO33Guide() {
           ))}
         </div>
 
-        {/* Beat markers */}
         <div className="flex items-center gap-2 mt-0.5">
           <div className="w-16" />
           <div className="flex gap-0 flex-1">
@@ -260,14 +247,12 @@ export function PO33Guide() {
         </div>
       </div>
 
-      {/* Action buttons */}
       <div className="flex gap-3">
         <button className="btn-secondary" onClick={clearPattern}>
           CLEAR ALL
         </button>
       </div>
 
-      {/* Instructions — auto-show when pattern exists */}
       {hasPattern && (
         <div className="panel">
           <div className="panel-header">PO-33 Programming instructions</div>
@@ -284,7 +269,6 @@ export function PO33Guide() {
         </div>
       )}
 
-      {/* FX Reference */}
       <div className="panel">
         <div className="panel-header">PO-33 Effects reference</div>
         <div className="grid grid-cols-4 gap-0">

@@ -1,15 +1,15 @@
-/* ------------------------------------------------------------------ */
-/* V2.3 + V2.4 tuning types — TS mirror of FastAPI Pydantic models    */
-/*                                                                    */
-/* Source contracts:                                                  */
-/*   api/main.py — TuningRequest, ResonantPoint, TuningResponse,      */
-/*                 TuningExtractRequest, TuningExtractResponse        */
-/*   engine/ml/regional_profiles.py — RegionCode, SubRegion           */
-/*                                                                    */
-/* Keep these aliases in lockstep with the Python type aliases per    */
-/* [[DECISIONS]] D-S7-02 (single source of truth: spoke filenames →   */
-/* Python RegionCode/SubRegion → these TS literals → frontend UI).    */
-/* ------------------------------------------------------------------ */
+/*
+ * Tuning types: TS mirror of FastAPI Pydantic models.
+ *
+ * Source contracts:
+ *   api/main.py: TuningRequest, ResonantPoint, TuningResponse,
+ *                TuningExtractRequest, TuningExtractResponse
+ *   engine/ml/regional_profiles.py: RegionCode, SubRegion
+ *
+ * Keep these aliases in lockstep with the Python type aliases. Python
+ * RegionCode/SubRegion are the single source of truth, mirrored to these TS
+ * literals and on to the frontend UI.
+ */
 
 export const REGION_CODES = [
   "DETROIT_FIRST_WAVE",
@@ -25,7 +25,7 @@ export type RegionCode = (typeof REGION_CODES)[number];
 export const SUB_REGIONS = ["TOKYO", "OSAKA"] as const;
 export type SubRegion = (typeof SUB_REGIONS)[number];
 
-/* ---- V2.3 — /tuning ---- */
+/* ---- V2.3 - /tuning ---- */
 
 export interface TuningRequest {
   bpm: number;
@@ -49,7 +49,7 @@ export interface TuningResponse {
   inference_latency_ms: number;
 }
 
-/* ---- V2.4 — /tuning/extract ---- */
+/* ---- V2.4 - /tuning/extract ---- */
 
 export interface TuningExtractRequest {
   text: string;

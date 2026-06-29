@@ -42,7 +42,6 @@ export function TuningPanel() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      {/* Header */}
       <div>
         <h1 className="font-display text-lg font-bold tracking-tight">
           TUNING
@@ -53,10 +52,8 @@ export function TuningPanel() {
         </p>
       </div>
 
-      {/* LLM extraction (optional shortcut) */}
       <TuningExtract onExtracted={handleExtracted} />
 
-      {/* Form */}
       <TuningForm
         value={request}
         onChange={setRequest}
@@ -65,7 +62,6 @@ export function TuningPanel() {
         error={error}
       />
 
-      {/* Result */}
       {result && <TuningResult result={result} />}
     </div>
   );

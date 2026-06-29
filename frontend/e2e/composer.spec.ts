@@ -1,6 +1,5 @@
 /**
  * T-03: Composer Tab
- * GUI_TEST_SPECIFICATION.md §T-03
  */
 
 import { test, expect } from "./fixtures";
@@ -26,7 +25,7 @@ test.describe("T-03: Composer Tab", () => {
       await input.press("Enter");
     }
 
-    // Config JSON should appear — look for generator name from mock response
+    // Config JSON should appear - look for generator name from mock response
     await expect(page.getByText(/noise_burst/).first()).toBeVisible({ timeout: 5000 });
   });
 
@@ -41,7 +40,7 @@ test.describe("T-03: Composer Tab", () => {
     }
 
     // Reasoning is a top-level field (ComposeResponse.reasoning) rendered in its own
-    // panel. Backend contract aligned 2026-06-18 — knowledge/rag.py compose() now lifts
+    // panel. Backend contract aligned 2026-06-18 - knowledge/rag.py compose() now lifts
     // reasoning out of config to the top level (code review M2/M3).
     await expect(page.getByText(/long hall decay/i).first()).toBeVisible({ timeout: 5000 });
   });

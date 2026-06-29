@@ -9,7 +9,6 @@ export function TuningResult({ result }: Props) {
     <div className="panel space-y-4">
       <div className="panel-header">Tuning</div>
 
-      {/* Scalar tuning Hz — hero number */}
       <div className="text-center py-4">
         <div className="text-[10px] tracking-[0.3em] text-text-muted uppercase">
           Tuning frequency
@@ -21,7 +20,6 @@ export function TuningResult({ result }: Props) {
 
       <div className="divider" />
 
-      {/* Resonant points table */}
       <div>
         <div className="text-[10px] tracking-[0.3em] text-text-muted uppercase mb-2">
           Resonant points ({result.resonant_points.length})
@@ -53,7 +51,6 @@ export function TuningResult({ result }: Props) {
         </table>
       </div>
 
-      {/* Metadata footer */}
       <div className="divider" />
       <div className="flex justify-between gap-4 text-[10px] text-text-muted tracking-wider">
         <span>model {result.model_version.slice(0, 12)}…</span>

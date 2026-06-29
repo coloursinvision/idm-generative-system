@@ -11,7 +11,7 @@ Coverage:
     - Edge cases: all-zeros, single sample, very short signal
     - Parameter extremes: max drive, min bit depth, high feedback
     - Bypass behaviour: effects at neutral settings
-    - Numba kernel regression (CR-04): output parity vs pure-Python reference
+    - Numba kernel regression: output parity vs pure-Python reference
     - Vectorised RMS envelope: output parity vs sequential reference
 
 Run:
@@ -42,12 +42,10 @@ from engine.effects import (
 from engine.effects.compressor import _smooth_envelope_auto, _smooth_envelope_single
 from engine.effects.delay import _delay_line_kernel
 
-# Numba-compiled kernels — imported for direct regression testing
+# Numba-compiled kernels - imported for direct regression testing
 from engine.effects.reverb import _allpass_kernel, _comb_filter_kernel
 
-# ---------------------------------------------------------------------------
 # Fixtures
-# ---------------------------------------------------------------------------
 
 
 @pytest.fixture
@@ -91,9 +89,7 @@ ALL_EFFECT_CLASSES: list[type[BaseEffect]] = [
 ]
 
 
-# ---------------------------------------------------------------------------
 # Shape preservation
-# ---------------------------------------------------------------------------
 
 
 class TestShapePreservation:
@@ -125,9 +121,7 @@ class TestShapePreservation:
         )
 
 
-# ---------------------------------------------------------------------------
 # Edge cases
-# ---------------------------------------------------------------------------
 
 
 class TestEdgeCases:
@@ -178,9 +172,7 @@ class TestEdgeCases:
         assert not np.any(np.isinf(output)), f"{EffectClass.__name__}: Inf detected in output"
 
 
-# ---------------------------------------------------------------------------
-# Parameter validation (CR-05)
-# ---------------------------------------------------------------------------
+# Parameter validation
 
 
 class TestParameterValidation:
@@ -227,9 +219,7 @@ class TestParameterValidation:
             VinylMastering(vinyl_condition="invalid")
 
 
-# ---------------------------------------------------------------------------
 # Valid parameter acceptance
-# ---------------------------------------------------------------------------
 
 
 class TestValidParameters:
@@ -286,9 +276,7 @@ class TestValidParameters:
         assert v.vinyl_condition == vc
 
 
-# ---------------------------------------------------------------------------
 # Stateful block behaviour
-# ---------------------------------------------------------------------------
 
 
 class TestStatefulBlocks:
@@ -318,9 +306,7 @@ class TestStatefulBlocks:
         np.testing.assert_array_equal(output_1, output_2)
 
 
-# ---------------------------------------------------------------------------
 # Parameter extremes
-# ---------------------------------------------------------------------------
 
 
 class TestParameterExtremes:
@@ -383,9 +369,7 @@ class TestParameterExtremes:
         assert np.all(np.isfinite(output))
 
 
-# ---------------------------------------------------------------------------
 # Hardware presets
-# ---------------------------------------------------------------------------
 
 
 class TestHardwarePresets:
@@ -410,9 +394,7 @@ class TestHardwarePresets:
         assert bc.sample_rate_reduction == 1
 
 
-# ---------------------------------------------------------------------------
 # EffectChain
-# ---------------------------------------------------------------------------
 
 
 class TestEffectChain:
@@ -465,9 +447,7 @@ class TestEffectChain:
         assert isinstance(chain.effects[1], Bitcrusher)
 
 
-# ---------------------------------------------------------------------------
 # Reproducibility
-# ---------------------------------------------------------------------------
 
 
 class TestReproducibility:
@@ -495,16 +475,14 @@ class TestReproducibility:
         np.testing.assert_array_equal(out1, out2)
 
 
-# ===========================================================================
-# CR-04 — Numba kernel regression tests
+# Numba kernel regression tests
 #
 # Each test class provides a pure-Python reference implementation of the
 # original pre-Numba loop, then asserts that the Numba-compiled kernel
 # produces numerically identical output (within double-precision tolerance).
 #
-# Tolerance: rtol=1e-12, atol=1e-15 — allows for LLVM vs CPython float
+# Tolerance: rtol=1e-12, atol=1e-15 - allows for LLVM vs CPython float
 # evaluation order differences, which are negligible at float64 precision.
-# ===========================================================================
 
 # Tolerance constants for Numba regression comparisons
 NUMBA_RTOL = 1e-12
@@ -694,7 +672,7 @@ class TestDelayLineKernelRegression:
         max_mod_offset = int(wow_depth * sr) + 1
         buf_len = delay_samples + max_mod_offset + n + 1
 
-        # Reference — separate buffer copy
+        # Reference - separate buffer copy
         buf_ref = np.zeros(buf_len)
         buf_ref[:n] = signal_short
         ref = self._reference_delay_line(
@@ -709,7 +687,7 @@ class TestDelayLineKernelRegression:
             buf_len,
         )
 
-        # Numba — separate buffer copy
+        # Numba - separate buffer copy
         buf_jit = np.zeros(buf_len)
         buf_jit[:n] = signal_short
         jit = _delay_line_kernel(

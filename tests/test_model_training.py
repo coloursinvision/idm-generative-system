@@ -33,9 +33,7 @@ from engine.ml.model_training import (
     train,
 )
 
-# ---------------------------------------------------------------------------
 # Fixtures
-# ---------------------------------------------------------------------------
 
 
 def _make_training_df(n_rows: int = 100) -> pd.DataFrame:
@@ -84,9 +82,7 @@ def _make_training_df(n_rows: int = 100) -> pd.DataFrame:
     )
 
 
-# ---------------------------------------------------------------------------
 # Pipeline construction
-# ---------------------------------------------------------------------------
 
 
 class TestBuildPipeline:
@@ -130,9 +126,7 @@ class TestBuildPreprocessor:
         assert "num" in transformer_names
 
 
-# ---------------------------------------------------------------------------
 # Feature / target extraction
-# ---------------------------------------------------------------------------
 
 
 class TestExtractColumns:
@@ -150,7 +144,7 @@ class TestExtractColumns:
     def test_target_columns(self) -> None:
         df = _make_training_df(10)
         _, target_cols = extract_feature_target_columns(df)
-        # tuning_hz is reframed OUT of the target set (D-PIPE-07): deterministic
+        # tuning_hz is reframed OUT of the target set: deterministic
         # A4 reference, not a learned target. Targets are the freq_* columns only.
         assert "tuning_hz" not in target_cols
         assert "freq_pitch_ref" in target_cols
@@ -169,9 +163,7 @@ class TestExtractColumns:
             extract_feature_target_columns(df)
 
 
-# ---------------------------------------------------------------------------
 # Data preparation
-# ---------------------------------------------------------------------------
 
 
 class TestPrepareData:
@@ -208,9 +200,7 @@ class TestPrepareData:
         assert y.shape[1] == len(target_cols)
 
 
-# ---------------------------------------------------------------------------
 # Training smoke test
-# ---------------------------------------------------------------------------
 
 
 class TestTrain:
@@ -289,9 +279,7 @@ class TestTrain:
         assert "metrics.r2_mean" in latest_run.index
 
 
-# ---------------------------------------------------------------------------
 # Optuna HPO smoke test
-# ---------------------------------------------------------------------------
 
 
 class TestOptunaStudy:
@@ -369,9 +357,7 @@ class TestOptunaStudy:
         assert best_metrics["rmse_mean"] >= 0.0
 
 
-# ---------------------------------------------------------------------------
-# Group-aware split (spec-level leakage prevention — #2)
-# ---------------------------------------------------------------------------
+# Group-aware split (spec-level leakage prevention - #2)
 
 
 class TestSplitByGroup:
@@ -415,9 +401,7 @@ class TestSplitByGroup:
         assert list(a[1].index) == list(b[1].index)  # X_test rows identical
 
 
-# ---------------------------------------------------------------------------
-# Group-aware three-way split (HPO validation split — #3 / D-PIPE-06)
-# ---------------------------------------------------------------------------
+# Group-aware three-way split (HPO validation split)
 
 
 class TestSplitTrainValTestByGroup:
@@ -446,7 +430,7 @@ class TestSplitTrainValTestByGroup:
         assert g_train.isdisjoint(g_val)
         assert g_train.isdisjoint(g_test)
         assert g_val.isdisjoint(g_test)
-        # All groups partitioned exactly once — none lost, none duplicated.
+        # All groups partitioned exactly once - none lost, none duplicated.
         assert g_train | g_val | g_test == set(range(n_groups))
         assert len(g_train) + len(g_val) + len(g_test) == n_groups
         # Every row accounted for exactly once.

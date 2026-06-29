@@ -33,9 +33,7 @@ from engine.ml.regional_profiles import (
     SwingSpec,
 )
 
-# ---------------------------------------------------------------------------
 # Fixtures
-# ---------------------------------------------------------------------------
 
 
 @pytest.fixture
@@ -110,9 +108,7 @@ def zero_config() -> PerturbationConfig:
     return PerturbationConfig()
 
 
-# ---------------------------------------------------------------------------
 # TrackSpec
-# ---------------------------------------------------------------------------
 
 
 class TestTrackSpec:
@@ -154,9 +150,7 @@ class TestTrackSpec:
         assert spec.sub_region == "OSAKA"
 
 
-# ---------------------------------------------------------------------------
-# SyntheticDatasetGenerator — construction
-# ---------------------------------------------------------------------------
+# SyntheticDatasetGenerator - construction
 
 
 class TestGeneratorConstruction:
@@ -181,9 +175,7 @@ class TestGeneratorConstruction:
             SyntheticDatasetGenerator(zero_config, n_perturbations=-1)
 
 
-# ---------------------------------------------------------------------------
-# generate_rows — row structure
-# ---------------------------------------------------------------------------
+# generate_rows - row structure
 
 
 class TestGenerateRows:
@@ -296,9 +288,7 @@ class TestGenerateRows:
         assert len(differences) > 0
 
 
-# ---------------------------------------------------------------------------
-# generate_rows — zero perturbations
-# ---------------------------------------------------------------------------
+# generate_rows - zero perturbations
 
 
 class TestZeroPerturbations:
@@ -316,9 +306,7 @@ class TestZeroPerturbations:
         assert rows[0]["is_perturbed"] is False
 
 
-# ---------------------------------------------------------------------------
-# generate_dataset — DataFrame shape and structure
-# ---------------------------------------------------------------------------
+# generate_dataset - DataFrame shape and structure
 
 
 class TestGenerateDataset:
@@ -437,9 +425,7 @@ class TestGenerateDataset:
             assert baseline[col] == zero_row[col], f"Mismatch in {col}"
 
 
-# ---------------------------------------------------------------------------
-# generate_dataset — NaN handling for absent columns
-# ---------------------------------------------------------------------------
+# generate_dataset - NaN handling for absent columns
 
 
 class TestNaNHandling:
@@ -512,9 +498,7 @@ class TestNaNHandling:
         assert pd.isna(df["noise_sub_bass_hz"].iloc[0])
 
 
-# ---------------------------------------------------------------------------
 # Reproducibility
-# ---------------------------------------------------------------------------
 
 
 class TestReproducibility:

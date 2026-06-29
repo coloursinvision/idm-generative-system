@@ -44,9 +44,7 @@ from engine.codegen.mappings import (
 )
 from engine.codegen.synthdef import SuperColliderCodegen
 
-# =====================================================================
 # Section 1: Mapping completeness
-# =====================================================================
 
 
 class TestMappingCompleteness:
@@ -94,9 +92,7 @@ class TestMappingCompleteness:
         assert positions == sorted(positions)
 
 
-# =====================================================================
 # Section 2: Value transforms
-# =====================================================================
 
 
 class TestValueTransforms:
@@ -170,9 +166,7 @@ class TestValueTransforms:
         assert transform_param(pm, 2400.0) == 2400.0
 
 
-# =====================================================================
 # Section 3: Lookup helpers
-# =====================================================================
 
 
 class TestLookupHelpers:
@@ -212,9 +206,7 @@ class TestLookupHelpers:
         assert len(unmapped) > 5  # compressor has many unmapped Tidal params
 
 
-# =====================================================================
 # Section 4: BaseCodegen validation
-# =====================================================================
 
 
 class TestBaseCodegenValidation:
@@ -259,9 +251,7 @@ class TestBaseCodegenValidation:
             sc.generate(self._make_input(generator="bad"))
 
 
-# =====================================================================
 # Section 5: SuperCollider output
-# =====================================================================
 
 
 class TestSuperColliderOutput:
@@ -371,9 +361,7 @@ class TestSuperColliderOutput:
             assert f"idm_fx_{key}" in result.code or "idm_fx" in result.code
 
 
-# =====================================================================
 # Section 6: TidalCycles output
-# =====================================================================
 
 
 class TestTidalCyclesOutput:
@@ -454,9 +442,7 @@ class TestTidalCyclesOutput:
         assert "hush" in result.code
 
 
-# =====================================================================
 # Section 7: CodegenResult contract
-# =====================================================================
 
 
 class TestCodegenResult:
@@ -517,9 +503,7 @@ class TestCodegenResult:
         assert "\\idm_fx_delay" in names
 
 
-# =====================================================================
 # Section 8: CodegenOptions
-# =====================================================================
 
 
 class TestCodegenOptions:
@@ -559,9 +543,7 @@ class TestCodegenOptions:
         assert dur2 < dur1
 
 
-# =====================================================================
 # Section 9: Edge cases
-# =====================================================================
 
 
 class TestEdgeCases:

@@ -139,9 +139,7 @@ class ResonantFilter(BaseEffect):
     def reset(self) -> None:
         """Stateless effect — nothing to reset."""
 
-    # ------------------------------------------------------------------
     # Private helpers
-    # ------------------------------------------------------------------
 
     def _build_filter(self, cutoff_norm: float) -> np.ndarray:
         """Build second-order sections (SOS) for the configured filter."""
