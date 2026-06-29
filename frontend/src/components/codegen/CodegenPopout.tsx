@@ -29,9 +29,7 @@ import type {
   CodegenBroadcastMessage,
 } from "../../types/codegen";
 
-/* ------------------------------------------------------------------ */
 /* Constants                                                           */
-/* ------------------------------------------------------------------ */
 
 const GENERATORS = ["glitch_click", "noise_burst", "fm_blip"] as const;
 
@@ -44,9 +42,7 @@ type EffectKey = (typeof EFFECT_BLOCKS)[number];
 
 const CHANNEL_NAME = "idm-codegen";
 
-/* ------------------------------------------------------------------ */
-/* Collapsible info strip (local copy — avoids cross-file dep)         */
-/* ------------------------------------------------------------------ */
+/* Collapsible info strip (local copy - avoids cross-file dep)         */
 
 function InfoStrip({
   title,
@@ -85,9 +81,7 @@ function InfoStrip({
   );
 }
 
-/* ------------------------------------------------------------------ */
 /* CodegenPopout                                                       */
-/* ------------------------------------------------------------------ */
 
 export function CodegenPopout() {
   /* --- State: config --- */
@@ -198,7 +192,6 @@ export function CodegenPopout() {
   return (
     <div className="min-h-screen bg-surface-base">
       <div className="max-w-3xl mx-auto p-4 space-y-0">
-        {/* Sync indicator */}
         {hasRemote && (
           <div className="flex items-center gap-2 mb-3">
             <span className="w-1.5 h-1.5 rounded-full bg-accent-green animate-pulse" />
@@ -208,7 +201,6 @@ export function CodegenPopout() {
           </div>
         )}
 
-        {/* ── Top bar ── */}
         <div className="flex items-stretch border border-surface-3">
           {(["supercollider", "tidalcycles"] as const).map((t) => (
             <button
@@ -238,7 +230,6 @@ export function CodegenPopout() {
           </button>
         </div>
 
-        {/* ── Config drawer ── */}
         <button
           onClick={() => setConfigOpen(!configOpen)}
           className="w-full flex items-center gap-2 px-3 py-1.5 bg-surface-0 border border-surface-3 border-t-0 cursor-pointer transition-colors hover:bg-surface-1"
@@ -347,14 +338,12 @@ export function CodegenPopout() {
           </div>
         )}
 
-        {/* ── Error ── */}
         {error && (
           <div className="px-3 py-2 border border-accent-red/50 border-t-0">
             <span className="text-accent-red text-xs">{error}</span>
           </div>
         )}
 
-        {/* ── Code output ── */}
         {result && (
           <>
             <div className="border-t-0">

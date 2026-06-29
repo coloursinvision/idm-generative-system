@@ -79,7 +79,7 @@ The canonical "does it work outside my interactive shell" check:
 env -i \
   HOME="$HOME" \
   PATH="/usr/bin:/bin:/usr/local/bin:$HOME/miniconda3/envs/idm/bin" \
-  SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/keys.txt" \
+  SOPS_AGE_KEY_FILE="$SOPS_AGE_KEY_FILE" \
   bash -c 'cd ~/dev/IDM_Generative_System_app && \
            ./scripts/run-with-env.sh pytest tests/test_api.py --collect-only'
 # expected: 23 tests collected in N.NNs
@@ -91,7 +91,7 @@ If this fails on a new machine, the provisioning is incomplete. See `RUNBOOK_NEW
 
 ## 3. Architecture (one-paragraph orientation)
 
-The frontend is a Vite+React SPA that proxies `/api/*` requests during dev to the FastAPI backend; in production the backend serves the SPA from `STATIC_DIR` and routes `/api/*` to its own endpoints. Audio handling lives in `frontend/src/hooks/useSequencer.ts` (the file CR-F13 remediates) and is consumed by `frontend/src/components/guide/PO33Guide.tsx` and `EP133Guide.tsx`. Frontend tests live in `frontend/src/tests/<module>/` (central tree, not co-located) per `[[DECISIONS#D-CRF13-02]]`. Backend modules: `api/main.py` (FastAPI app + route registration), `engine/*` (business logic including ML feature engineering), `tests/` at repo root. Secrets architecture: encrypted-as-code (SOPS+age) for credentials in `secrets/app.enc.yaml`, plaintext committed for non-secrets in `.env.shared`, loaded via `scripts/run-with-env.sh`. The age private key is per-machine at `~/.config/sops/age/keys.txt` with iCloud Keychain backup; the public key `age1ulhtjzwwt8raewsmnlkmg4glwwafyfpr3mp4qq8488qc9l9lve2sz6a8wz` is declared in `.sops.yaml`.
+The frontend is a Vite+React SPA that proxies `/api/*` requests during dev to the FastAPI backend; in production the backend serves the SPA from `STATIC_DIR` and routes `/api/*` to its own endpoints. Audio handling lives in `frontend/src/hooks/useSequencer.ts` (the file CR-F13 remediates) and is consumed by `frontend/src/components/guide/PO33Guide.tsx` and `EP133Guide.tsx`. Frontend tests live in `frontend/src/tests/<module>/` (central tree, not co-located) per `[[DECISIONS#D-CRF13-02]]`. Backend modules: `api/main.py` (FastAPI app + route registration), `engine/*` (business logic including ML feature engineering), `tests/` at repo root. Secrets architecture: encrypted-as-code (SOPS+age) for credentials in `secrets/app.enc.yaml`, plaintext committed for non-secrets in `.env.shared`, loaded via `scripts/run-with-env.sh`. The age private key is held per-machine outside Git (never in Git, sync clouds, or temp), located via the `SOPS_AGE_KEY_FILE` pointer; the corresponding public key is declared in `.sops.yaml`. Full key location/backup layout lives in `SECRETS_ARCHITECTURE` in the private vault, not in this public file.
 
 ---
 
@@ -149,7 +149,7 @@ Stop on first failure. Do not push past a red check.
 
 **Three-tier classification.** Every environment value falls into exactly one tier:
 
-1. **Root of trust** — age private key at `~/.config/sops/age/keys.txt`. NEVER in Git, NEVER in sync clouds.
+1. **Root of trust** — the age private key, held per-machine outside Git and located via the `SOPS_AGE_KEY_FILE` pointer. NEVER in Git, NEVER in sync clouds, temp, or docs. (Exact path + backup: private vault `SECRETS_ARCHITECTURE`.)
 2. **Encrypted secrets** — `secrets/app.enc.yaml`. API keys, service tokens. Committed encrypted. Six values: `OPENAI_API_KEY`, `QDRANT_API_KEY`, `DO_SPACES_KEY`, `DO_SPACES_SECRET`, `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`.
 3. **Shared non-secrets** — `.env.shared`. URLs, bucket names, region IDs. Committed plaintext. Six values: `QDRANT_URL`, `DO_SPACES_BUCKET`, `DO_SPACES_ENDPOINT_URL`, `MLFLOW_TRACKING_URI`, `MLFLOW_S3_ENDPOINT_URL`, `LANGFUSE_HOST`.
 
@@ -237,7 +237,7 @@ T-A (`/api` prefix mismatch) and T-B (backend 500) are **separate tickets**. The
 
 ### 6.8 The age private key has exactly two allowed locations per machine
 
-`~/.config/sops/age/keys.txt` on the machine itself (mode 600) and the iCloud Keychain note `IDM age private key (SOPS secrets master)`. Nowhere else. Not in Git, not in cloud docs, not in email, not in `/tmp`, not in a sync folder. Not "for a moment."
+The local key file (mode 600) on the machine itself, plus one OS-keychain backup — and nowhere else. Not in Git, not in cloud docs, not in email, not in `/tmp`, not in a sync folder. Not "for a moment." Exact paths and backup names live in the private vault `SECRETS_ARCHITECTURE`, not in this public file.
 
 ### 6.9 No stray writes — project root and system disk are off-limits
 

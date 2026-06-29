@@ -28,8 +28,7 @@ Parse pipeline:
 Japan Tokyo/Osaka split:
     ``load_profile("JAPAN_IDM", sub_region="OSAKA")`` swaps ``sub_bass_hz``
     and ``noise_floor_hz`` from 50 Hz (Tokyo default) to 60 Hz. No separate
-    ``JAPAN_OSAKA_PROFILE.md`` spoke exists; the split is parameter-level
-    per the bootstrap Gotcha.
+    Osaka profile spoke exists; the split is parameter-level.
 
 Path resolution:
     Honours the ``IDM_VAULT_PATH`` environment variable. Falls back to
@@ -55,9 +54,7 @@ from engine.ml.resonance_rules import ProfileKey
 
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
 # Type aliases
-# ---------------------------------------------------------------------------
 
 # RegionCode is the canonical name inside regional_profiles; it aliases
 # ProfileKey (defined once in resonance_rules) so the two modules cannot drift.
@@ -65,9 +62,7 @@ RegionCode = ProfileKey
 
 SubRegion = Literal["TOKYO", "OSAKA"]
 
-# ---------------------------------------------------------------------------
 # Constants
-# ---------------------------------------------------------------------------
 
 _REGION_TO_FILENAME: dict[RegionCode, str] = {
     "DETROIT_FIRST_WAVE": "DETROIT_FIRST_WAVE_PROFILE.md",
@@ -91,9 +86,7 @@ _DSP_SPEC_PATTERN: re.Pattern[str] = re.compile(
 )
 
 
-# ---------------------------------------------------------------------------
 # Exceptions
-# ---------------------------------------------------------------------------
 
 
 class SpokeParseError(Exception):
@@ -115,9 +108,7 @@ class SpokeParseError(Exception):
         super().__init__(f"[{spoke_path.name}] {message}")
 
 
-# ---------------------------------------------------------------------------
 # Path resolution
-# ---------------------------------------------------------------------------
 
 
 def _default_profiles_dir() -> Path:
@@ -138,9 +129,7 @@ def _default_profiles_dir() -> Path:
     return repo_root.parent / "IDM_Obsidian" / "02-Knowledge" / "supporting" / "profiles"
 
 
-# ---------------------------------------------------------------------------
 # Pydantic validation layer (internal)
-# ---------------------------------------------------------------------------
 
 
 class _DSPSpecModel(BaseModel):
@@ -218,9 +207,7 @@ class _DSPSpecModel(BaseModel):
         return v
 
 
-# ---------------------------------------------------------------------------
 # Public frozen dataclasses
-# ---------------------------------------------------------------------------
 
 
 @dataclass(frozen=True)
@@ -381,9 +368,7 @@ class RegionalProfile:
     vocal_presence: bool | None = None
 
 
-# ---------------------------------------------------------------------------
 # Parsing pipeline (internal)
-# ---------------------------------------------------------------------------
 
 
 def _extract_dsp_yaml(markdown_body: str, spoke_path: Path) -> str:
@@ -559,9 +544,7 @@ def _model_to_profile(
     )
 
 
-# ---------------------------------------------------------------------------
 # Public API
-# ---------------------------------------------------------------------------
 
 
 @cache

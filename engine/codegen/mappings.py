@@ -28,9 +28,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
-# ---------------------------------------------------------------------------
 # Data classes
-# ---------------------------------------------------------------------------
 
 
 @dataclass(frozen=True, slots=True)
@@ -105,9 +103,7 @@ class EffectBlockMapping:
     chain_position: int = 0
 
 
-# ---------------------------------------------------------------------------
-# Value transforms — named functions for clarity and testability
-# ---------------------------------------------------------------------------
+# Value transforms - named functions for clarity and testability
 
 
 def _ms_to_s(ms: float) -> float:
@@ -250,9 +246,7 @@ def _pan_to_tidal(pan: float) -> float:
     return (pan + 1.0) / 2.0
 
 
-# ---------------------------------------------------------------------------
 # Generator mappings
-# ---------------------------------------------------------------------------
 
 SC_GENERATORS: dict[str, GeneratorMapping] = {
     "glitch_click": GeneratorMapping(
@@ -414,9 +408,7 @@ SC_GENERATORS: dict[str, GeneratorMapping] = {
 }
 
 
-# ---------------------------------------------------------------------------
-# Effect block mappings — SuperCollider
-# ---------------------------------------------------------------------------
+# Effect block mappings - SuperCollider
 
 SC_EFFECTS: dict[str, EffectBlockMapping] = {
     "noise_floor": EffectBlockMapping(
@@ -827,9 +819,7 @@ SC_EFFECTS: dict[str, EffectBlockMapping] = {
 }
 
 
-# ---------------------------------------------------------------------------
 # TidalCycles effect mappings
-# ---------------------------------------------------------------------------
 
 TIDAL_EFFECTS: dict[str, dict[str, ParamMapping]] = {
     "noise_floor": {},  # No standard SuperDirt equivalent — omitted from Tidal output
@@ -1015,9 +1005,7 @@ UNMAPPED_TIDAL: dict[str, dict[str, str]] = {
 }
 
 
-# ---------------------------------------------------------------------------
 # Tape age → LPF cutoff lookup (used by synthdef.py for delay SynthDef)
-# ---------------------------------------------------------------------------
 
 TAPE_AGE_SC_CUTOFF: dict[str, float] = {
     "new": 14000.0,
@@ -1026,9 +1014,7 @@ TAPE_AGE_SC_CUTOFF: dict[str, float] = {
 }
 
 
-# ---------------------------------------------------------------------------
 # DAT mode → bandwidth ceiling lookup (used by synthdef.py for vinyl SynthDef)
-# ---------------------------------------------------------------------------
 
 DAT_MODE_SC_CUTOFF: dict[str, float] = {
     "dat_lp": 16000.0,
@@ -1038,9 +1024,7 @@ DAT_MODE_SC_CUTOFF: dict[str, float] = {
 }
 
 
-# ---------------------------------------------------------------------------
 # Vinyl condition → noise parameters (used by synthdef.py)
-# ---------------------------------------------------------------------------
 
 VINYL_CONDITION_SC: dict[str, dict[str, float]] = {
     "mint": {"hiss_amp": 0.0003, "crackle_density": 0.5, "crackle_amp": 0.005},
@@ -1050,9 +1034,7 @@ VINYL_CONDITION_SC: dict[str, dict[str, float]] = {
 }
 
 
-# ---------------------------------------------------------------------------
-# Pattern mapping — Tidal mini-notation equivalents
-# ---------------------------------------------------------------------------
+# Pattern mapping - Tidal mini-notation equivalents
 
 TIDAL_PATTERN_MAP: dict[str, str] = {
     "euclidean": "e",  # e(k, n) — native Tidal Euclidean
@@ -1063,9 +1045,7 @@ TIDAL_PATTERN_MAP: dict[str, str] = {
 }
 
 
-# ---------------------------------------------------------------------------
-# Lookup helpers — public API consumed by synthdef.py and tidal.py
-# ---------------------------------------------------------------------------
+# Lookup helpers - public API consumed by synthdef.py and tidal.py
 
 
 def get_sc_generator(name: str) -> GeneratorMapping | None:
@@ -1146,9 +1126,7 @@ def get_sc_effect_by_position(position: int) -> EffectBlockMapping | None:
     return None
 
 
-# ---------------------------------------------------------------------------
-# Validation — completeness check (used by tests)
-# ---------------------------------------------------------------------------
+# Validation - completeness check (used by tests)
 
 
 def validate_mapping_completeness() -> dict[str, list[str]]:

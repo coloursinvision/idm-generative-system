@@ -23,9 +23,7 @@ from fastapi.testclient import TestClient
 
 from api.main import app
 
-# ---------------------------------------------------------------------------
 # Fixtures
-# ---------------------------------------------------------------------------
 
 
 @pytest.fixture(scope="module")
@@ -48,9 +46,7 @@ def _post_tidal(client: TestClient, **kwargs: Any) -> Any:
     return client.post("/tidal", json=payload)
 
 
-# =====================================================================
 # POST /synthdef
-# =====================================================================
 
 
 class TestSynthdefEndpoint:
@@ -209,9 +205,7 @@ class TestSynthdefEndpoint:
         assert len(resp.json()["metadata"]["effects_chain"]) == 10
 
 
-# =====================================================================
 # POST /tidal
-# =====================================================================
 
 
 class TestTidalEndpoint:
@@ -315,9 +309,7 @@ class TestTidalEndpoint:
         assert "hush" in data["code"]
 
 
-# =====================================================================
 # Cross-endpoint consistency
-# =====================================================================
 
 
 class TestCrossEndpoint:

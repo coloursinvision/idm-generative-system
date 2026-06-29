@@ -112,7 +112,7 @@ Interactive programming guide for the Teenage Engineering EP-133 K.O.II
 - 12-pad grid (3×4) × 4 groups (A/B/C/D) matching the physical device
 - Group management: A=Drums, B=Bass, C=Melodic, D=Samples
 - Timing modes: 1/8, 1/8T, 1/16, 1/16T, 1/32
-- **Simultaneous multi-group transport (CR-F12, v0.9.0):** all four groups A/B/C/D play together under one master clock (1/32 grid, per-group stride for polyrhythm), a master/global play control, and a `gain → DynamicsCompressor` master bus that prevents multi-voice clipping. Mute/solo per group (solo wins over mute); per-group sample loading.
+- **Simultaneous multi-group transport (v0.9.0):** all four groups A/B/C/D play together under one master clock (1/32 grid, per-group stride for polyrhythm), a master/global play control, and a `gain → DynamicsCompressor` master bus that prevents multi-voice clipping. Mute/solo per group (solo wins over mute); per-group sample loading.
 - Step input and live record simulation
 - Instruction generator: converts patterns into EP-133 workflow with button combinations
 - Keys mode: chromatic keyboard for melodic input

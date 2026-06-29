@@ -43,9 +43,7 @@ from engine.codegen.mappings import (
     transform_param,
 )
 
-# ---------------------------------------------------------------------------
 # TidalCycles code generator
-# ---------------------------------------------------------------------------
 
 
 class TidalCyclesCodegen(BaseCodegen):
@@ -119,9 +117,7 @@ class TidalCyclesCodegen(BaseCodegen):
             setup_notes=setup_notes,
         )
 
-    # ------------------------------------------------------------------
     # Header & setup
-    # ------------------------------------------------------------------
 
     def _build_header(self, codegen_input: CodegenInput) -> str:
         gen_name = codegen_input.generator
@@ -145,9 +141,7 @@ class TidalCyclesCodegen(BaseCodegen):
             f"setcps ({opts.bpm}/120/2)"
         )
 
-    # ------------------------------------------------------------------
     # Generator code (Tidal sound selection)
-    # ------------------------------------------------------------------
 
     def _build_generator_code(self, codegen_input: CodegenInput) -> str:
         """Build Tidal sound string for the generator.
@@ -160,9 +154,7 @@ class TidalCyclesCodegen(BaseCodegen):
             return "unknown"
         return gen_mapping.tidal_name
 
-    # ------------------------------------------------------------------
     # Pattern code
-    # ------------------------------------------------------------------
 
     def _build_pattern_code(
         self,
@@ -175,7 +167,7 @@ class TidalCyclesCodegen(BaseCodegen):
         Returns the pattern expression as a string.
         """
         if codegen_input.pattern is None:
-            # No pattern — single trigger
+            # No pattern - single trigger
             gen_mapping = SC_GENERATORS.get(codegen_input.generator)
             sound = gen_mapping.tidal_name if gen_mapping else "unknown"
             return f's "{sound}"'
@@ -255,9 +247,7 @@ class TidalCyclesCodegen(BaseCodegen):
         degrade = 1.0 - density
         return f'degradeBy {degrade:.2f} $ s "{sound}*{steps}"'
 
-    # ------------------------------------------------------------------
     # Effects code
-    # ------------------------------------------------------------------
 
     def _build_effects_code(
         self,
@@ -337,9 +327,7 @@ class TidalCyclesCodegen(BaseCodegen):
 
         return effect_strs
 
-    # ------------------------------------------------------------------
     # Assembly
-    # ------------------------------------------------------------------
 
     def _assemble_pattern_with_effects(
         self,
@@ -361,7 +349,7 @@ class TidalCyclesCodegen(BaseCodegen):
             prefix = f"-- Pattern\n{orbit}"
 
         if is_multiline:
-            # Multi-track pattern — effects apply to the whole stack
+            # Multi-track pattern - effects apply to the whole stack
             indent_pattern = _indent_block(pattern_code, "  ")
             if effects:
                 fx_str = "\n  ".join(effects)
@@ -375,9 +363,7 @@ class TidalCyclesCodegen(BaseCodegen):
 
         return f"{prefix} $ {pattern_code}"
 
-    # ------------------------------------------------------------------
     # Cleanup & notes
-    # ------------------------------------------------------------------
 
     def _build_cleanup(self, opts: CodegenOptions) -> str:
         if opts.mode == CodegenMode.STUDIO:
@@ -419,9 +405,7 @@ class TidalCyclesCodegen(BaseCodegen):
         return {f"d{i + 1}": i for i, _ in enumerate(tracks)}
 
 
-# ---------------------------------------------------------------------------
 # Formatting helpers
-# ---------------------------------------------------------------------------
 
 
 def _tidal_fmt(value: Any) -> str:

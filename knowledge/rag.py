@@ -34,9 +34,7 @@ from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_ex
 
 from knowledge.qdrant_client import KnowledgeBase
 
-# ---------------------------------------------------------------------------
 # Constants
-# ---------------------------------------------------------------------------
 
 GPT_MODEL = "gpt-4o"
 MAX_CONTEXT_CHUNKS = 5
@@ -132,9 +130,7 @@ Rules:
 """
 
 
-# ---------------------------------------------------------------------------
 # RAG Pipeline
-# ---------------------------------------------------------------------------
 
 
 class RAGPipeline:
@@ -162,9 +158,7 @@ class RAGPipeline:
         self.openai = OpenAI(api_key=api_key)
         self.model = model
 
-    # ------------------------------------------------------------------
     # LLM call with retry
-    # ------------------------------------------------------------------
 
     @retry(
         stop=stop_after_attempt(3),
@@ -198,9 +192,7 @@ class RAGPipeline:
             max_tokens=max_tokens,
         )
 
-    # ------------------------------------------------------------------
     # Context assembly
-    # ------------------------------------------------------------------
 
     def _retrieve_context(
         self,
@@ -248,9 +240,7 @@ class RAGPipeline:
 
         return "\n\n---\n\n".join(context_parts), results
 
-    # ------------------------------------------------------------------
     # Advisor mode (Manual)
-    # ------------------------------------------------------------------
 
     def ask(
         self,
@@ -300,9 +290,7 @@ class RAGPipeline:
             },
         }
 
-    # ------------------------------------------------------------------
     # Composer mode (Auto)
-    # ------------------------------------------------------------------
 
     def compose(
         self,
@@ -336,7 +324,7 @@ class RAGPipeline:
         config = self._parse_compose_output(choice.message.content)
 
         # The model's explanation is surfaced as a top-level field, not left inside
-        # `config` — `config` must stay a clean /generate-/process-ready payload.
+        # `config` - `config` must stay a clean /generate-/process-ready payload.
         # Matches the frontend ComposeResponse contract (reasoning at top level).
         reasoning = config.pop("reasoning", None)
 
@@ -356,9 +344,7 @@ class RAGPipeline:
             },
         }
 
-    # ------------------------------------------------------------------
-    # Tuning request extraction (V2.4 — frontend free-text → API contract)
-    # ------------------------------------------------------------------
+    # Tuning request extraction (V2.4 - frontend free-text → API contract)
 
     def extract_tuning_request(self, text: str) -> dict[str, Any]:
         """
@@ -394,9 +380,7 @@ class RAGPipeline:
         raw = response.choices[0].message.content
         return self._parse_tuning_extract_output(raw)
 
-    # ------------------------------------------------------------------
     # Output validation
-    # ------------------------------------------------------------------
 
     @staticmethod
     def _parse_compose_output(raw: str) -> dict[str, Any]:
@@ -407,7 +391,7 @@ class RAGPipeline:
         if fence_match:
             text = fence_match.group(1).strip()
         else:
-            # No fence — try to extract raw JSON object
+            # No fence - try to extract raw JSON object
             brace_start = text.find("{")
             brace_end = text.rfind("}")
             if brace_start != -1 and brace_end > brace_start:

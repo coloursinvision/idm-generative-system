@@ -32,9 +32,7 @@ import math
 from dataclasses import dataclass
 from typing import Literal
 
-# ---------------------------------------------------------------------------
 # Shared helpers (private)
-# ---------------------------------------------------------------------------
 
 _NOTE_NAMES: tuple[str, ...] = (
     "C",
@@ -80,13 +78,9 @@ def _hz_to_note_and_cents(
     return f"{_NOTE_NAMES[pitch_class]}{octave}", cents
 
 
-# ===========================================================================
 # PHYSICAL RULES (1–4)
-# ===========================================================================
 
-# ---------------------------------------------------------------------------
-# Rule 1 — BPM to audible harmonic mapping   [BPM_TO_HZ.md]
-# ---------------------------------------------------------------------------
+# Rule 1 - BPM to audible harmonic mapping   [BPM_TO_HZ.md]
 
 
 @dataclass(frozen=True)
@@ -152,9 +146,7 @@ def bpm_to_hz(
     )
 
 
-# ---------------------------------------------------------------------------
-# Rule 2 — Schumann resonances (Earth-ionosphere cavity)   [SCHUMANN_RESONANCES.md]
-# ---------------------------------------------------------------------------
+# Rule 2 - Schumann resonances (Earth-ionosphere cavity)   [SCHUMANN_RESONANCES.md]
 
 SCHUMANN_MODES_HZ: tuple[float, ...] = (7.83, 14.30, 20.80, 27.30, 33.80)
 """Canonical Schumann resonance mode frequencies (first five modes, Hz).
@@ -210,9 +202,7 @@ def schumann_bpm_anchor(
     return (schumann_mode(mode) * 60.0) / subharmonic_divisor
 
 
-# ---------------------------------------------------------------------------
-# Rule 3 — 432 / 440 Hz tuning arithmetic   [TUNING_432_440.md]
-# ---------------------------------------------------------------------------
+# Rule 3 - 432 / 440 Hz tuning arithmetic   [TUNING_432_440.md]
 
 # PEP 586 forbids float values inside ``Literal[...]``; mypy strict rejects
 # ``Literal[432.0, 440.0]``. ``TuningReference`` is therefore typed as ``float``
@@ -313,9 +303,7 @@ def tuning_difference_hz(a: TuningReference, b: TuningReference) -> float:
     return a - b
 
 
-# ---------------------------------------------------------------------------
-# Rule 4 — Regional mains hum   [MAINS_HUM_REGIONAL.md]
-# ---------------------------------------------------------------------------
+# Rule 4 - Regional mains hum   [MAINS_HUM_REGIONAL.md]
 
 GridRegion = Literal["UK", "JP_TOKYO", "US", "JP_OSAKA"]
 
@@ -419,9 +407,7 @@ def mains_hum_profile(
     )
 
 
-# ===========================================================================
-# AESTHETIC RULE (5) — NON-PHYSICAL PROJECT CONVENTION
-# ===========================================================================
+# AESTHETIC RULE (5) - NON-PHYSICAL PROJECT CONVENTION
 #
 # The frequencies and profile mappings below are an EDITORIAL CONVENTION of
 # the IDM Generative System project; they are NOT physically derived. Unlike
@@ -432,7 +418,6 @@ def mains_hum_profile(
 #
 # See also: SOLFEGGIO_FILTER_SEEDING.md spoke, parked research TODO-6
 # (formal Solfeggio → filter cutoff mapping methodology).
-# ===========================================================================
 
 SOLFEGGIO_HZ: dict[str, float] = {
     "foundation": 174.0,

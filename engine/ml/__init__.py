@@ -160,7 +160,7 @@ __all__ = [
     "load_profile",
     "all_profiles",
     "SpokeParseError",
-    # --- Resonance rules — physical ----------------------------------------
+    # --- Resonance rules - physical ----------------------------------------
     "bpm_to_hz",
     "AudibleHarmonic",
     "schumann_mode",
@@ -176,7 +176,7 @@ __all__ = [
     "RegionalNoiseFloor",
     "GridRegion",
     "GRID_HZ",
-    # --- Resonance rules — aesthetic (NON-PHYSICAL) ------------------------
+    # --- Resonance rules - aesthetic (NON-PHYSICAL) ------------------------
     "solfeggio_cutoff_seed",
     "SOLFEGGIO_HZ",
     "REGIONAL_SOLFEGGIO_SEED",
@@ -192,7 +192,7 @@ __all__ = [
     "TrackSpec",
 ]
 
-# Layer 6 symbols — available only when [ml] extras are installed.
+# Layer 6 symbols - available only when [ml] extras are installed.
 if _HAS_ML_EXTRAS:
     __all__ += [
         # --- Dataset schema validation (Layer 5–6 boundary) ----------------

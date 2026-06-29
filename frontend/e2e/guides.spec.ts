@@ -1,6 +1,5 @@
 /**
  * T-06 & T-07: PO-33 and EP-133 Guide Tabs
- * GUI_TEST_SPECIFICATION.md §T-06, §T-07
  */
 
 import { test, expect } from "./fixtures";

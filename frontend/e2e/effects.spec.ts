@@ -1,6 +1,5 @@
 /**
  * T-04: Effects Explorer
- * GUI_TEST_SPECIFICATION.md §T-04
  */
 
 import { test, expect } from "./fixtures";

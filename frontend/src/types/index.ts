@@ -1,6 +1,4 @@
-/* ------------------------------------------------------------------ */
-/* API response types — mirrors FastAPI Pydantic models                */
-/* ------------------------------------------------------------------ */
+/* API response types - mirrors FastAPI Pydantic models                */
 
 export interface HealthResponse {
   status: string;
