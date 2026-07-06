@@ -243,7 +243,7 @@ The local key file (mode 600) on the machine itself, plus one OS-keychain backup
 
 Claude Code MUST NOT create, write, or save any file in the **project root directory** or anywhere else **on the system disk** — explicitly including ephemeral, scratch, planning, hand-off, or generated documents. The **only** permitted location for such artifacts is `~/Downloads/`, and **only after explicit operator confirmation for that specific write**. Never write first and ask later.
 
-This does not block the version-controlled source work an approved task requires — editing existing tracked files, or adding new source files inside their proper subdirectory (`engine/`, `frontend/src/…`, `tests/`), committed via the Git Flow in §4.4. It forbids depositing ephemeral or stray files into the repo root or scattering them across the system disk. The project root is never a scratch space. When in doubt, ask before writing.
+This does not block the version-controlled source work an approved task requires — editing existing tracked files, or adding new source files inside their proper subdirectory (`engine/`, `frontend/src/…`, `tests/`, and versioned tooling configuration under `.claude/` — skills, settings), committed via the Git Flow in §4.4. It forbids depositing ephemeral or stray files into the repo root or scattering them across the system disk. The project root is never a scratch space. When in doubt, ask before writing.
 
 ---
 
@@ -273,6 +273,27 @@ Located at `/Volumes/StorageGo/Downloads/Downloads GO/Dropshit_Migration/` on th
 - age — https://github.com/FiloSottile/age (v1.3.1)
 - SOPS — https://github.com/getsops/sops (v3.13.1)
 - Obsidian Git plugin — community plugin in vault
+
+### 7.4 Project documentation — the vault as a working directory
+
+The Obsidian vault `~/Obsidian/IDM_Vault` is wired into Claude Code as an
+additional working directory (`.claude/settings.json`). Treat it as the
+project's memory — actively read it:
+
+- **Before a task:** search the vault for the topic (Grep/Glob) and read the
+  related notes — `02-Knowledge/` (domain reference), `00-Project/DECISIONS.md`
+  (decision canon), the newest `05-HANDOFFS/` handoff (current state).
+- **If a note contradicts the code:** report the discrepancy; never guess and
+  never silently reconcile. The repo is authoritative for code; the vault is
+  authoritative for rationale and decisions.
+- **Write policy: the vault is READ-ONLY for Claude Code.** The agent never
+  creates, edits, or commits vault files; session notes, decisions, and gotchas
+  are handed to the operator, who transcribes and syncs via the Obsidian Git
+  plugin. (Operator decision, 2026-07-05.)
+- Curated, code-verified project knowledge lives in `.claude/skills/`
+  (the `idm-*` skills); each skill's footer names its source documents and
+  verification date. When a skill and the vault disagree, verify against the
+  code and flag the drift.
 
 ---
 
