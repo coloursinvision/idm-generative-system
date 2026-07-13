@@ -135,6 +135,7 @@ A supervised model (`TuningEstimator`) that maps a regional/aesthetic profile to
 - **Reproducibility:** DVC pipeline (`dvc.yaml`: `generate → validate → train`); model artifacts and the synthetic dataset are content-hashed (`dvc_dataset_hash` MLflow tag).
 - **Registry:** `TuningEstimator/Production` (served by `/tuning`); newer baselines land at `Staging` first.
 - **Serving:** the FastAPI lifespan loads `models:/TuningEstimator/Production` from the MLflow registry (artifacts on DigitalOcean Spaces). `/tuning` returns resonant points; `/tuning/extract` turns free text into a structured `TuningRequest` via GPT-4o. Both endpoints emit Langfuse traces.
+- **Methodology:** leakage-safe split / HPO isolation / target-framing invariants — see [docs/ML_METHODOLOGY_NOTES.md](docs/ML_METHODOLOGY_NOTES.md).
 
 > Pipeline execution (training / `dvc repro`) runs on a workstation, **never** on the production droplet. See `06-MLOps/` in the project vault for the full pipeline state, decisions, and runbook.
 
