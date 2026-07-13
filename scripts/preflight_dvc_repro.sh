@@ -4,9 +4,7 @@
 #
 # Verifies nine pre-conditions required before running `dvc repro` on the
 # IDM Generative System V2 ML pipeline (Layer 6). Designed to be invoked
-# from the repository root on a Tailscale-connected workstation host
-# (Linux: /home/tomboro/Dropbox/IDM_Generative_System/IDM_Generative_System_app
-#  macOS: ~/Dropbox/IDM_Generative_System/IDM_Generative_System_app).
+# from the repository root on a Tailscale-connected workstation host.
 #
 # Training execution host is the workstation
 # (preferred — has GPU) or MacBook (acceptable — CPU-only, longer wall time).
