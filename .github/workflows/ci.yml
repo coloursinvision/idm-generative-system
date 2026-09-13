@@ -45,7 +45,10 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install ruff
-        run: pip install ruff
+        # Pinned to the workstation version. Unpinned, CI drifts with upstream:
+        # 0.16 began formatting Python blocks inside Markdown, which reddens
+        # untouched docs on every PR.
+        run: pip install ruff==0.15.16
 
       - name: Ruff lint
         run: ruff check .
