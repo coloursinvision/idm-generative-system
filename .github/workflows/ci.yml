@@ -217,10 +217,10 @@ jobs:
         # Pinned to the revision in .pre-commit-config.yaml so local and CI
         # agree. Unpinned tooling in CI has already reddened this pipeline once.
         run: |
-          mkdir -p "${RUNNER_TEMP}/gitleaks"
+          mkdir -p "${RUNNER_TEMP}/bin"
           curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.18.4/gitleaks_8.18.4_linux_x64.tar.gz \
-            | tar -xz -C "${RUNNER_TEMP}/gitleaks" gitleaks
+            | tar -xz -C "${RUNNER_TEMP}/bin" gitleaks
 
       - name: Scan git history
         # --redact keeps any match out of this public build log.
-        run: ${RUNNER_TEMP}/gitleaks detect --redact -v
+        run: ${RUNNER_TEMP}/bin/gitleaks detect --redact -v
