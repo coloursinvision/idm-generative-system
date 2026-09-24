@@ -237,7 +237,7 @@ T-A (`/api` prefix mismatch) and T-B (backend 500) are **separate tickets**. The
 
 ### 6.8 The age private key has exactly two allowed locations per machine
 
-The local key file (mode 600) on the machine itself, plus one OS-keychain backup — and nowhere else. Not in Git, not in cloud docs, not in email, not in `/tmp`, not in a sync folder. Not "for a moment." Exact paths and backup names live in the private vault `SECRETS_ARCHITECTURE`, not in this public file.
+The local key file (mode 600) on the machine itself, plus one OS-keychain backup — and nowhere else. Not in Git, not in cloud docs, not in email, not in `/tmp`, not in a sync folder. Not "for a moment." The tooling's documented default location may appear in configuration, comments and error messages, since the repository's own SOPS files make it derivable anyway. Anything beyond that (non-default locations, backup names, and the recovery procedure) lives in the private vault `SECRETS_ARCHITECTURE`, not in this public file.
 
 ### 6.9 No stray writes — project root and system disk are off-limits
 
