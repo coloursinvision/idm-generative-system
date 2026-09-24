@@ -7,6 +7,8 @@
 #   PR to main        → lint + type-check + test + Docker build (no push)
 #   push to main      → lint + type-check + test + Docker build + push to GHCR
 #   hotfix/* branches → lint + type-check + test
+#
+# A gitleaks secret scan runs on every trigger, in parallel with lint.
 # =============================================================================
 
 name: CI
@@ -143,7 +145,7 @@ jobs:
   docker:
     name: "Docker"
     runs-on: ubuntu-latest
-    needs: [lint, typecheck, test]
+    needs: [lint, typecheck, test, secret-scan]
     # Only build Docker on develop pushes, main pushes, and PRs to main.
     if: >-
       github.event_name == 'push' &&
@@ -197,3 +199,28 @@ jobs:
         run: |
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+  # ---------------------------------------------------------------------------
+  # Job 5 - Secret Scan
+  # ---------------------------------------------------------------------------
+  secret-scan:
+    name: "Secret Scan"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # gitleaks scans history; a shallow clone contains none of it, which
+          # would make this job pass unconditionally.
+          fetch-depth: 0
+
+      - name: Install gitleaks
+        # Pinned to the revision in .pre-commit-config.yaml so local and CI
+        # agree. Unpinned tooling in CI has already reddened this pipeline once.
+        run: |
+          mkdir -p "${RUNNER_TEMP}/bin"
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.18.4/gitleaks_8.18.4_linux_x64.tar.gz \
+            | tar -xz -C "${RUNNER_TEMP}/bin" gitleaks
+
+      - name: Scan git history
+        # --redact keeps any match out of this public build log.
+        run: ${RUNNER_TEMP}/bin/gitleaks detect --redact -v
