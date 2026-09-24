@@ -92,8 +92,11 @@ keys.txt
 *.agekey
 age-key.txt
 
-# Claude Code local machine-specific settings (not committed)
-.claude/settings.local.json
+# Claude Code configuration (rules, permissions, skills) lives in a separate
+# private repository, cloned into place as .claude/. CLAUDE.md at the root is a
+# symlink into that clone. Machine-specific overrides stay untracked there too.
+.claude/
+/CLAUDE.md
 
 # Built SPA served by backend (build artifact — never commit)
 static/
