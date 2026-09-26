@@ -12,6 +12,7 @@ their Refs trailers cite the vault by design.
 
 Usage:
     python scripts/check_text_hygiene.py --staged           # lines the next commit adds
+    python scripts/check_text_hygiene.py --diff REF         # lines the working tree adds since REF
     python scripts/check_text_hygiene.py --files PATH [...] # whole files
     python scripts/check_text_hygiene.py --all              # every tracked file
     python scripts/check_text_hygiene.py --commit-msg PATH  # a commit message file
@@ -569,11 +570,30 @@ def check_all(*, fix: bool, report: Report) -> None:
             check_path(relpath, relpath, target, fix=fix, report=report)
 
 
-def added_lines(root: Path, old: str, new: str) -> set[int]:
-    """Lines the index adds to a file; a rename contributes only its edits."""
+def changed_paths(root: Path, against: str) -> list[tuple[str, str]]:
+    """Old and new path of each file the diff adds or modifies; renames stay paired.
+
+    against is --cached for the index, or a commit SHA for the working tree.
+    """
+    status = git(root, "diff", "--name-status", "-z", "-M", "--diff-filter=ACMR", against, "--")
+    fields = status.decode("utf-8", "surrogateescape").split("\x00")
+    pairs: list[tuple[str, str]] = []
+    index = 0
+    while index < len(fields) and fields[index]:
+        if fields[index].startswith(("R", "C")):
+            pairs.append((fields[index + 1], fields[index + 2]))
+            index += 3
+        else:
+            pairs.append((fields[index + 1], fields[index + 1]))
+            index += 2
+    return pairs
+
+
+def added_lines(root: Path, old: str, new: str, against: str) -> set[int]:
+    """Lines the diff adds to a file; a rename contributes only its edits."""
     paths = [new] if old == new else [old, new]
-    options = ("--cached", "-U0", "-M", "--no-color", "--no-ext-diff", "--no-textconv")
-    diff = git(root, "diff", *options, "--", *paths)
+    options = ("-U0", "-M", "--no-color", "--no-ext-diff", "--no-textconv")
+    diff = git(root, "diff", *options, against, "--", *paths)
     added: set[int] = set()
     for line in diff.decode("utf-8", "replace").splitlines():
         match = HUNK.match(line)
@@ -586,21 +606,37 @@ def added_lines(root: Path, old: str, new: str) -> set[int]:
 
 def check_staged(report: Report) -> None:
     root = require_repo_root()
-    status = git(root, "diff", "--cached", "--name-status", "-z", "-M", "--diff-filter=ACMR")
-    fields = status.decode("utf-8", "surrogateescape").split("\x00")
-    index = 0
-    while index < len(fields) and fields[index]:
-        if fields[index].startswith(("R", "C")):
-            old, new = fields[index + 1], fields[index + 2]
-            index += 3
-        else:
-            old = new = fields[index + 1]
-            index += 2
+    for old, new in changed_paths(root, "--cached"):
         kind = kind_of(new)
         if not kind:
             continue
-        added = added_lines(root, old, new)
+        added = added_lines(root, old, new, "--cached")
         result = inspect(new, kind, git(root, "cat-file", "blob", f":{new}"))
+        report.file(new, [f for f in result.findings if f.whole_file or f.line in added])
+
+
+def resolve_commit(root: Path, ref: str) -> str:
+    """The commit REF names. A file name or unknown name aborts rather than diffing the index."""
+    if ref.startswith("-"):
+        raise AbortError(f"not a commit: {ref}")
+    try:
+        output = git(root, "rev-parse", "--verify", f"{ref}^{{commit}}")
+    except AbortError as exc:
+        raise AbortError(f"not a commit: {ref}") from exc
+    return output.decode("ascii").strip()
+
+
+def check_diff(ref: str, report: Report) -> None:
+    root = require_repo_root()
+    commit = resolve_commit(root, ref)
+    for old, new in changed_paths(root, commit):
+        kind = kind_of(new)
+        target = root / new
+        # Read from disk, a link would be judged by its target's text; --all skips links too.
+        if not kind or target.is_symlink():
+            continue
+        added = added_lines(root, old, new, commit)
+        result = inspect(new, kind, target.read_bytes())
         report.file(new, [f for f in result.findings if f.whole_file or f.line in added])
 
 
@@ -625,6 +661,9 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
     mode.add_argument(
         "--staged", action="store_true", help="lines the index adds, as the next commit records"
     )
+    mode.add_argument(
+        "--diff", metavar="REF", help="lines the working tree adds relative to commit REF"
+    )
     mode.add_argument("--files", nargs="+", metavar="PATH", help="whole files, as given")
     mode.add_argument("--all", dest="all_files", action="store_true", help="every tracked file")
     mode.add_argument("--commit-msg", metavar="PATH", help="a commit message file")
@@ -634,7 +673,7 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
         help="rewrite the mechanically safe characters in prose; with --files or --all",
     )
     args = parser.parse_args(argv)
-    if args.fix and (args.staged or args.commit_msg is not None):
+    if args.fix and (args.staged or args.diff is not None or args.commit_msg is not None):
         parser.error("--fix works only with --files or --all")
     return args
 
@@ -648,6 +687,8 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.staged:
             check_staged(report)
+        elif args.diff is not None:
+            check_diff(args.diff, report)
         elif args.all_files:
             check_all(fix=args.fix, report=report)
         elif args.commit_msg is not None:
