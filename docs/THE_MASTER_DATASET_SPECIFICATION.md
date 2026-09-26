@@ -125,13 +125,13 @@ Extensive metadata for audio synthesis and regional scene analysis.
 ## PART 4: ALGORITHMIC LOGIC (DSP IMPLEMENTATION)
 
 ### 4.1 Acid Slide (Nonlinear Glide)
-*   **Logic:** If `Gate_Overlap` is True, disable `Envelope_Retrigger`. 
+*   **Logic:** If `Gate_Overlap` is True, disable `Envelope_Retrigger`.
 *   **Formula:** `Current_Pitch += Alpha * (Target_Pitch - Current_Pitch)` where `Alpha = 1 - exp(-1 / (Fs * 0.03))`.
 *   **Artifact:** 30ms glide constant modeled after 303 capacitor discharge.
 
 ### 4.2 Acid Accent (Parameter Coupling)
 *   **Trigger:** Velocity > 100.
-*   **Effects:** 
+*   **Effects:**
     1. Shorten `VCF_Decay` by ~50%.
     2. Boost `Resonance` gain by ~15%.
     3. Apply `tanh` saturation on VCA: `Output = tanh(Input * Accent_Gain)`.
@@ -173,7 +173,7 @@ import scipy.io.wavfile as wav
 """
 CORE ACID DSP ENGINE - VERSION 2.0
 Target: International Audio Engineering / Data Science Audit
-Features: 
+Features:
 - Nonlinear 303-style Glide (RC Time Constant modeling)
 - Inter-step frequency persistence (self.current_f)
 - Asymmetric VCA Saturation (tanh-based soft clipping)
@@ -188,27 +188,27 @@ class AcidDSPModel:
     def process_step(self, target_f, is_slide, is_accent, duration_sec):
         num_samples = int(self.sr * duration_sec)
         step_buffer = np.zeros(num_samples)
-        
+
         # 50ms Glide Constant (Alpha) for RC-style Slide logic
         slide_alpha = 1.0 - np.exp(-1.0 / (self.sr * 0.05)) if is_slide else 1.0
-        
+
         for n in range(num_samples):
             # 1. NONLINEAR FREQUENCY TRACKING (Slide)
             self.current_f = (slide_alpha * target_f) + (1.0 - slide_alpha) * self.current_f
-            
+
             # 2. OSCILLATOR CORE (Phase accumulation)
             self.phase += self.current_f / self.sr
-            if self.phase > 1.0: self.phase -= 2.0 
-            
+            if self.phase > 1.0: self.phase -= 2.0
+
             sample = self.phase
-            
+
             # 3. ACCENT & VCA NONLINEARITY (Saturation)
             # drive_gain simulates the overdriven internal VCA of the TB-303
             drive_gain = 2.4 if is_accent else 1.0
             sample = np.tanh(sample * drive_gain)
-            
+
             step_buffer[n] = sample
-            
+
         return step_buffer
 ```
 
@@ -216,8 +216,8 @@ class AcidDSPModel:
 *Optimized for real-time performance and sample-accurate circuit emulation.*
 
 ```cpp
-/* 
- * ACID SYNTH ENGINE - DSP IMPLEMENTATION 
+/*
+ * ACID SYNTH ENGINE - DSP IMPLEMENTATION
  * Target: Low-level Circuit Emulation (C++)
  * Logic: Sample-accurate alpha coefficient for smooth glide transitions.
  */
@@ -240,7 +240,7 @@ public:
     // Update target pitch and handle immediate vs glide transition
     void updateFrequency(double newFreq, bool isSlide) {
         targetFreq = newFreq;
-        if (!isSlide) currentFreq = targetFreq; 
+        if (!isSlide) currentFreq = targetFreq;
     }
 
     // Process single sample
@@ -393,7 +393,7 @@ These devices provided the "uncommon" textures found on Rephlex and Skam release
     *   *Characteristic:* 4-Operator FM. Unlike the DX7, it used 8 different waveforms (not just sines).
     *   *Dataset Value:* Modeling non-sinusoidal FM operators is key to the "hollow" bass sounds of B12 and Likemind.
 *   **Roland JD-800/990:**
-    *   *Characteristic:* PCM-based "Super-Synth." 
+    *   *Characteristic:* PCM-based "Super-Synth."
     *   *Dataset Value:* The source of the "Glassy" and "Ethereal" pads found in Japanese IDM and Progressive House (Sasha/Digweed).
 
 ---
@@ -529,7 +529,7 @@ Summary of global parameters for the Generative Model.
 To ensure "Zero-Rubbish" output, any generated track must pass these final technical checks:
 
 1.  **Noise Floor Consistency:** Integrated -78dB RMS noise (Pink + 50Hz Hum for UK / 60Hz for Detroit).
-2.  **Stereo Width Logic:** 
+2.  **Stereo Width Logic:**
     *   Kick & Bass: **Strictly Mono** (< 200Hz).
     *   Pads & Reverbs: **Wide Stereo** (using Phase Decorrelation).
     *   Percussion: **70% Width** (panned TR-909 style).
@@ -548,7 +548,7 @@ Current Structure:
 *Status: Final Documentation Seal*
 
 ### 16.1 Executive Summary
-The "Underground Electronic Architecture" dataset is a high-fidelity reconstruction of the 1987–1999 electronic music landscape. By integrating physical hardware constraints (8/12-bit DACs), regional aesthetic archetypes (UK/Detroit/Japan), and nonlinear DSP modeling (Acid Slide/Accent), the project provides a "Zero-Rubbish" environment for generative audio research and historical preservation. 
+The "Underground Electronic Architecture" dataset is a high-fidelity reconstruction of the 1987–1999 electronic music landscape. By integrating physical hardware constraints (8/12-bit DACs), regional aesthetic archetypes (UK/Detroit/Japan), and nonlinear DSP modeling (Acid Slide/Accent), the project provides a "Zero-Rubbish" environment for generative audio research and historical preservation.
 
 The core of the project rejects modern "clean" digital synthesis in favor of modeled artifacts, including:
 *   **Time-domain non-linearities:** 30ms RC glide constants and 96 PPQN jitter.
@@ -630,23 +630,23 @@ class GranularEngine:
         """
         grain_len = int(self.sr * (grain_size_ms / 1000.0))
         output = np.zeros(len(source_audio))
-        
+
         # Hanning window to prevent DC clicks
         window = np.hanning(grain_len)
-        
+
         # Stochastic grain placement
         num_grains = int((len(source_audio) / self.sr) * density)
-        
+
         for _ in range(num_grains):
             # Random position in source
             pos = np.random.randint(0, len(source_audio) - grain_len)
             # Random position in output (time jitter)
             out_pos = np.random.randint(0, len(source_audio) - grain_len)
-            
+
             # Extract, window, and add grain
             grain = source_audio[pos : pos + grain_len] * window
             output[out_pos : out_pos + grain_len] += grain
-            
+
         return output
 ```
 
@@ -663,5 +663,3 @@ class GranularEngine:
 ```
 
 **[END OF MASTER DOCUMENTATION]**
-
-
