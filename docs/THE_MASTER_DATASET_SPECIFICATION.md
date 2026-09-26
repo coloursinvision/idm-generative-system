@@ -656,10 +656,10 @@ class GranularEngine:
 
 ```
 /underground-electronic-dataset/
-├── docs/                  ← MASTER_SPECIFICATION.md
-├── engine/                ← acid_engine_v2.py, AcidSynthEngine.cpp
-├── environment.yml        ← Python 3.9, numpy, scipy, librosa
-└── dataset/               ← samples, mid, patches
+├── docs/                  <- MASTER_SPECIFICATION.md
+├── engine/                <- acid_engine_v2.py, AcidSynthEngine.cpp
+├── environment.yml        <- Python 3.9, numpy, scipy, librosa
+└── dataset/               <- samples, mid, patches
 ```
 
 **[END OF MASTER DOCUMENTATION]**
