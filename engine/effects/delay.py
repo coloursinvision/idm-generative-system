@@ -34,16 +34,16 @@ Historical context:
     Tape Age / HF Rolloff:
         Older tape loses high-frequency response due to oxide shedding
         and head wear. Three conditions modelled:
-            new  → 14 kHz cutoff
-            used → 8 kHz cutoff  (default — most period-accurate)
-            worn → 4.5 kHz cutoff
+            new  -> 14 kHz cutoff
+            used -> 8 kHz cutoff  (default, most period-accurate)
+            worn -> 4.5 kHz cutoff
 
     Self-Oscillation:
         At feedback > 0.95, the delay enters self-oscillation — the
         tail builds into a resonant drone. Used deliberately in dub
         and IDM for sustained textural effects.
 
-Signal position: Reverb → [Block 6] → SpatialProcessor → ...
+Signal position: Reverb -> [Block 6] -> SpatialProcessor -> ...
 """
 
 from __future__ import annotations
@@ -257,9 +257,9 @@ class TapeDelay(BaseEffect):
         Build low-pass SOS filter modelling tape HF rolloff.
 
         Cutoff frequency depends on tape_age:
-            new  → 14 kHz (minimal oxide loss)
-            used → 8 kHz  (moderate wear, period-accurate default)
-            worn → 4.5 kHz (heavy head wear, thick/dark character)
+            new  -> 14 kHz (minimal oxide loss)
+            used -> 8 kHz  (moderate wear, period-accurate default)
+            worn -> 4.5 kHz (heavy head wear, thick/dark character)
         """
         cutoff_hz = TAPE_AGE_CUTOFF.get(self.tape_age, 8000)
         cutoff_norm = np.clip(cutoff_hz / (self.sr / 2.0), 0.001, 0.999)

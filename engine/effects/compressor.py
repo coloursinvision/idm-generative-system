@@ -50,7 +50,7 @@ Historical context:
     in linear domain. This mirrors the analog signal path of hardware
     bus compressors.
 
-Signal position: GlitchEngine → [Block 9] → VinylMastering → OUTPUT
+Signal position: GlitchEngine -> [Block 9] -> VinylMastering -> OUTPUT
 """
 
 from __future__ import annotations
@@ -186,9 +186,9 @@ class Compressor(BaseEffect):
     IDM bus compressor with soft knee, program-dependent release,
     and sidechain high-pass filter.
 
-    Models the analogue signal path: sidechain HPF → RMS envelope
-    detection → soft-knee gain computation → attack/release smoothing
-    → gain application → makeup gain.
+    Models the analogue signal path: sidechain HPF -> RMS envelope
+    detection -> soft-knee gain computation -> attack/release smoothing
+    -> gain application -> makeup gain.
 
     The soft knee implements a quadratic interpolation zone around the
     threshold, mirroring the gradual onset characteristic of diode-bridge
@@ -289,9 +289,9 @@ class Compressor(BaseEffect):
         """
         Apply bus compression to the input signal.
 
-        Processing chain: sidechain HPF → RMS envelope → soft-knee
-        gain computation → attack/release smoothing → gain application
-        → makeup gain → dry/wet mix.
+        Processing chain: sidechain HPF -> RMS envelope -> soft-knee
+        gain computation -> attack/release smoothing -> gain application
+        -> makeup gain -> dry/wet mix.
 
         Args:
             signal: Input audio array, normalised to [-1.0, 1.0].
@@ -316,7 +316,7 @@ class Compressor(BaseEffect):
         # Smooth gain reduction via attack/release
         smoothed_gr_db = self._smooth_envelope(gain_reduction_db)
 
-        # Apply gain reduction (dB → linear)
+        # Apply gain reduction (dB -> linear)
         gain_linear = np.power(10.0, smoothed_gr_db / 20.0)
         wet = signal * gain_linear
 
@@ -379,7 +379,7 @@ class Compressor(BaseEffect):
         # Windowed mean of squared signal (no per-sample loop)
         rms_sq = (cumsum[indices + 1] - cumsum[starts]) / window_sizes
 
-        # RMS → dB (floor at -120 dB to avoid log(0))
+        # RMS -> dB (floor at -120 dB to avoid log(0))
         rms_linear = np.sqrt(np.maximum(rms_sq, 1e-12))
         return 20.0 * np.log10(rms_linear)
 

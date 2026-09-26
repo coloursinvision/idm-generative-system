@@ -19,11 +19,11 @@ Loading strategy:
 
 Parse pipeline:
     markdown file
-      → python-frontmatter (YAML header + body)
-      → regex-extract ``## 5. DSP specification`` fenced block
-      → ``yaml.safe_load`` (raw dict)
-      → Pydantic v2 ``_DSPSpecModel`` (runtime validation, ``extra="forbid"``)
-      → composed frozen ``RegionalProfile`` dataclass
+      -> python-frontmatter (YAML header + body)
+      -> regex-extract ``## 5. DSP specification`` fenced block
+      -> ``yaml.safe_load`` (raw dict)
+      -> Pydantic v2 ``_DSPSpecModel`` (runtime validation, ``extra="forbid"``)
+      -> composed frozen ``RegionalProfile`` dataclass
 
 Japan Tokyo/Osaka split:
     ``load_profile("JAPAN_IDM", sub_region="OSAKA")`` swaps ``sub_bass_hz``
@@ -124,7 +124,7 @@ def _default_profiles_dir() -> Path:
     env = os.environ.get("IDM_VAULT_PATH")
     if env:
         return Path(env) / "02-Knowledge" / "supporting" / "profiles"
-    # /<repo>/engine/ml/regional_profiles.py → repo root at parent[2]
+    # /<repo>/engine/ml/regional_profiles.py -> repo root at parent[2]
     repo_root = Path(__file__).resolve().parent.parent.parent
     return repo_root.parent / "IDM_Obsidian" / "02-Knowledge" / "supporting" / "profiles"
 

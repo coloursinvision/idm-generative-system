@@ -151,7 +151,7 @@ The application consists of six tabs accessible from the top navigation bar. Eac
 | Tab | Route | Function | Mode |
 |-----|-------|----------|------|
 | ADVISOR | `/advisor` | Sound design Q&A | Manual |
-| COMPOSER | `/composer` | Aesthetic → JSON config | Auto |
+| COMPOSER | `/composer` | Aesthetic -> JSON config | Auto |
 | GENERATOR | `/generator` | Sample generation + playback | Both |
 | EFFECTS | `/effects` | Signal chain reference | Both |
 | PO-33 | `/guide/po33` | PO-33 programming guide | Both |
@@ -181,7 +181,7 @@ The Advisor is a retrieval-augmented Q&A interface. It answers sound design ques
 
 - **Question input** — free-text field. Accepts any sound design, DSP, or production-related query. The more specific the question, the more targeted the retrieval.
 - **Context chunks slider** (1–10) — controls how many knowledge base chunks are included in the LLM context. Lower values produce more focused answers; higher values provide broader context at the cost of response specificity.
-- **Submit** — triggers the RAG pipeline: embed query → cosine similarity search in Qdrant → retrieve top-k chunks → construct prompt with context → GPT-4o completion.
+- **Submit:** triggers the RAG pipeline: embed query -> cosine similarity search in Qdrant -> retrieve top-k chunks -> construct prompt with context -> GPT-4o completion.
 - **Answer display** — rendered response with inline source attribution tags showing which parts of the knowledge base contributed to each claim. Each tag displays the source part number and relevance score.
 - **Token usage footer** — displays prompt and completion token counts for the current query.
 
@@ -280,15 +280,15 @@ An interactive programming interface for the Teenage Engineering PO-33 K.O! The 
 - **Track selector** — switch between sounds (kick, snare, hat, and up to 5 additional glitch/texture layers) to view and edit their step patterns independently.
 - **Step input mode** — click grid cells to toggle steps on/off. Mirrors the PO-33's write mode workflow.
 - **Sample slot mapping panel:**
-  - **Auto mode:** kick→slot 1, snare→slot 2, hat→slot 3, glitch→slots 4-8, textures→slots 9-16
+  - **Auto mode:** kick->slot 1, snare->slot 2, hat->slot 3, glitch->slots 4-8, textures->slots 9-16
   - **Manual mode:** drag any generated sample to any slot position
 - **Instruction generator** — given a pattern, produces a numbered list of PO-33 button sequences:
   ```
-  1. Hold SOUND + press 1       → Select kick sound
-  2. Press WRITE                 → Enter record mode
-  3. Press steps 1, 5, 9, 13    → Program four-on-the-floor kick
-  4. Hold SOUND + press 2       → Select snare sound
-  5. Press steps 5, 13          → Program backbeat snare
+  1. Hold SOUND + press 1       -> Select kick sound
+  2. Press WRITE                 -> Enter record mode
+  3. Press steps 1, 5, 9, 13    -> Program four-on-the-floor kick
+  4. Hold SOUND + press 2       -> Select snare sound
+  5. Press steps 5, 13          -> Program backbeat snare
   ...
   ```
 - **Effects reference** — table of PO-33 FX 1-16 with descriptions and recommended usage contexts per sound type.
@@ -330,13 +330,13 @@ An interactive programming interface for the Teenage Engineering EP-133 K.O.II. 
 - **Live record simulation** — visual representation of real-time recording. Shows which pad would be captured at which step position when recording in real-time mode.
 - **Instruction generator** — produces step-by-step EP-133 workflow with exact button combinations:
   ```
-  1. Press MAIN                       → Enter main mode
-  2. Press Group A                    → Select drums group
-  3. Hold RECORD + press Pad 1        → Assign kick to step 1.1.1
-  4. Press + to advance               → Move to step 1.2.1
-  5. Hold RECORD + press Pad 3        → Assign hat to step 1.2.1
+  1. Press MAIN                       -> Enter main mode
+  2. Press Group A                    -> Select drums group
+  3. Hold RECORD + press Pad 1        -> Assign kick to step 1.1.1
+  4. Press + to advance               -> Move to step 1.2.1
+  5. Hold RECORD + press Pad 3        -> Assign hat to step 1.2.1
   ...
-  12. Press SHIFT + MAIN              → Commit pattern to scene
+  12. Press SHIFT + MAIN              -> Commit pattern to scene
   ```
 - **Scene/pattern workflow** — visual representation of the EP-133 commit flow. Shows how patterns are committed to scenes (SHIFT+MAIN) and how scenes are chained into arrangements.
 - **Keys mode** — chromatic keyboard visualisation for melodic input. Displays which pads correspond to which notes when Keys mode is active on the physical device.
@@ -422,7 +422,7 @@ Adds a calibrated noise floor to the signal, modeling the analog mixer bus sum t
 - **Level:** Noise floor amplitude in dB (default: -75 dB)
 - **Hum frequency:** 50 Hz (UK/EU) or 60 Hz (US/Detroit) mains hum
 - **Hum level:** Mains hum amplitude
-- **Crosstalk:** Inter-channel leakage coefficient (L→R and R→L bleed, modeling Mackie bus routing: `L_out = L + R × 0.005`)
+- **Crosstalk:** Inter-channel leakage coefficient (L->R and R->L bleed, modeling Mackie bus routing: `L_out = L + R × 0.005`)
 
 **Design note:** This is the Anti-GIGO block. It sets the environmental floor before any processing occurs. Without it, subsequent blocks operate on an unrealistically clean signal that has no analog equivalent from the target era.
 
@@ -544,7 +544,7 @@ Bus-style compression targeting a dynamic range of DR 8–10 — the characteris
 - **Release:** Compressor release time in ms (100–300 ms for the "pumping" effect)
 - **Knee:** Soft or hard knee transition
 - **Makeup gain:** Post-compression gain to restore level
-- **Sidechain:** Optional sidechain input for ducking effects (kick → pad bus, modeling the Alesis 3630 "pump" technique)
+- **Sidechain:** Optional sidechain input for ducking effects (kick -> pad bus, modeling the Alesis 3630 "pump" technique)
 
 **Design note:** The DR 8–10 target is a quality check, not a hard constraint. Output that falls outside this range may still be musically valid but diverges from the historical mastering aesthetic.
 
@@ -639,12 +639,12 @@ The indexed document covers:
 ### 9.1 PO-33 K.O! Workflow
 
 ```
-Generator → Generate samples (WAV)
-         → PO-33 Guide → Map samples to slots (auto or manual)
-                        → Program pattern via step grid
-                        → Preview via Web Audio sequencer
-                        → Read instruction list
-                        → Transfer to physical PO-33:
+Generator -> Generate samples (WAV)
+         -> PO-33 Guide -> Map samples to slots (auto or manual)
+                        -> Program pattern via step grid
+                        -> Preview via Web Audio sequencer
+                        -> Read instruction list
+                        -> Transfer to physical PO-33:
                             1. Line-in or mic sampling
                             2. Assign to melodic (1-8) or drum (9-16) slot
                             3. Enter write mode (WRITE button)
@@ -660,13 +660,13 @@ Generator → Generate samples (WAV)
 ### 9.2 EP-133 K.O.II Workflow
 
 ```
-Generator → Generate samples (WAV, multiple generators for different groups)
-         → EP-133 Guide → Assign to groups (A=drums, B=bass, C=melodic, D=loops)
-                         → Select timing resolution per group
-                         → Program patterns via step grid
-                         → Preview via Web Audio sequencer
-                         → Read instruction list
-                         → Transfer to physical EP-133:
+Generator -> Generate samples (WAV, multiple generators for different groups)
+         -> EP-133 Guide -> Assign to groups (A=drums, B=bass, C=melodic, D=loops)
+                         -> Select timing resolution per group
+                         -> Program patterns via step grid
+                         -> Preview via Web Audio sequencer
+                         -> Read instruction list
+                         -> Transfer to physical EP-133:
                              1. USB-C audio or 3.5mm line-in sampling
                              2. Assign to group and category slot
                              3. Enter step sequencer (MAIN mode)

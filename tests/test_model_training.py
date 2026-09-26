@@ -383,7 +383,7 @@ class TestSplitByGroup:
         test_groups = set(groups.loc[X_test.index])
         # Disjoint group partitions.
         assert train_groups.isdisjoint(test_groups)
-        # Split is at the group level: 20% of 10 groups → 2 test, 8 train.
+        # Split is at the group level: 20% of 10 groups -> 2 test, 8 train.
         assert len(test_groups) == 2
         assert len(train_groups) == 8
         # Every row accounted for exactly once.
@@ -394,7 +394,7 @@ class TestSplitByGroup:
         assert list(X_test.index) == list(y_test.index)
 
     def test_deterministic(self) -> None:
-        """Same random_state → identical split."""
+        """Same random_state -> identical split."""
         X, y, groups = self._make_grouped(8, 11)
         a = split_by_group(X, y, groups, test_size=0.25, random_state=42)
         b = split_by_group(X, y, groups, test_size=0.25, random_state=42)
@@ -444,7 +444,7 @@ class TestSplitTrainValTestByGroup:
         assert len(g_train) > len(g_test)
 
     def test_deterministic(self) -> None:
-        """Same random_state → identical three-way split."""
+        """Same random_state -> identical three-way split."""
         X, y, groups = self._make_grouped(20, 11)
         a = split_train_val_test_by_group(
             X, y, groups, test_size=0.2, val_size=0.2, random_state=42

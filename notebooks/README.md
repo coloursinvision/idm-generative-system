@@ -63,8 +63,8 @@ jupyter nbconvert --clear-output --inplace notebooks/your_notebook.ipynb
 
 ```
 notebooks/
-├── README.md          ← this file
-└── archive/           ← historical/genesis artefacts (read-only reference)
+├── README.md          <- this file
+└── archive/           <- historical/genesis artefacts (read-only reference)
     └── exploration_2026-02-03_pattern_genesis.ipynb
 ```
 

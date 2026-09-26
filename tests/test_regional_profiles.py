@@ -3,11 +3,11 @@
 Covers the full parse pipeline end-to-end:
 
     markdown file
-      → python-frontmatter (YAML header + body)
-      → regex-extract ``## 5. DSP specification`` fenced block
-      → ``yaml.safe_load`` (raw dict)
-      → Pydantic v2 ``_DSPSpecModel`` (validation, ``extra="forbid"``)
-      → composed frozen ``RegionalProfile`` dataclass
+      -> python-frontmatter (YAML header + body)
+      -> regex-extract ``## 5. DSP specification`` fenced block
+      -> ``yaml.safe_load`` (raw dict)
+      -> Pydantic v2 ``_DSPSpecModel`` (validation, ``extra="forbid"``)
+      -> composed frozen ``RegionalProfile`` dataclass
 
 Strategy
 --------
@@ -324,12 +324,12 @@ class TestOptionalSubgroups:
     """Sparse profiles produce ``None`` for reverb and noise subgroups."""
 
     def test_uk_braindance_has_no_reverb(self, synthetic_profiles_dir: Path) -> None:
-        """UK_BRAINDANCE has zero reverb fields → ``reverb is None``."""
+        """UK_BRAINDANCE has zero reverb fields -> ``reverb is None``."""
         p = load_profile("UK_BRAINDANCE", profiles_dir=synthetic_profiles_dir)
         assert p.reverb is None
 
     def test_uk_braindance_has_no_noise(self, synthetic_profiles_dir: Path) -> None:
-        """UK_BRAINDANCE has no sub_bass_hz → ``noise is None``."""
+        """UK_BRAINDANCE has no sub_bass_hz -> ``noise is None``."""
         p = load_profile("UK_BRAINDANCE", profiles_dir=synthetic_profiles_dir)
         assert p.noise is None
 
@@ -461,12 +461,12 @@ class TestErrorPaths:
     """Every parse-pipeline failure surfaces as a SpokeParseError or ValueError."""
 
     def test_missing_spoke_file(self, tmp_path: Path) -> None:
-        """Empty directory → missing file error."""
+        """Empty directory -> missing file error."""
         with pytest.raises(SpokeParseError, match="spoke file not found"):
             load_profile("DETROIT_UR", profiles_dir=tmp_path)
 
     def test_missing_dsp_section(self, tmp_path: Path) -> None:
-        """Spoke without ``## 5. DSP specification`` → SpokeParseError."""
+        """Spoke without ``## 5. DSP specification`` -> SpokeParseError."""
         (tmp_path / "DETROIT_UR_PROFILE.md").write_text(
             "---\ndocument_type: regional_profile\n---\n\n# no dsp section here\n"
         )
@@ -474,7 +474,7 @@ class TestErrorPaths:
             load_profile("DETROIT_UR", profiles_dir=tmp_path)
 
     def test_malformed_yaml_in_dsp_block(self, tmp_path: Path) -> None:
-        """Invalid YAML inside the fenced block → SpokeParseError wrapping YAMLError."""
+        """Invalid YAML inside the fenced block -> SpokeParseError wrapping YAMLError."""
         bad_yaml = "bpm_range: [118, 132\nswing_type: broken\n"  # unclosed bracket
         (tmp_path / "DETROIT_UR_PROFILE.md").write_text(_build_spoke_markdown(bad_yaml))
         with pytest.raises(SpokeParseError, match="DSP spec YAML parse failed"):
