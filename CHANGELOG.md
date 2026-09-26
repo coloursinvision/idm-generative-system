@@ -57,7 +57,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `useSequencer.ts` and `PO33Guide.tsx` are untouched — **PO-33 is unaffected**. The WebKit `AudioContext` lifecycle is duplicated into the new hook by deliberate decision (shared `useAudioContext` util deferred).
 - **`/health` version reporting fixed** — `/health` `version` is sourced from `importlib.metadata` (`api/main.py`), so the deployed `/health` now reports the package version correctly; `develop` had drifted to `0.7.0` because the `0.8.0` bump landed on `main` only and was never back-merged.
 - Ships the whole `develop` integration branch (Git Flow): also includes training-time-only pipeline changes (spec-level-leakage fix via `spec_id` group split / `GroupShuffleSplit`, train re-run idempotency, regenerated `dvc.lock` / metrics for `TuningEstimator` v4 @ Staging). **Serving impact: none** — `/tuning` loads `TuningEstimator/Production` (v1, unchanged in the MLflow registry).
-- Gates: vitest **68/68** (11 new, AC1–AC8); real-browser AC1–AC9 PASS; `tsc` clean; `vite build` OK.
+- Gates: vitest **68/68** (11 new, AC1-AC8); real-browser AC1-AC9 PASS; `tsc` clean; `vite build` OK.
 
 ---
 

@@ -117,7 +117,7 @@ def bpm_to_hz(
         bpm: Tempo in beats per minute. Must be positive.
         octave_multiplier: Power-of-two factor that shifts the beat
             frequency into the audible range. ``64`` is the canonical choice
-            for typical IDM tempos (80–180 BPM land in the C2–F3 octave).
+            for typical IDM tempos (80–180 BPM land in the C2-F3 octave).
         tuning_hz: Reference pitch for A4. Defaults to concert ``440.0``;
             ``432.0`` supports alternative-tuning research.
 
