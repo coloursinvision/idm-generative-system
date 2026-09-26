@@ -48,7 +48,7 @@ export interface GroupSequencerState {
   timing: TimingMode;
   /** Mixer mute. Silenced unless a solo elsewhere overrides (solo wins). */
   muted: boolean;
-  /** Mixer solo. Any group soloed → only soloed groups are audible. */
+  /** Mixer solo. Any group soloed -> only soloed groups are audible. */
   solo: boolean;
   /** True while this group's samples are being (re)loaded. */
   loading: boolean;

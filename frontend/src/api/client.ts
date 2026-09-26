@@ -1,5 +1,5 @@
 /* API client - thin fetch wrapper over FastAPI backend                */
-/* Vite proxy rewrites /api/* → http://localhost:8000/*                */
+/* Vite proxy rewrites /api/* -> http://localhost:8000/*                */
 
 import type {
   HealthResponse,

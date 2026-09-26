@@ -30,15 +30,15 @@ The package exposes 36 symbols via `__init__.py`. See the module docstring in `_
 ## Module dependency graph
 
 ```
-resonance_rules.py          ← pure functions, no I/O
+resonance_rules.py          <- pure functions, no I/O
        ↓
-regional_profiles.py        ← spoke parser, @cache memoised
+regional_profiles.py        <- spoke parser, @cache memoised
        ↓
-deterministic_mapper.py     ← Layer 3: scene → DSP targets
+deterministic_mapper.py     <- Layer 3: scene -> DSP targets
        ↓
-gaussian_noise.py           ← Layer 4: calibrated perturbation
+gaussian_noise.py           <- Layer 4: calibrated perturbation
        ↓
-dataset_generator.py        ← Layer 5: synthetic DataFrame
+dataset_generator.py        <- Layer 5: synthetic DataFrame
 ```
 
 ## Testing

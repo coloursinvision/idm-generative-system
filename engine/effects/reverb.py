@@ -31,7 +31,7 @@ Historical context:
     Reverb types (from Quadraverb manual):
         Room, Chamber, Hall, Plate, Reverse (spring approximated separately)
 
-Signal position: Saturation → [Block 5] → TapeDelay → ...
+Signal position: Saturation -> [Block 5] -> TapeDelay -> ...
 """
 
 from __future__ import annotations
@@ -285,7 +285,7 @@ class Reverb(BaseEffect):
 
         Three allpass filters with delay times derived from diffusion
         parameter. Higher diffusion = smoother, less grainy attack.
-        Emulates the Quadraverb's EQ → Pitch → Delay signal path.
+        Emulates the Quadraverb's EQ -> Pitch -> Delay signal path.
 
         Inner loop delegated to _allpass_kernel (Numba JIT-compiled).
         """
@@ -306,8 +306,8 @@ class Reverb(BaseEffect):
         Apply colour filter to the reverb tail.
 
         Replicates the Quadraverb's HF/LF decay colour control:
-            colour > 0 → high-pass (brighter tail, removes low-end mud)
-            colour < 0 → low-pass (darker tail, removes high-frequency content)
+            colour > 0 -> high-pass (brighter tail, removes low-end mud)
+            colour < 0 -> low-pass (darker tail, removes high-frequency content)
         """
         if self.colour > 0:
             # Positive = bright: high-pass removes low-end

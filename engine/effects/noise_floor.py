@@ -17,7 +17,7 @@ Historical context:
         - Noise type:  Pink (1/f) + 50 Hz hum (UK) or 60 Hz (Detroit)
         - Crosstalk:   inter-channel bleed via summing bus
 
-Signal position: INPUT → [Block 1] → Bitcrusher → ...
+Signal position: INPUT -> [Block 1] -> Bitcrusher -> ...
 """
 
 from __future__ import annotations

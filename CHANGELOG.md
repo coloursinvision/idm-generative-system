@@ -20,12 +20,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.10.0] — 2026-06-19 — FM analog voice + pipeline integrity (leakage / HPO / tuning_hz reframe)
 
 ### Added
-- **`fm_analog` generator** — warm analog voice: two detuned FM oscillators → soft tanh saturation → resonant TPT state-variable low-pass (cutoff on an attack/decay envelope) → amplitude envelope. New additive generator; existing generators unchanged. Wired into `/generate` and `batch_export`; the lo-fi effects chain is intentionally NOT its default path (raw voice is the deliverable).
+- **`fm_analog` generator:** warm analog voice: two detuned FM oscillators -> soft tanh saturation -> resonant TPT state-variable low-pass (cutoff on an attack/decay envelope) -> amplitude envelope. New additive generator; existing generators unchanged. Wired into `/generate` and `batch_export`; the lo-fi effects chain is intentionally NOT its default path (raw voice is the deliverable).
 - **`fm_blip` FM expansion** — four additive, keyword-only, backward-compatible timbral controls (`mod_index_end`, `attack_ms`, `ratio`, `feedback`); a bare `fm_blip()` is bit-identical to the prior signal.
 
 ### Changed
 - **`/compose` `reasoning`** returned as a top-level response field (was nested).
-- **`/tuning/extract`** response field `model_version` → `model`.
+- **`/tuning/extract`** response field `model_version` -> `model`.
 - **Audio scheduler** in both sequencer hooks driven by `setTimeout`, not `requestAnimationFrame` — keeps note scheduling alive in background tabs; `play()` re-entrancy guard added.
 - **ML pipeline integrity (training-time only; serving unchanged):**
   - Spec-level train/test leakage removed — group split by `spec_id` / `GroupShuffleSplit`.
@@ -44,7 +44,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - **EP-133 Guide: simultaneous A/B/C/D playback under one master transport** (CRITICAL; `frontend/src/hooks/useEP133Sequencer.ts` [new], `frontend/src/components/guide/EP133Guide.tsx`) — The guide previously sounded only the single active group; the four EP-133 pad groups could not run together. The new `useEP133Sequencer` hook drives all four groups from **one `AudioContext` and a single master clock** at the finest interval (1/32 = 32 ticks/bar); each group strides over it (`stride = 32 / numSteps(timing)`), giving simultaneous playback and correct polyrhythm (8/16/32 all divide 32, so groups stay phase-aligned). One global BPM, per-group note interval (1/8, 1/16, 1/32).
 
-- **Multi-voice clipping eliminated** — all group voices route through a master bus `gain (0.35 headroom) → DynamicsCompressor (limiter) → destination`, mirroring the EP-133 hardware master compressor (manual §11). Without it the four-group sum exceeded 0 dBFS and degraded into distortion.
+- **Multi-voice clipping eliminated:** all group voices route through a master bus `gain (0.35 headroom) -> DynamicsCompressor (limiter) -> destination`, mirroring the EP-133 hardware master compressor (manual §11). Without it the four-group sum exceeded 0 dBFS and degraded into distortion.
 
 - **Mute/solo** — mixer predicate read fresh each tick (`audible = anySolo ? solo : !muted`); solo wins over mute.
 
@@ -65,7 +65,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- **`POST /tuning/extract`** — free-text → `TuningRequest` extraction via GPT-4o (existing `RAGPipeline.extract_tuning_request`), Langfuse-traced, **fail-open** (not gated on `_HAS_MLFLOW`).
+- **`POST /tuning/extract`:** free-text -> `TuningRequest` extraction via GPT-4o (existing `RAGPipeline.extract_tuning_request`), Langfuse-traced, **fail-open** (not gated on `_HAS_MLFLOW`).
 - **Frontend `/tuning` route + TUNING navbar tab** (8th tab; wraps to a second row below 768 px). TuningPanel composes TuningExtract + TuningForm + TuningResult.
 
 ### Notes
@@ -94,7 +94,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **EP-133 Guide: complete per-group state persistence** (`frontend/src/components/guide/EP133Guide.tsx`, `frontend/src/hooks/useSequencer.ts`) — Full rewrite of the group state management layer. The previous partial fix (v0.5.2) preserved only step patterns via `groupStepsRef` and only `initialSteps` in `initTracks`. Three categories of state were still lost on every group switch: (1) loaded `AudioBuffer` references — samples had to be re-fetched after returning to a group; (2) per-group timing resolution — switching away from a group and back reset timing to `"1/16"` regardless of the user's selection; (3) the double-fire bug — `initTracks` was listed in the `useEffect` dependency array; because `initTracks` identity changes with `numSteps`, any timing change re-triggered the effect and wiped the active group's pattern.
 
   **Root cause analysis (complete):**
-  - `useEffect([activeGroup, initTracks])` — `initTracks` in dep array caused effect to re-fire on timing change (identity shift via `numSteps` → `useCallback` deps), destroying the active group's pattern mid-session.
+  - `useEffect([activeGroup, initTracks])`: `initTracks` in dep array caused effect to re-fire on timing change (identity shift via `numSteps` -> `useCallback` deps), destroying the active group's pattern mid-session.
   - No buffer persistence — `initTracks` always initialised `buffer: null`; loaded `AudioBuffer` references were discarded on group switch.
   - No timing persistence — `timing` was a single `useState` shared across all 4 groups.
   - Stale closure risk in `switchGroup` — snapshot of departing group's state could have used stale `tracks` values if `tracks` changed between the last render and the switch callback execution.
@@ -116,8 +116,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Pending — Production Deployment
 
 The fix is committed on `develop` (commit `65bf69b`). It has **not yet been deployed to production** (`https://idm.coloursinvision.ai`). Deployment requires:
-1. `develop` → `main` PR merge
-2. CI build → GHCR push (automatic on `main`)
+1. `develop` -> `main` PR merge
+2. CI build -> GHCR push (automatic on `main`)
 3. Droplet: `cd /opt/idm && docker compose pull && docker compose up -d`
 
 ---
@@ -126,7 +126,7 @@ The fix is committed on `develop` (commit `65bf69b`). It has **not yet been depl
 
 ### Changed
 
-- **Dockerfile — 3-stage build** — Extended from 2-stage (Python builder + runtime) to 3-stage: `frontend-builder` (Node 22-slim, `npm ci && npm run build`) → `python-builder` (unchanged) → `runtime` (copies venv + `dist/` to `/app/static`). Frontend source from `frontend/` subdirectory. Workers hardcoded to `1` (OOM constraint on 2 GiB droplet).
+- **Dockerfile, 3-stage build:** Extended from 2-stage (Python builder + runtime) to 3-stage: `frontend-builder` (Node 22-slim, `npm ci && npm run build`) -> `python-builder` (unchanged) -> `runtime` (copies venv + `dist/` to `/app/static`). Frontend source from `frontend/` subdirectory. Workers hardcoded to `1` (OOM constraint on 2 GiB droplet).
 
 - **`api/main.py` — StaticFiles mount + SPA catch-all** — `StaticFiles` serves Vite hashed assets from `/app/static/assets/`. Catch-all `GET /{path:path}` returns `index.html` for client-side routing. Conditional on `static/` directory existence — no-op in development. Zero changes to existing API routes.
 
@@ -193,15 +193,15 @@ The fix is committed on `develop` (commit `65bf69b`). It has **not yet been depl
 - **Playwright E2E test suite** (`frontend/e2e/`) — 56 browser-level tests across 9 spec files covering all 7 tabs, codegen popout window, error states, and console audit. Tests run against Vite dev server with mocked API routes (zero backend dependency).
   - `fixtures.ts` — shared test fixture with auto-mocking (`mockApi`), deterministic API response payloads, minimal WAV binary generator, and page helpers (`navigateToTab`, `getCodeBlockText`, `collectConsoleErrors`).
   - `navigation.spec.ts` — 7 tests: app shell render, 7-tab navigation, routing, active indicator, responsive layout, StatusBar health, default redirect.
-  - `advisor.spec.ts` — 4 tests: input render, typing, submit→answer+sources, content validation.
-  - `composer.spec.ts` — 3 tests: input render, submit→JSON config, sources display.
+  - `advisor.spec.ts`, 4 tests: input render, typing, submit->answer+sources, content validation.
+  - `composer.spec.ts`, 3 tests: input render, submit->JSON config, sources display.
   - `effects.spec.ts` — 3 tests: 10-block display, signal chain order, parameter expansion.
   - `generator.spec.ts` — 5 tests: controls render, waveform display, play/download buttons, WAV file save.
   - `guides.spec.ts` — 7 tests: PO-33 sequencer grid + step toggle + play + BPM, EP-133 group layout + pad interaction + play.
   - `codegen.spec.ts` — 20 tests: SC/TIDAL generation flow, solarized dark background, COPY/DOWNLOAD, toolbar labels, config drawer, popout route + standalone generate.
   - `error-states.spec.ts` — 7 tests: backend failure handling, unhandled rejection check, console error audit, rapid navigation stability, pageerror check.
 
-- **CI pipeline** (`.github/workflows/e2e.yml`) — GitHub Actions job: checkout → Node 24 → `npm ci` → Playwright browser install (Chromium + Firefox) → `npm run e2e` → report/trace upload. 112 tests (56×2 browsers), 15-minute timeout, retry 2 on CI.
+- **CI pipeline** (`.github/workflows/e2e.yml`): GitHub Actions job: checkout -> Node 24 -> `npm ci` -> Playwright browser install (Chromium + Firefox) -> `npm run e2e` -> report/trace upload. 112 tests (56×2 browsers), 15-minute timeout, retry 2 on CI.
 
 - **package.json scripts** — `"e2e": "playwright test"` and `"e2e:install": "playwright install"` added for CI-safe binary resolution.
 
@@ -262,7 +262,7 @@ The fix is committed on `develop` (commit `65bf69b`). It has **not yet been depl
 
 ## [0.2.1] — 2026-04-01 — Backend Code Review
 
-20 findings. 14 resolved (1 CRITICAL, 5 HIGH, 8 MEDIUM). 6 LOW deferred. Test suite: 23 → 209 cases. Numba JIT on 5 DSP hot paths.
+20 findings. 14 resolved (1 CRITICAL, 5 HIGH, 8 MEDIUM). 6 LOW deferred. Test suite: 23 -> 209 cases. Numba JIT on 5 DSP hot paths.
 
 ### Fixed
 - [CRITICAL] Reverb colour parameter inversion, tail padding in `/process`, duplicate import, inline import, deprecated RNG.

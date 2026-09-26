@@ -10,7 +10,7 @@ Status:         complete
 
 Composes Layers 3 and 4 into a single dataset-generation workflow:
 
-    TrackSpec → deterministic_map → DeterministicMapping
+    TrackSpec -> deterministic_map -> DeterministicMapping
                                       ↓
                               GaussianNoiseInjector
                                       ↓
@@ -131,7 +131,7 @@ def _flatten_profile_dsp(
     Returns:
         Dict with keys: ``swing_amount``, ``reverb_decay``,
         ``reverb_diffusion``, ``noise_sub_bass_hz``, ``noise_floor_hz``,
-        ``noise_floor_db``. Missing fields receive ``None`` (→ ``NaN``
+        ``noise_floor_db``. Missing fields receive ``None`` (-> ``NaN``
         in the DataFrame).
     """
     row: dict[str, Any] = {}
@@ -344,8 +344,8 @@ class SyntheticDatasetGenerator:
         Returns:
             A ``pandas.DataFrame`` with ``len(specifications) *
             (1 + n_perturbations)`` rows. Columns are ordered:
-            input fields → ``tuning_hz`` → ``freq_*`` → DSP params →
-            metadata (``spec_id`` → ``is_perturbed`` → ``perturbation_idx``).
+            input fields -> ``tuning_hz`` -> ``freq_*`` -> DSP params ->
+            metadata (``spec_id`` -> ``is_perturbed`` -> ``perturbation_idx``).
             ``spec_id`` is the global per-spec group key (the ``enumerate``
             index over ``specifications``); the model never consumes it
             (see :func:`extract_feature_target_columns`).
@@ -365,7 +365,7 @@ class SyntheticDatasetGenerator:
 
         df = pd.DataFrame(all_rows)
 
-        # --- Column ordering: inputs → tuning → freq → DSP → metadata ---
+        # --- Column ordering: inputs -> tuning -> freq -> DSP -> metadata ---
         input_cols = ["bpm", "pitch_midi", "swing", "region", "sub_region"]
         tuning_cols = ["tuning_hz"]
         freq_cols = sorted(c for c in df.columns if c.startswith("freq_"))

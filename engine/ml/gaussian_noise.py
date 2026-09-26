@@ -30,8 +30,8 @@ Design principles:
 
 RNG draw order contract:
     :meth:`perturb_profile` draws in fixed field order:
-    ``swing_amount → reverb_decay → reverb_diffusion → noise_sub_bass_hz
-    → noise_floor_hz → noise_floor_db``. Fields that are absent (``None``)
+    ``swing_amount -> reverb_decay -> reverb_diffusion -> noise_sub_bass_hz
+    -> noise_floor_hz -> noise_floor_db``. Fields that are absent (``None``)
     or whose sigma is ``0.0`` consume zero draws, preserving downstream
     determinism for any ``(config, seed)`` pair.
 
@@ -230,7 +230,7 @@ def _perturb_noise(
     Hz fields are clamped to ``>= 1``. dB field is clamped to ``<= 0``
     (noise floor is always negative dBFS or zero).
 
-    Draws occur in fixed order: ``sub_bass_hz → noise_floor_hz →
+    Draws occur in fixed order: ``sub_bass_hz -> noise_floor_hz ->
     noise_floor_db``, regardless of whether individual fields are ``None``.
 
     Args:

@@ -28,7 +28,7 @@ Historical context:
         - Shortens VCF decay by ~50%
         - Applies tanh saturation on the VCA output
 
-Signal position: Bitcrusher → [Block 3] → Saturation → ...
+Signal position: Bitcrusher -> [Block 3] -> Saturation -> ...
 """
 
 from __future__ import annotations

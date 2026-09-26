@@ -14,16 +14,16 @@
 /**
  * Target language for code generation.
  *
- * - supercollider → sclang (.scd)
- * - tidalcycles   → Haskell / TidalCycles (.tidal)
+ * - supercollider -> sclang (.scd)
+ * - tidalcycles   -> Haskell / TidalCycles (.tidal)
  */
 export type CodegenTarget = "supercollider" | "tidalcycles";
 
 /**
  * Generation mode.
  *
- * - studio → self-contained script with s.waitForBoot, full comments, Pbind.
- * - live   → minimal boilerplate, assumes server running, Pdef/Ndef hot-swap.
+ * - studio -> self-contained script with s.waitForBoot, full comments, Pbind.
+ * - live   -> minimal boilerplate, assumes server running, Pdef/Ndef hot-swap.
  */
 export type CodegenMode = "studio" | "live";
 
@@ -34,7 +34,7 @@ export type CodegenMode = "studio" | "live";
  *
  * - euclidean:     Bjorklund algorithm - `pulses` per voice, `steps` total.
  * - probabilistic: Per-step trigger probability.
- * - density:       Fractional density → probabilistic grid.
+ * - density:       Fractional density -> probabilistic grid.
  */
 export interface PatternConfigEuclidean {
   type: "euclidean";

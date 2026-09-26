@@ -368,7 +368,7 @@ class TestPerturbProfile:
             reverb=reverb,
         )
         # Large reverb_sigma - diffusion_sigma = reverb_sigma / 1000
-        # so 50000 → diffusion_sigma = 50 → guaranteed to hit boundary
+        # so 50000 -> diffusion_sigma = 50 -> guaranteed to hit boundary
         config = PerturbationConfig(reverb_sigma=50000.0)
         injector = GaussianNoiseInjector(config, seed=42)
         result = injector.perturb_profile(profile)
@@ -700,7 +700,7 @@ class TestRNGDrawOrder:
         mapping: DeterministicMapping,
         active_config: PerturbationConfig,
     ) -> None:
-        """profile→mapping sequence must be reproducible across instances."""
+        """profile->mapping sequence must be reproducible across instances."""
         inj_a = GaussianNoiseInjector(active_config, seed=42)
         prof_a = inj_a.perturb_profile(profile)
         map_a = inj_a.perturb_mapping(mapping, profile)
@@ -718,7 +718,7 @@ class TestRNGDrawOrder:
         mapping: DeterministicMapping,
         active_config: PerturbationConfig,
     ) -> None:
-        """mapping→profile sequence must be reproducible across instances."""
+        """mapping->profile sequence must be reproducible across instances."""
         inj_a = GaussianNoiseInjector(active_config, seed=42)
         map_a = inj_a.perturb_mapping(mapping, profile)
         prof_a = inj_a.perturb_profile(profile)
