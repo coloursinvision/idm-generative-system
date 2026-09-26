@@ -1,4 +1,4 @@
-"""Tests for engine.ml.dataset_generator — Layer 5 synthetic dataset generation.
+"""Tests for engine.ml.dataset_generator - Layer 5 synthetic dataset generation.
 
 Covers:
     - TrackSpec construction and frozen semantics
@@ -10,7 +10,7 @@ Covers:
     - Zero-perturbation mode (baseline only)
     - Empty specifications edge case
 
-Fixtures construct RegionalProfile and TrackSpec directly — no spoke
+Fixtures construct RegionalProfile and TrackSpec directly - no spoke
 filesystem dependency. All tests are pure unit tests.
 """
 
@@ -79,7 +79,7 @@ def uk_spec() -> TrackSpec:
 
 @pytest.fixture
 def detroit_spec() -> TrackSpec:
-    """TrackSpec for DETROIT_UR — triggers dual-stack mains."""
+    """TrackSpec for DETROIT_UR - triggers dual-stack mains."""
     return TrackSpec(
         bpm=133.0,
         pitch_midi=60.0,

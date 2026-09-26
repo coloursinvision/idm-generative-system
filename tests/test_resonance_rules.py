@@ -1,4 +1,4 @@
-"""Unit tests for engine.ml.resonance_rules — Layer 2 Part 5.1 rule implementations.
+"""Unit tests for engine.ml.resonance_rules - Layer 2 Part 5.1 rule implementations.
 
 Covers the 5 rule signatures (4 physical + 1 aesthetic):
 
@@ -287,7 +287,7 @@ class TestMainsHum:
 
 
 class TestSolfeggio:
-    """Tests for :func:`solfeggio_cutoff_seed` — aesthetic project convention."""
+    """Tests for :func:`solfeggio_cutoff_seed` - aesthetic project convention."""
 
     def test_solfeggio_hz_table_has_all_9_labels(self) -> None:
         expected_labels = {

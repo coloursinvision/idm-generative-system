@@ -10,7 +10,7 @@ Architecture:
     - BaseCodegen defines the contract: validate input -> generate code -> return result
     - CodegenResult is the structured response returned to API consumers
     - CodegenOptions controls target-specific generation behaviour
-    - Pure string transforms — no audio processing, no I/O, no external deps
+    - Pure string transforms - no audio processing, no I/O, no external deps
 """
 
 from __future__ import annotations
@@ -31,7 +31,7 @@ class CodegenTarget(StrEnum):
 
 
 class CodegenMode(StrEnum):
-    """Generation mode — controls output structure and boilerplate.
+    """Generation mode - controls output structure and boilerplate.
 
     STUDIO:
         Self-contained script. Includes server boot, cleanup, full
@@ -60,7 +60,7 @@ class CodegenOptions:
         include_server_boot:  Include s.boot / s.waitForBoot in SC output.
                               Auto-set to False when mode is LIVE.
         bus_offset:           Starting private bus number for SC bus allocation.
-        bpm:                  Beats per minute — used for Tidal cycle timing
+        bpm:                  Beats per minute - used for Tidal cycle timing
                               and SC TempoClock.
     """
 

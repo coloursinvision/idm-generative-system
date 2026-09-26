@@ -4,7 +4,7 @@ engine/codegen/__init__.py
 Public API for the IDM Generative System code generation module.
 
 Generates SuperCollider (.scd) and TidalCycles (Haskell DSL) code
-from engine configurations. Pure string transforms — no audio
+from engine configurations. Pure string transforms - no audio
 processing, no external dependencies.
 
 Usage:

@@ -1,7 +1,7 @@
 """
 engine/effects/chain.py
 
-EffectChain — sequential DSP pipeline for the IDM Generative System.
+EffectChain - sequential DSP pipeline for the IDM Generative System.
 
 Connects all 10 effect blocks in the correct signal-chain order:
 

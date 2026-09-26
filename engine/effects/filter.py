@@ -1,20 +1,20 @@
 """
 engine/effects/filter.py
 
-Block 3 — Resonant Filter (VCF Emulation).
+Block 3: Resonant Filter (VCF Emulation).
 
 Source:
-    MASTER_DATASET Part 1.2 — Synthesis & Tone Generation
-    MASTER_DATASET Part 4.1 — Acid Slide (Nonlinear Glide Logic)
-    MASTER_DATASET Part 4.2 — Acid Accent (Parameter Coupling & Saturation)
+    MASTER_DATASET Part 1.2 - Synthesis & Tone Generation
+    MASTER_DATASET Part 4.1 - Acid Slide (Nonlinear Glide Logic)
+    MASTER_DATASET Part 4.2 - Acid Accent (Parameter Coupling & Saturation)
 
 Hardware references:
-    - Roland TB-303  : 18 dB/oct 3-pole low-pass filter — nonlinear accent/
+    - Roland TB-303  : 18 dB/oct 3-pole low-pass filter - nonlinear accent/
                        resonance coupling; 30ms glide constant. The defining
                        filter of acid music.
-    - Roland SH-101  : 24 dB/oct 4-pole (IR3109 chip) — rubber-like bass
+    - Roland SH-101  : 24 dB/oct 4-pole (IR3109 chip) - rubber-like bass
                        response; perfect linear tracking.
-    - Korg M1        : Digital filter — used in Japanese IDM and Detroit Techno
+    - Korg M1        : Digital filter - used in Japanese IDM and Detroit Techno
                        for clean, precise filtering.
 
 Historical context:
@@ -54,13 +54,13 @@ class ResonantFilter(BaseEffect):
                       Values above 0.7 produce self-oscillation character.
                       Default: 0.3.
         filter_type:  Filter topology.
-                        'lp' — low-pass  (default, TB-303/SH-101 style)
-                        'hp' — high-pass
-                        'bp' — band-pass
+                        'lp' - low-pass  (default, TB-303/SH-101 style)
+                        'hp' - high-pass
+                        'bp' - band-pass
         poles:        Filter order / pole count.
-                        3 — TB-303 (18 dB/oct)
-                        4 — SH-101 (24 dB/oct, default)
-                        2 — gentle 12 dB/oct
+                        3 - TB-303 (18 dB/oct)
+                        4 - SH-101 (24 dB/oct, default)
+                        2 - gentle 12 dB/oct
         accent:       TB-303 accent coupling strength [0.0–1.0].
                       At accent > 0:
                           - resonance boosted by +15%
@@ -137,7 +137,7 @@ class ResonantFilter(BaseEffect):
         return filtered
 
     def reset(self) -> None:
-        """Stateless effect — nothing to reset."""
+        """Stateless effect - nothing to reset."""
 
     # Private helpers
 

@@ -4,13 +4,13 @@ engine/effects/compressor.py
 Block 9: Bus Compressor (SSL-Style Glue, Soft Knee, DR8-DR10 Target).
 
 Source:
-    MASTER_DATASET — Bus Summing, Dynamics Processing
+    MASTER_DATASET - Bus Summing, Dynamics Processing
     IDM mastering references: DR8-DR10 target dynamic range
 
 Hardware references:
     - SSL 4000 G Series Bus Compressor (1987): The defining mix-bus
       compressor for electronic music. Auto-release circuit with
-      program-dependent time constants — fast transients trigger short
+      program-dependent time constants - fast transients trigger short
       release, sustained material triggers longer release. The "glue"
       effect that bonds disparate elements into a cohesive stereo image.
       Ratio selections: 2:1, 4:1, 10:1. Fixed attack detents.
@@ -19,7 +19,7 @@ Hardware references:
     - Neve 33609 (1969, updated 1985): Diode-bridge compressor with
       soft-knee transfer curve. Warm, harmonically rich compression
       with a slower, more "breathing" character than SSL. The inherent
-      soft knee comes from the diode bridge topology — gain reduction
+      soft knee comes from the diode bridge topology - gain reduction
       onset is gradual rather than abrupt.
       Notable: Autechre's Warp-era masters, Boards of Canada.
 
@@ -33,17 +33,17 @@ Historical context:
     reverb tails) while maintaining enough density to translate on
     small speakers and club systems.
 
-    Below DR8: crushed, lifeless — micro-dynamics destroyed. The loudness
+    Below DR8: crushed, lifeless - micro-dynamics destroyed. The loudness
     war sound that kills IDM's textural depth.
 
-    Above DR10: too open for dense arrangements — elements fight for
+    Above DR10: too open for dense arrangements - elements fight for
     attention, bass doesn't sit, and the mix falls apart on earbuds.
 
     The compressor design here models three behaviours:
         1. Soft-knee transfer curve (Neve 33609 topology)
         2. Program-dependent release (SSL auto-release circuit)
         3. Sidechain high-pass filter (prevents sub-bass from driving
-           gain reduction — critical for bass-heavy IDM)
+           gain reduction - critical for bass-heavy IDM)
 
     Gain reduction is computed in dB domain via RMS envelope detection,
     smoothed with separate attack/release time constants, and applied
@@ -107,7 +107,7 @@ def _smooth_envelope_single(
     env_init: float,
 ) -> tuple[np.ndarray, float]:
     """
-    Standard single-detector attack/release envelope — Numba-compiled.
+    Standard single-detector attack/release envelope - Numba-compiled.
 
     One-pole IIR smoother: attack coefficient when gain reduction
     increases (signal getting louder), release coefficient when it
@@ -139,7 +139,7 @@ def _smooth_envelope_auto(
     env_init: float,
 ) -> tuple[np.ndarray, float]:
     """
-    SSL 4000 G dual-detector auto-release envelope — Numba-compiled.
+    SSL 4000 G dual-detector auto-release envelope - Numba-compiled.
 
     Two parallel envelope followers with different release time constants:
       - Fast detector (50 ms release): tracks transient peaks
@@ -244,7 +244,7 @@ class Compressor(BaseEffect):
         >>> comp = Compressor(threshold_db=-18, ratio=4, auto_release=True)
         >>> output = comp(signal)
 
-        >>> # Parallel compression (NY-style — retains transient punch)
+        >>> # Parallel compression (NY-style - retains transient punch)
         >>> comp = Compressor(threshold_db=-24, ratio=8, mix=0.4)
 
         >>> # Neve-style warm bus compression
@@ -341,7 +341,7 @@ class Compressor(BaseEffect):
         """
         High-pass filter the sidechain detection path.
 
-        Prevents sub-bass energy from driving gain reduction — critical
+        Prevents sub-bass energy from driving gain reduction - critical
         for bass-heavy IDM where kick drums and sub-bass would otherwise
         cause excessive pumping on every hit.
         """
@@ -357,10 +357,10 @@ class Compressor(BaseEffect):
         Compute RMS envelope in dB using a sliding window.
 
         RMS detection is more musical than peak detection for bus
-        compression — it responds to average energy rather than
+        compression - it responds to average energy rather than
         individual transient spikes, producing smoother gain reduction.
 
-        Vectorised implementation using cumulative sum — no per-sample
+        Vectorised implementation using cumulative sum - no per-sample
         Python loop. Window boundaries computed via NumPy broadcasting.
         """
         n = len(signal)

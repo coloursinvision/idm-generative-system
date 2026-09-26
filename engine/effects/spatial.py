@@ -1,10 +1,10 @@
 """
 engine/effects/spatial.py
 
-Block 7 — Spatial Processing (Stereo Width & Phase).
+Block 7: Spatial Processing (Stereo Width & Phase).
 
 Source:
-    MASTER_DATASET Part 15 — Stereo Width Logic (Sonic Fingerprint)
+    MASTER_DATASET Part 15 - Stereo Width Logic (Sonic Fingerprint)
 
 Rules (MASTER_DATASET Part 15):
     - Kick & Bass : strictly mono below 200 Hz
@@ -65,7 +65,7 @@ class SpatialProcessor(BaseEffect):
         >>> sp = SpatialProcessor(width=1.2, bass_mono_hz=200)
         >>> left, right = sp.process_stereo(left, right)
 
-        >>> # Mono input — returns stereo pair
+        >>> # Mono input - returns stereo pair
         >>> left, right = sp.process_mono(signal)
 
         >>> # Wide pad with decorrelation
@@ -174,7 +174,7 @@ class SpatialProcessor(BaseEffect):
         return left * pan_l, right * pan_r
 
     def reset(self) -> None:
-        """Stateless effect — nothing to reset."""
+        """Stateless effect - nothing to reset."""
 
     # Private helpers
 
@@ -183,7 +183,7 @@ class SpatialProcessor(BaseEffect):
         Apply Haas-zone phase decorrelation to the side channel.
 
         Blends the original side signal with a delayed version.
-        The delay is within the Haas effect zone (< 23ms) — the brain
+        The delay is within the Haas effect zone (< 23ms) - the brain
         fuses the two signals into a single, wider perceived image rather
         than hearing a distinct echo.
         """

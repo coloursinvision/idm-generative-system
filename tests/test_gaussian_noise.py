@@ -1,4 +1,4 @@
-"""Tests for engine.ml.gaussian_noise — Layer 4 Gaussian noise injection.
+"""Tests for engine.ml.gaussian_noise - Layer 4 Gaussian noise injection.
 
 Covers:
     - Reproducibility (seeded RNG produces identical outputs)
@@ -9,7 +9,7 @@ Covers:
     - perturb_mapping: frequency perturbation with nearest_note recalculation
     - RNG draw-order determinism across independent calls
 
-Fixtures construct dataclass instances directly — no spoke filesystem
+Fixtures construct dataclass instances directly - no spoke filesystem
 dependency. All tests are pure unit tests.
 """
 
@@ -434,7 +434,7 @@ class TestPerturbProfile:
         profile: RegionalProfile,
         active_config: PerturbationConfig,
     ) -> None:
-        """SaturationSpec has no numeric fields — must pass through unchanged."""
+        """SaturationSpec has no numeric fields - must pass through unchanged."""
         injector = GaussianNoiseInjector(active_config, seed=42)
         result = injector.perturb_profile(profile)
         assert result.saturation == profile.saturation
@@ -444,7 +444,7 @@ class TestPerturbProfile:
         profile: RegionalProfile,
         active_config: PerturbationConfig,
     ) -> None:
-        """HarmonicContentSpec has no perturbable fields — must pass through."""
+        """HarmonicContentSpec has no perturbable fields - must pass through."""
         injector = GaussianNoiseInjector(active_config, seed=42)
         result = injector.perturb_profile(profile)
         assert result.harmonic == profile.harmonic
@@ -551,7 +551,7 @@ class TestPerturbMappingPerturbableSources:
         mapping: DeterministicMapping,
         profile: RegionalProfile,
     ) -> None:
-        """mains_harmonic_<k> is NOT in _FIXED_SOURCES — must be perturbed."""
+        """mains_harmonic_<k> is NOT in _FIXED_SOURCES - must be perturbed."""
         config = PerturbationConfig(mapper_sigma=5.0)
         injector = GaussianNoiseInjector(config, seed=42)
         result = injector.perturb_mapping(mapping, profile)
@@ -564,7 +564,7 @@ class TestPerturbMappingPerturbableSources:
         mapping: DeterministicMapping,
         profile: RegionalProfile,
     ) -> None:
-        """mains_ref_harmonic_<k> is NOT in _FIXED_SOURCES — must be perturbed."""
+        """mains_ref_harmonic_<k> is NOT in _FIXED_SOURCES - must be perturbed."""
         config = PerturbationConfig(mapper_sigma=5.0)
         injector = GaussianNoiseInjector(config, seed=42)
         result = injector.perturb_mapping(mapping, profile)
@@ -656,7 +656,7 @@ class TestPerturbMappingStructure:
         profile: RegionalProfile,
         active_config: PerturbationConfig,
     ) -> None:
-        """Source tags must not change — only frequency and nearest_note."""
+        """Source tags must not change - only frequency and nearest_note."""
         injector = GaussianNoiseInjector(active_config, seed=42)
         result = injector.perturb_mapping(mapping, profile)
         original_sources = [p.source for p in mapping.resonant_points]

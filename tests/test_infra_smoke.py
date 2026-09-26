@@ -1,7 +1,7 @@
 """
 tests/test_infra_smoke.py
 
-Infrastructure smoke tests for V2.0 — DO Spaces connectivity and DVC config.
+Infrastructure smoke tests for V2.0 - DO Spaces connectivity and DVC config.
 
 These are integration tests requiring real credentials. Skipped in CI
 unless DO_SPACES_KEY is set in the environment.

@@ -1,7 +1,7 @@
 """
 engine/effects/noise_floor.py
 
-Block 1 — Noise Floor & Environmental Constraints.
+Block 1: Noise Floor & Environmental Constraints.
 
 Source:
     MASTER_DATASET Part 5 (Anti-GIGO environmental constraints)
@@ -38,10 +38,10 @@ class NoiseFloor(BaseEffect):
         noise_floor_db: Target RMS noise level in dB. Default: -78.0 dB
                         (MASTER_DATASET Part 5 spec).
         noise_type:     Noise character. Options:
-                            'pink'    — 1/f pink noise (default, most natural)
-                            'white'   — flat-spectrum white noise
-                            'hum_uk'  — pink noise + 50 Hz mains hum (UK)
-                            'hum_us'  — pink noise + 60 Hz mains hum (Detroit)
+                            'pink'    - 1/f pink noise (default, most natural)
+                            'white'   - flat-spectrum white noise
+                            'hum_uk'  - pink noise + 50 Hz mains hum (UK)
+                            'hum_us'  - pink noise + 60 Hz mains hum (Detroit)
         hum_freq:       Mains hum frequency in Hz. Auto-set by noise_type
                         but can be overridden. Default: 50.0 Hz.
         crosstalk_db:   Inter-channel crosstalk level in dB.
@@ -100,7 +100,7 @@ class NoiseFloor(BaseEffect):
         return signal + noise + crosstalk
 
     def reset(self) -> None:
-        """Stateless effect — nothing to reset."""
+        """Stateless effect - nothing to reset."""
 
     # Private helpers
 
@@ -143,7 +143,7 @@ class NoiseFloor(BaseEffect):
         Simulate Mackie CR-1604 summing bus inter-channel crosstalk.
 
         A low-level, phase-shifted copy of the signal bleeds from an
-        adjacent channel — 64-sample offset approximates the propagation
+        adjacent channel - 64-sample offset approximates the propagation
         delay across the analogue summing bus.
         """
         crosstalk_linear = 10.0 ** (self.crosstalk_db / 20.0)

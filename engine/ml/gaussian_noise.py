@@ -1,4 +1,4 @@
-"""gaussian_noise — calibrated Gaussian noise injection for synthetic data generation.
+"""gaussian_noise - calibrated Gaussian noise injection for synthetic data generation.
 
 Pipeline layer: 4
 Consumes:       deterministic_mapper (DeterministicMapping, ResonantPoint)
@@ -101,10 +101,10 @@ class PerturbationConfig:
         swing_sigma: Sigma for swing amount perturbation.
         reverb_sigma: Sigma for reverb decay / diffusion perturbation.
         saturation_sigma: Sigma for saturation intensity perturbation.
-            Reserved — :class:`SaturationSpec` has no numeric fields in
+            Reserved - :class:`SaturationSpec` has no numeric fields in
             the current spoke schema.
         harmonic_sigma: Sigma for harmonic content frequency perturbation.
-            Reserved — :class:`HarmonicContentSpec` has no perturbable
+            Reserved - :class:`HarmonicContentSpec` has no perturbable
             numeric fields in the current spoke schema.
         noise_sigma: Sigma for noise floor level perturbation.
         mapper_sigma: Sigma for resonant-point frequency perturbation
@@ -273,11 +273,11 @@ class GaussianNoiseInjector:
     The injector wraps a seeded ``numpy.random.Generator`` for
     reproducibility. Two perturbation methods are provided:
 
-    - :meth:`perturb_profile` — perturbs profile-level DSP parameters
+    - :meth:`perturb_profile` - perturbs profile-level DSP parameters
       (swing, reverb, noise specs). Saturation and harmonic specs are
       passed through unchanged (no perturbable numeric fields in the
       current spoke schema).
-    - :meth:`perturb_mapping` — perturbs the resonant-point frequencies
+    - :meth:`perturb_mapping` - perturbs the resonant-point frequencies
       in a :class:`DeterministicMapping`, respecting source-tag filters.
 
     Both methods return new frozen instances; inputs are never mutated.
@@ -321,7 +321,7 @@ class GaussianNoiseInjector:
         the corresponding sigma values in :attr:`config`. Fields with
         sigma = 0.0 are returned unchanged and consume no RNG draws.
 
-        Saturation and harmonic specs are passed through unchanged — they
+        Saturation and harmonic specs are passed through unchanged - they
         contain no perturbable numeric fields in the current spoke schema.
 
         Returns a new frozen :class:`RegionalProfile`; the input is

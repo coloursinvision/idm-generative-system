@@ -1,12 +1,12 @@
 """
 streamlit_app/app.py
 
-IDM Generative System — Streamlit Auxiliary UI.
+IDM Generative System - Streamlit Auxiliary UI.
 
 Three tabs:
-    1. Sound Design Advisor (Manual mode) — ask questions, get RAG answers
-    2. Auto-Composer (Auto mode) — describe aesthetic, get chain config
-    3. Effects Explorer — browse all 10 blocks with params and docs
+    1. Sound Design Advisor (Manual mode) - ask questions, get RAG answers
+    2. Auto-Composer (Auto mode) - describe aesthetic, get chain config
+    3. Effects Explorer - browse all 10 blocks with params and docs
 
 Requires:
     - Qdrant running on localhost:6333
@@ -164,7 +164,7 @@ st.markdown(
 
 @st.cache_resource
 def get_rag() -> RAGPipeline:
-    """Singleton RAG pipeline — cached across reruns."""
+    """Singleton RAG pipeline - cached across reruns."""
     return RAGPipeline()
 
 

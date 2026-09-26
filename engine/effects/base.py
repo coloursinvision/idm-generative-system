@@ -40,7 +40,7 @@ class BaseEffect(ABC):
                 return signal * self.gain
 
             def reset(self) -> None:
-                pass  # stateless — nothing to reset
+                pass  # stateless - nothing to reset
     """
 
     @abstractmethod
