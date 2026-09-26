@@ -78,3 +78,20 @@ repos:
     hooks:
       - id: commitizen
         stages: [commit-msg]
+
+  # The text-hygiene checker judges only the lines a commit adds, read from
+  # the index, so older text in a touched file does not block the commit.
+  # language: python builds the hook environment from the interpreter that
+  # runs pre-commit, so no conda environment has to be active.
+  - repo: local
+    hooks:
+      - id: text-hygiene
+        name: text hygiene (added lines)
+        entry: python scripts/check_text_hygiene.py --staged
+        language: python
+        pass_filenames: false
+      - id: text-hygiene-msg
+        name: text hygiene (commit message)
+        entry: python scripts/check_text_hygiene.py --commit-msg
+        language: python
+        stages: [commit-msg]
