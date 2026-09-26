@@ -37,7 +37,7 @@ class ParamMapping:
 
     Attributes:
         target_name:  Name in target language (SC arg name / Tidal effect name).
-        transform:    Callable to convert Python value → target value.
+        transform:    Callable to convert Python value -> target value.
                       None means identity (pass-through).
         default:      Default value in the target language.
         description:  Human-readable note for code comments.
@@ -60,8 +60,8 @@ class GeneratorMapping:
         sc_name:         SuperCollider SynthDef name (e.g. 'idm_fm_blip').
         sc_ugens:        Primary SC UGens used in the SynthDef.
         tidal_name:      TidalCycles sound name.
-        params:          Dict of Python param name → ParamMapping (SC-specific).
-        tidal_params:    Dict of Python param name → ParamMapping (Tidal-specific).
+        params:          Dict of Python param name -> ParamMapping (SC-specific).
+        tidal_params:    Dict of Python param name -> ParamMapping (Tidal-specific).
         description:     Human-readable description.
     """
 
@@ -83,8 +83,8 @@ class EffectBlockMapping:
         python_class:    Python class name (e.g. 'Reverb').
         sc_name:         SuperCollider SynthDef name for this effect.
         sc_ugens:        Primary SC UGens used.
-        sc_params:       Python param name → SC ParamMapping.
-        tidal_params:    Python param name → Tidal ParamMapping.
+        sc_params:       Python param name -> SC ParamMapping.
+        tidal_params:    Python param name -> Tidal ParamMapping.
         unmapped_sc:     Params with no SC equivalent (documented, not dropped).
         unmapped_tidal:  Params with no Tidal equivalent.
         description:     Human-readable description.
@@ -107,20 +107,20 @@ class EffectBlockMapping:
 
 
 def _ms_to_s(ms: float) -> float:
-    """Milliseconds → seconds."""
+    """Milliseconds -> seconds."""
     return ms / 1000.0
 
 
 def _db_to_linear(db: float) -> float:
-    """Decibels → linear amplitude."""
+    """Decibels -> linear amplitude."""
     return float(10.0 ** (db / 20.0))
 
 
 def _resonance_to_rq(res: float) -> float:
-    """Python resonance [0–1] → SC reciprocal-Q for RLPF/RHPF.
+    """Python resonance [0–1] -> SC reciprocal-Q for RLPF/RHPF.
 
-    res=0 → rq=1.0 (no resonance, wide bandwidth)
-    res=1 → rq=0.01 (extreme resonance, narrow bandwidth)
+    res=0 -> rq=1.0 (no resonance, wide bandwidth)
+    res=1 -> rq=0.01 (extreme resonance, narrow bandwidth)
     Logarithmic mapping for perceptually linear control.
     """
     clamped = max(0.0, min(res, 0.99))
@@ -128,7 +128,7 @@ def _resonance_to_rq(res: float) -> float:
 
 
 def _feedback_to_decaytime(feedback: float, delay_s: float = 0.375) -> float:
-    """Feedback coefficient [0–0.98] → CombC decaytime in seconds.
+    """Feedback coefficient [0–0.98] -> CombC decaytime in seconds.
 
     Based on: decaytime = -3 * delay / log10(feedback)
     Clamped to [0.01, 60.0] for safety.
@@ -141,7 +141,7 @@ def _feedback_to_decaytime(feedback: float, delay_s: float = 0.375) -> float:
 
 
 def _drive_to_pregain(drive: float) -> float:
-    """Saturation drive [0.1–10] → SC pre-gain multiplier.
+    """Saturation drive [0.1–10] -> SC pre-gain multiplier.
 
     Maps to a range suitable for tanh soft-clipping in SC.
     """
@@ -149,17 +149,17 @@ def _drive_to_pregain(drive: float) -> float:
 
 
 def _ratio_to_slope_above(ratio: float) -> float:
-    """Compression ratio → Compander slopeAbove.
+    """Compression ratio -> Compander slopeAbove.
 
-    ratio=1 → slope=1.0 (no compression)
-    ratio=4 → slope=0.25
-    ratio=20 → slope=0.05
+    ratio=1 -> slope=1.0 (no compression)
+    ratio=4 -> slope=0.25
+    ratio=20 -> slope=0.05
     """
     return 1.0 / max(ratio, 1.0)
 
 
 def _knee_to_clamp(knee_db: float) -> float:
-    """Soft knee width → Compander clampTime approximation.
+    """Soft knee width -> Compander clampTime approximation.
 
     Wider knee ≈ slower onset. Maps to [0.001, 0.05] range.
     """
@@ -167,12 +167,12 @@ def _knee_to_clamp(knee_db: float) -> float:
 
 
 def _width_to_sc(width: float) -> float:
-    """Stereo width [0–2] → SC Splay spread parameter [0–1]."""
+    """Stereo width [0–2] -> SC Splay spread parameter [0–1]."""
     return max(0.0, min(width / 2.0, 1.0))
 
 
 def _riaa_to_sc_shelf(intensity: float) -> tuple[float, float]:
-    """RIAA intensity [0–1] → (bass_db, treble_db) shelf gains.
+    """RIAA intensity [0–1] -> (bass_db, treble_db) shelf gains.
 
     Approximates the RIAA curve as two shelving EQ bands.
     """
@@ -182,7 +182,7 @@ def _riaa_to_sc_shelf(intensity: float) -> tuple[float, float]:
 
 
 def _crush_to_tidal(bit_depth: int) -> float:
-    """Python bit_depth [4–24] → Tidal # crush [1–16].
+    """Python bit_depth [4–24] -> Tidal # crush [1–16].
 
     Tidal crush: lower = more crushed. Inverted and scaled.
     """
@@ -190,7 +190,7 @@ def _crush_to_tidal(bit_depth: int) -> float:
 
 
 def _sr_reduction_to_coarse(factor: int) -> float:
-    """Sample rate reduction factor [1–16] → Tidal # coarse [0–1].
+    """Sample rate reduction factor [1–16] -> Tidal # coarse [0–1].
 
     coarse=0: no reduction. coarse=1: maximum reduction.
     """
@@ -198,7 +198,7 @@ def _sr_reduction_to_coarse(factor: int) -> float:
 
 
 def _decay_to_tidal_sz(decay_s: float) -> float:
-    """Reverb decay [0.1–10] → Tidal # sz (room size) [0–1].
+    """Reverb decay [0.1–10] -> Tidal # sz (room size) [0–1].
 
     Logarithmic mapping: sz=0.5 ≈ 2.5s decay.
     """
@@ -206,7 +206,7 @@ def _decay_to_tidal_sz(decay_s: float) -> float:
 
 
 def _delay_ms_to_tidal(ms: float, bpm: float = 120.0) -> float:
-    """Delay time in ms → Tidal # delaytime [0–1] (cycles).
+    """Delay time in ms -> Tidal # delaytime [0–1] (cycles).
 
     Converts absolute delay time to cycle-relative time at given BPM.
     """
@@ -215,30 +215,30 @@ def _delay_ms_to_tidal(ms: float, bpm: float = 120.0) -> float:
 
 
 def _feedback_to_tidal(feedback: float) -> float:
-    """Feedback [0–0.98] → Tidal # delayfeedback [0–1]."""
+    """Feedback [0–0.98] -> Tidal # delayfeedback [0–1]."""
     return max(0.0, min(feedback, 1.0))
 
 
 def _cutoff_to_tidal(hz: float) -> float:
-    """Cutoff frequency Hz → Tidal # lpf / # hpf (Hz, direct pass-through)."""
+    """Cutoff frequency Hz -> Tidal # lpf / # hpf (Hz, direct pass-through)."""
     return hz
 
 
 def _resonance_to_tidal(res: float) -> float:
-    """Resonance [0–1] → Tidal # resonance [0–1] (direct)."""
+    """Resonance [0–1] -> Tidal # resonance [0–1] (direct)."""
     return res
 
 
 def _drive_to_tidal_distort(drive: float) -> float:
-    """Saturation drive [0.1–10] → Tidal # distort [0–1].
+    """Saturation drive [0.1–10] -> Tidal # distort [0–1].
 
-    Logarithmic mapping: drive=1 → ~0.1, drive=5 → ~0.7, drive=10 → 1.0.
+    Logarithmic mapping: drive=1 -> ~0.1, drive=5 -> ~0.7, drive=10 -> 1.0.
     """
     return max(0.0, min(math.log10(drive + 0.1) / math.log10(10.1), 1.0))
 
 
 def _pan_to_tidal(pan: float) -> float:
-    """Pan [-1, 1] → Tidal # pan [0, 1].
+    """Pan [-1, 1] -> Tidal # pan [0, 1].
 
     Python: -1=left, 0=center, 1=right
     Tidal:   0=left, 0.5=center, 1=right
@@ -1005,7 +1005,7 @@ UNMAPPED_TIDAL: dict[str, dict[str, str]] = {
 }
 
 
-# Tape age → LPF cutoff lookup (used by synthdef.py for delay SynthDef)
+# Tape age -> LPF cutoff lookup (used by synthdef.py for delay SynthDef)
 
 TAPE_AGE_SC_CUTOFF: dict[str, float] = {
     "new": 14000.0,
@@ -1014,7 +1014,7 @@ TAPE_AGE_SC_CUTOFF: dict[str, float] = {
 }
 
 
-# DAT mode → bandwidth ceiling lookup (used by synthdef.py for vinyl SynthDef)
+# DAT mode -> bandwidth ceiling lookup (used by synthdef.py for vinyl SynthDef)
 
 DAT_MODE_SC_CUTOFF: dict[str, float] = {
     "dat_lp": 16000.0,
@@ -1024,7 +1024,7 @@ DAT_MODE_SC_CUTOFF: dict[str, float] = {
 }
 
 
-# Vinyl condition → noise parameters (used by synthdef.py)
+# Vinyl condition -> noise parameters (used by synthdef.py)
 
 VINYL_CONDITION_SC: dict[str, dict[str, float]] = {
     "mint": {"hiss_amp": 0.0003, "crackle_density": 0.5, "crackle_amp": 0.005},
@@ -1039,7 +1039,7 @@ VINYL_CONDITION_SC: dict[str, dict[str, float]] = {
 TIDAL_PATTERN_MAP: dict[str, str] = {
     "euclidean": "e",  # e(k, n) — native Tidal Euclidean
     "probabilistic": "?",  # ? operator — per-step probability
-    "density": "?",  # density → uniform probability per step
+    "density": "?",  # density -> uniform probability per step
     "markov": "markov",  # no native Tidal; approximated with weighted choice
     "mutation": "degrade",  # degrade / degradeBy — probabilistic step removal
 }
@@ -1079,7 +1079,7 @@ def get_tidal_effect_params(block_key: str) -> dict[str, ParamMapping]:
         block_key: Canonical chain key (e.g. 'reverb', 'delay').
 
     Returns:
-        Dict of Python param name → Tidal ParamMapping. Empty dict if
+        Dict of Python param name -> Tidal ParamMapping. Empty dict if
         the effect has no Tidal equivalent.
     """
     return TIDAL_EFFECTS.get(block_key, {})
@@ -1092,7 +1092,7 @@ def get_tidal_unmapped(block_key: str) -> dict[str, str]:
         block_key: Canonical chain key.
 
     Returns:
-        Dict of Python param name → explanation string.
+        Dict of Python param name -> explanation string.
     """
     return UNMAPPED_TIDAL.get(block_key, {})
 
@@ -1134,7 +1134,7 @@ def validate_mapping_completeness() -> dict[str, list[str]]:
     explicitly listed in unmapped sets.
 
     Returns:
-        Dict of block_key → list of unaccounted parameter names.
+        Dict of block_key -> list of unaccounted parameter names.
         Empty dict means all parameters are accounted for.
 
     This function is called by test_mappings.py to ensure zero

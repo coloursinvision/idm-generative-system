@@ -15,11 +15,11 @@ aesthetic rule is at the bottom, visually separated by a divider and a
 header comment recording the non-physical character of its values.
 
 Spoke sources:
-    BPM_TO_HZ.md              → bpm_to_hz + AudibleHarmonic
-    SCHUMANN_RESONANCES.md    → schumann_mode + schumann_bpm_anchor
-    TUNING_432_440.md         → midi_to_hz + hz_to_midi + tuning_difference_hz
-    MAINS_HUM_REGIONAL.md     → mains_hum_profile + friends
-    SOLFEGGIO_FILTER_SEEDING.md → solfeggio_cutoff_seed (AESTHETIC, not physical)
+    BPM_TO_HZ.md              -> bpm_to_hz + AudibleHarmonic
+    SCHUMANN_RESONANCES.md    -> schumann_mode + schumann_bpm_anchor
+    TUNING_432_440.md         -> midi_to_hz + hz_to_midi + tuning_difference_hz
+    MAINS_HUM_REGIONAL.md     -> mains_hum_profile + friends
+    SOLFEGGIO_FILTER_SEEDING.md -> solfeggio_cutoff_seed (AESTHETIC, not physical)
 
 All functions are pure: no I/O, no hidden state, no module-level side effects
 beyond constant-table definitions. Downstream layers (Gaussian noise injection,
@@ -189,7 +189,7 @@ def schumann_bpm_anchor(
 
     Args:
         mode: Schumann mode index, 1-indexed.
-        subharmonic_divisor: Power-of-two divisor applied after the Hz→BPM
+        subharmonic_divisor: Power-of-two divisor applied after the Hz->BPM
             conversion to drop the tempo into a musically useful range.
 
     Returns:
@@ -417,7 +417,7 @@ def mains_hum_profile(
 # not as ground truth.
 #
 # See also: SOLFEGGIO_FILTER_SEEDING.md spoke, parked research TODO-6
-# (formal Solfeggio → filter cutoff mapping methodology).
+# (formal Solfeggio -> filter cutoff mapping methodology).
 
 SOLFEGGIO_HZ: dict[str, float] = {
     "foundation": 174.0,

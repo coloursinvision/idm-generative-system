@@ -4,8 +4,8 @@ engine/effects/base.py
 Abstract base class for all DSP effect blocks in the IDM Generative System.
 
 All effects in the chain must inherit from BaseEffect and implement:
-    - __call__(signal) → processed signal
-    - reset()          → reset any internal state
+    - __call__(signal) -> processed signal
+    - reset()          -> reset any internal state
 
 This interface ensures:
     - Consistent API across all 10 effect blocks

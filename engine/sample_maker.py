@@ -87,7 +87,7 @@ def noise_burst(
     Noise burst with adjustable tone character.
 
     Blends white noise with a low-passed (smoothed) version of itself.
-    tone=0.0 → pure white noise; tone=1.0 → smooth low-frequency noise.
+    tone=0.0 -> pure white noise; tone=1.0 -> smooth low-frequency noise.
 
     Useful for snare, rim shot, and percussive texture generation.
 

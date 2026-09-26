@@ -528,10 +528,10 @@ def _format_type_hint(type_hint: type) -> str:
     /effects endpoint response.
 
     Examples:
-        int                   → "int"
-        Optional[float]       → "float | null"
-        Union[str, int]       → "str | int"
-        list[str]             → "list[str]"
+        int                   -> "int"
+        Optional[float]       -> "float | null"
+        Union[str, int]       -> "str | int"
+        list[str]             -> "list[str]"
     """
     origin = get_origin(type_hint)
     if origin is Union:
@@ -785,7 +785,7 @@ async def process_audio(
             detail=f"Could not read audio file: {e}",
         ) from e
 
-    # Handle stereo → mono (effects chain is mono)
+    # Handle stereo -> mono (effects chain is mono)
     if signal.ndim == 2:
         signal = np.mean(signal, axis=1)
 
@@ -1124,7 +1124,7 @@ class TuningResponse(BaseModel):
 
 # V2.4 - /tuning/extract endpoint Pydantic models
 #
-# Free-text → TuningRequest extraction via GPT-4o (RAGPipeline). Used by
+# Free-text -> TuningRequest extraction via GPT-4o (RAGPipeline). Used by
 # V2.4 frontend TuningPanel to pre-fill the form. Extraction output is
 # validated by _parse_tuning_extract_output in knowledge/rag.py (types,
 # ranges, cross-field rule). User still reviews/edits before POST /tuning.
@@ -1387,7 +1387,7 @@ if _HAS_MLFLOW:
 
 # V2.4 - /tuning/extract endpoint handler
 #
-# Free-text → structured TuningRequest extraction via RAGPipeline.extract_
+# Free-text -> structured TuningRequest extraction via RAGPipeline.extract_
 # tuning_request (GPT-4o + parser + validator). Independent from MLflow -
 # registered unconditionally (not gated on _HAS_MLFLOW) because extraction
 # does NOT require the trained model; it produces a TuningRequest payload
