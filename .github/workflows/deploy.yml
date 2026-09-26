@@ -1,5 +1,5 @@
 # =============================================================================
-# IDM Generative System — Continuous Deployment
+# IDM Generative System - Continuous Deployment
 # Triggers after CI passes on main. SSHes into the production droplet,
 # pulls the latest GHCR image, and restarts the stack.
 # =============================================================================

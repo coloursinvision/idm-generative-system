@@ -1,4 +1,4 @@
-# IDM Generative System — Project Configuration
+# IDM Generative System - Project Configuration
 # Single source of truth for metadata, dependencies, and tool configs.
 # Replaces requirements.txt (kept for Streamlit Cloud) and environment.yml (kept for conda).
 
@@ -12,7 +12,7 @@ build-backend = "hatchling.build"
 [project]
 name = "idm-generative-system"
 version = "0.10.1"
-description = "Generative audio engine for experimental IDM production — DSP modeling, algorithmic composition, and RAG-augmented sound design."
+description = "Generative audio engine for experimental IDM production - DSP modeling, algorithmic composition, and RAG-augmented sound design."
 readme = "README.md"
 license = "AGPL-3.0-or-later"
 requires-python = ">=3.11,<3.13"
@@ -26,7 +26,7 @@ classifiers = [
     "Topic :: Multimedia :: Sound/Audio :: Sound Synthesis",
 ]
 
-# Core runtime dependencies — the minimum set to run the FastAPI backend + engine.
+# Core runtime dependencies - the minimum set to run the FastAPI backend + engine.
 dependencies = [
     # DSP / Audio
     "numpy>=1.26.0,<2.0",
@@ -51,9 +51,9 @@ dependencies = [
     # LLM
     "openai>=1.0.0",
 
-    # Data (engine/generator.py — pattern DataFrames)
+    # Data (engine/generator.py - pattern DataFrames)
     "pandas>=2.0.0",
-    # Knowledge layer (engine/ml — profile spoke parsing)
+    # Knowledge layer (engine/ml - profile spoke parsing)
     "python-frontmatter>=1.3.0,<2.0.0",
     "PyYAML>=6.0.0",
 ]
@@ -94,7 +94,7 @@ monitoring = [
     "langfuse>=2.0.0",
 ]
 
-# Streamlit auxiliary UI — NOT included in Docker image
+# Streamlit auxiliary UI - NOT included in Docker image
 streamlit = [
     "streamlit>=1.32.0",
 ]
@@ -109,7 +109,7 @@ Repository = "https://github.com/coloursinvision/idm-generative-system"
 packages = ["engine", "api", "knowledge"]
 
 # ---------------------------------------------------------------------------
-# Ruff — linter + formatter (replaces flake8 + black + isort)
+# Ruff - linter + formatter (replaces flake8 + black + isort)
 # ---------------------------------------------------------------------------
 [tool.ruff]
 target-version = "py311"
@@ -142,35 +142,35 @@ select = [
     "RET",    # flake8-return
 ]
 ignore = [
-    "S101",    # assert used in tests — intentional
-    "B008",    # function call in default arg — FastAPI Depends() pattern
-    "RET504",  # unnecessary assignment before return — readability preference
-    "E501",    # line too long — handled by formatter
-    "E402",    # module-level import not at top — load_dotenv() must run before imports
-    "RUF001",  # ambiguous unicode in strings — en-dashes in domain text intentional
-    "RUF002",  # ambiguous unicode in docstrings — parameter ranges use en-dash
-    "RUF003",  # ambiguous unicode in comments — intentional
-    "RUF012",  # mutable class var — frozen sets on effect classes are intentional constants
-    "RUF022",  # unsorted __all__ — grouped by logical category, not alphabetical
+    "S101",    # assert used in tests - intentional
+    "B008",    # function call in default arg - FastAPI Depends() pattern
+    "RET504",  # unnecessary assignment before return - readability preference
+    "E501",    # line too long - handled by formatter
+    "E402",    # module-level import not at top - load_dotenv() must run before imports
+    "RUF001",  # ambiguous unicode in strings - en-dashes in domain text intentional
+    "RUF002",  # ambiguous unicode in docstrings - parameter ranges use en-dash
+    "RUF003",  # ambiguous unicode in comments - intentional
+    "RUF012",  # mutable class var - frozen sets on effect classes are intentional constants
+    "RUF022",  # unsorted __all__ - grouped by logical category, not alphabetical
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = [
     "S101",   # assert in tests
     "S311",   # pseudo-random in tests
-    "N803",   # EffectClass, MockKB etc. — test parametrize convention
-    "N806",   # X, X_train, X_test — scikit-learn naming convention
+    "N803",   # EffectClass, MockKB etc. - test parametrize convention
+    "N806",   # X, X_train, X_test - scikit-learn naming convention
 ]
 "engine/effects/*.py" = [
     "N803",   # DSP convention (Q, N, etc.)
     "N806",   # DSP convention
 ]
 "knowledge/qdrant_client.py" = [
-    "T201",   # print() in CLI __main__ block — intentional
-    "S324",   # MD5 for content hashing — not security
+    "T201",   # print() in CLI __main__ block - intentional
+    "S324",   # MD5 for content hashing - not security
 ]
 "streamlit_app/**/*.py" = [
-    "E402",   # import order — _bridge_secrets() must run before imports
+    "E402",   # import order - _bridge_secrets() must run before imports
 ]
 
 [tool.ruff.lint.isort]
@@ -182,7 +182,7 @@ indent-style = "space"
 docstring-code-format = true
 
 # ---------------------------------------------------------------------------
-# mypy — strict static type checking
+# mypy - strict static type checking
 # ---------------------------------------------------------------------------
 [tool.mypy]
 python_version = "3.11"

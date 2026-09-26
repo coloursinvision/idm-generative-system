@@ -1,6 +1,6 @@
 # .github/workflows/e2e.yml
 #
-# E2E browser tests — runs Playwright against the Vite dev server
+# E2E browser tests - runs Playwright against the Vite dev server
 # with mocked API routes (no backend required).
 #
 # Trigger: push/PR to develop, main, hotfix/*
