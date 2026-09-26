@@ -109,7 +109,7 @@ describe("useSequencer AudioContext lifecycle", () => {
       await result.current.unlockAudioContext();
     });
 
-    // Silent buffer trick: createBuffer(1, 1, 22050) → source → start(0)
+    // Silent buffer trick: createBuffer(1, 1, 22050) -> source -> start(0)
     expect(currentMockCtx.createBuffer).toHaveBeenCalledWith(1, 1, 22050);
     expect(currentMockCtx.createBufferSource).toHaveBeenCalledOnce();
   });

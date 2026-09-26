@@ -3,10 +3,10 @@
 # Gitflow: develop = active dev, main = release-ready only.
 #
 # Triggers:
-#   push to develop   → lint + type-check + test + Docker build (no push)
-#   PR to main        → lint + type-check + test + Docker build (no push)
-#   push to main      → lint + type-check + test + Docker build + push to GHCR
-#   hotfix/* branches → lint + type-check + test
+#   push to develop   -> lint + type-check + test + Docker build (no push)
+#   PR to main        -> lint + type-check + test + Docker build (no push)
+#   push to main      -> lint + type-check + test + Docker build + push to GHCR
+#   hotfix/* branches -> lint + type-check + test
 #
 # A gitleaks secret scan runs on every trigger, in parallel with lint.
 # A text-hygiene check judges only the lines each change adds, also in parallel.
