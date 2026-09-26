@@ -1,4 +1,4 @@
-# params.yaml — IDM Generative System V2 pipeline parameters
+# params.yaml - IDM Generative System V2 pipeline parameters
 #
 # Single source of truth for all DVC pipeline configuration.
 # Consumed by: scripts/generate_dataset.py, scripts/train_model.py

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# train_with_hash.sh — DVC train stage entrypoint with dataset hash injection.
+# train_with_hash.sh - DVC train stage entrypoint with dataset hash injection.
 #
 # Extracts the md5 hash of data/synthetic/dataset.parquet from dvc.lock
 # (under the generate stage's outs), exports it as DVC_DATASET_HASH, and

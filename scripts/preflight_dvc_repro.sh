@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 #
-# preflight_dvc_repro.sh — pre-flight checks for RUNBOOK_DVC_REPRO_BASELINE.md
+# preflight_dvc_repro.sh - pre-flight checks for RUNBOOK_DVC_REPRO_BASELINE.md
 #
 # Verifies nine pre-conditions required before running `dvc repro` on the
 # IDM Generative System V2 ML pipeline (Layer 6). Designed to be invoked
 # from the repository root on a Tailscale-connected workstation host.
 #
 # Training execution host is the workstation
-# (preferred — has GPU) or MacBook (acceptable — CPU-only, longer wall time).
+# (preferred - has GPU) or MacBook (acceptable - CPU-only, longer wall time).
 # The droplet hosts the MLflow tracking server only and is reached via
 # the Tailscale-restricted vhost https://mlflow.idm.coloursinvision.ai.
 #
@@ -17,9 +17,9 @@
 #   [FAIL]  <check>     condition unsatisfied; runbook must not proceed
 #
 # Exit code:
-#   0  — all checks PASS (WARN allowed)
-#   1  — one or more FAIL
-#   2  — invalid invocation or environment (missing deps, wrong cwd)
+#   0  - all checks PASS (WARN allowed)
+#   1  - one or more FAIL
+#   2  - invalid invocation or environment (missing deps, wrong cwd)
 #
 # Usage:
 #   bash scripts/preflight_dvc_repro.sh
@@ -83,7 +83,7 @@ fail() {
 
 usage() {
     cat <<EOF
-${SCRIPT_NAME} — pre-flight checks for DVC repro baseline (Layer 6)
+${SCRIPT_NAME} - pre-flight checks for DVC repro baseline (Layer 6)
 
 Usage:
   bash scripts/${SCRIPT_NAME}            run all nine checks
@@ -246,7 +246,7 @@ check_07_dvc_status() {
     if grep -qiE "up to date" <<<"${pipeline_status}"; then
         pass "07-dvc-status" "pipeline up to date (no stages need re-run)"
     else
-        warn "07-dvc-status" "stages need re-run — expected on first run; review output below"
+        warn "07-dvc-status" "stages need re-run - expected on first run; review output below"
         printf "        %s\n" "${pipeline_status//$'\n'/$'\n        '}"
     fi
 }
@@ -340,12 +340,12 @@ main() {
         "${COL_BOLD}" "${COL_RESET}" "${PASS_COUNT}" "${WARN_COUNT}" "${FAIL_COUNT}"
 
     if (( FAIL_COUNT > 0 )); then
-        printf "%sresult: FAIL — do not proceed with dvc repro%s\n" \
+        printf "%sresult: FAIL - do not proceed with dvc repro%s\n" \
             "${COL_RED}" "${COL_RESET}"
         exit 1
     fi
 
-    printf "%sresult: OK — proceed to runbook Step 1%s\n" \
+    printf "%sresult: OK - proceed to runbook Step 1%s\n" \
         "${COL_GREEN}" "${COL_RESET}"
     exit 0
 }
