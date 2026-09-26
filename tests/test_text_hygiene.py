@@ -1043,3 +1043,275 @@ class TestContract:
         assert result.returncode == 0, result.stdout
         assert lines_tagged(result, "FAIL") == [], result.stdout
         assert lines_tagged(result, "WARN") == [], result.stdout
+
+
+def commit(repo: Path, message: str) -> None:
+    """Stage everything in a scratch repository and commit it."""
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", message)
+
+
+class TestNegativeDiff:
+    """--diff judges only what the working tree adds relative to REF."""
+
+    def test_committed_legacy_lines_are_not_rechecked(self, repo: Path) -> None:
+        """A commit after REF that adds clean text to a legacy file passes."""
+        write(repo, "docs/GUIDE.md", "Legacy %EMDASH% text.\n")
+        commit(repo, "chore: baseline")
+        git(repo, "tag", "base")
+        write(repo, "docs/GUIDE.md", "Legacy %EMDASH% text.\nNew clean line.\n")
+        commit(repo, "docs: add a line")
+        assert_clean(run_checker("--diff", "base", cwd=repo), "docs/GUIDE.md")
+
+    def test_uncommitted_clean_edit_to_a_legacy_file_passes(self, repo: Path) -> None:
+        """The authoring-hook shape: REF is HEAD and the edit is not staged."""
+        write(repo, "docs/GUIDE.md", "Legacy %EMDASH% text.\n")
+        commit(repo, "chore: baseline")
+        write(repo, "docs/GUIDE.md", "Legacy %EMDASH% text.\nNew clean line.\n")
+        assert_clean(run_checker("--diff", "HEAD", cwd=repo), "docs/GUIDE.md")
+
+    def test_renamed_legacy_file_is_not_rechecked(self, repo: Path) -> None:
+        """A rename adds no lines, so moving a legacy file after REF passes."""
+        write(repo, "docs/OLD.md", "Legacy %EMDASH% text.\n")
+        commit(repo, "chore: baseline")
+        git(repo, "tag", "base")
+        git(repo, "mv", "docs/OLD.md", "docs/NEW.md")
+        commit(repo, "chore: rename")
+        assert_clean(run_checker("--diff", "base", cwd=repo), "docs/NEW.md")
+
+    def test_renamed_legacy_file_is_not_rechecked_whatever_the_config(self, repo: Path) -> None:
+        """Renames are detected explicitly, whatever diff.renames says."""
+        git(repo, "config", "diff.renames", "false")
+        write(repo, "docs/OLD.md", "Legacy %EMDASH% text.\n")
+        commit(repo, "chore: baseline")
+        git(repo, "tag", "base")
+        git(repo, "mv", "docs/OLD.md", "docs/NEW.md")
+        commit(repo, "chore: rename")
+        assert_clean(run_checker("--diff", "base", cwd=repo), "docs/NEW.md")
+
+    def test_untracked_files_are_ignored(self, repo: Path) -> None:
+        """git diff shows tracked files only, so an untracked draft is not judged."""
+        write(repo, "docs/GUIDE.md", "Clean line.\n")
+        commit(repo, "chore: baseline")
+        write(repo, "docs/GUIDE.md", "Clean line.\nSecond clean line.\n")
+        write(repo, "docs/DRAFT.md", "Draft %EMDASH% text.\n")
+        result = run_checker("--diff", "HEAD", cwd=repo)
+        assert_clean(result, "docs/GUIDE.md")
+        assert flagged(result, "docs/DRAFT.md") == [], result.stdout
+
+    def test_deleted_file_passes(self, repo: Path) -> None:
+        write(repo, "docs/OLD.md", "Legacy %EMDASH% text.\n")
+        write(repo, "docs/GUIDE.md", "Clean line.\n")
+        commit(repo, "chore: baseline")
+        git(repo, "rm", "-q", "docs/OLD.md")
+        write(repo, "docs/GUIDE.md", "Clean line.\nSecond clean line.\n")
+        result = run_checker("--diff", "HEAD", cwd=repo)
+        assert "Traceback" not in result.stderr, result.stderr
+        assert_clean(result, "docs/GUIDE.md")
+        assert flagged(result, "docs/OLD.md") == [], result.stdout
+
+    def test_symlink_is_skipped(self, repo: Path) -> None:
+        """Read from disk, a link is judged by its target's text; --all skips links too."""
+        write(repo, "docs/GUIDE.md", "Legacy %EMDASH% text.\n")
+        write(repo, "docs/NOTES.md", "Clean line.\n")
+        commit(repo, "chore: baseline")
+        (repo / "docs" / "LINK.md").symlink_to("GUIDE.md")
+        git(repo, "add", "docs/LINK.md")
+        write(repo, "docs/NOTES.md", "Clean line.\nSecond clean line.\n")
+        result = run_checker("--diff", "HEAD", cwd=repo)
+        assert_clean(result, "docs/NOTES.md")
+        assert flagged(result, "docs/LINK.md") == [], result.stdout
+
+    def test_added_user_facing_strings_pass(self, repo: Path) -> None:
+        """Region rules still apply: literals in .py and rendered JSX in .tsx are not read."""
+        py = "api/profiles.py"
+        tsx = "frontend/src/components/Panel.tsx"
+        py_base = '"""Profile lookup endpoints."""\n'
+        tsx_base = "export const Panel = () => <h2>Tempo</h2>;\n"
+        write(repo, py, py_base)
+        write(repo, tsx, tsx_base)
+        commit(repo, "chore: baseline")
+        write(repo, py, py_base + 'TRACK = "Track #1 %EMDASH% intro"\n')
+        write(repo, tsx, tsx_base + "export const H = () => <h2>Tempo %RARR% Swing</h2>;\n")
+        result = run_checker("--diff", "HEAD", cwd=repo)
+        assert_clean(result, py)
+        assert_clean(result, tsx)
+
+    def test_exempt_and_unchecked_files_are_skipped(self, repo: Path) -> None:
+        """LICENCE.md, SOPS output and a JSON file stay out of scope in --diff."""
+        skipped = ["LICENCE.md", "secrets/app.enc.yaml", "config/presets.json"]
+        for path in [*skipped, "docs/NOTES.md"]:
+            write(repo, path, "Clean line.\n")
+        commit(repo, "chore: baseline")
+        for path in skipped:
+            write(repo, path, "Clean line.\nLegacy %EMDASH% text.\n")
+        write(repo, "docs/NOTES.md", "Clean line.\nSecond clean line.\n")
+        result = run_checker("--diff", "HEAD", cwd=repo)
+        assert_clean(result, "docs/NOTES.md")
+        for path in skipped:
+            assert flagged(result, path) == [], path
+
+    def test_edit_reverted_to_ref_content_passes(self, repo: Path) -> None:
+        """The working tree is judged, not the history: an edit undone again adds nothing."""
+        write(repo, "docs/GUIDE.md", "Legacy %EMDASH% text.\n")
+        write(repo, "docs/NOTES.md", "Clean line.\n")
+        commit(repo, "chore: baseline")
+        git(repo, "tag", "base")
+        write(repo, "docs/GUIDE.md", "Legacy %EMDASH% text, edited.\n")
+        commit(repo, "docs: edit the legacy line")
+        write(repo, "docs/GUIDE.md", "Legacy %EMDASH% text.\n")
+        write(repo, "docs/NOTES.md", "Clean line.\nSecond clean line.\n")
+        result = run_checker("--diff", "base", cwd=repo)
+        assert_clean(result, "docs/NOTES.md")
+        assert flagged(result, "docs/GUIDE.md") == [], result.stdout
+
+
+class TestPositiveDiff:
+    """--diff fails on what the working tree adds relative to REF."""
+
+    def test_added_line_since_ref_fails(self, repo: Path) -> None:
+        path = "docs/GUIDE.md"
+        write(repo, path, "Legacy %EMDASH% text.\n")
+        commit(repo, "chore: baseline")
+        git(repo, "tag", "base")
+        write(repo, path, "Legacy %EMDASH% text.\nNew %RARR% line.\nGlue %MIDDOT% knee.\n")
+        commit(repo, "docs: add two lines")
+        result = run_checker("--diff", "base", cwd=repo)
+        assert result.returncode == 1, result.stdout
+        assert_reported(result, "FAIL", path, 2, label("RARR"))
+        assert_reported(result, "WARN", path, 3, label("MIDDOT"))
+        assert located(result, "FAIL", path, 1) == [], result.stdout
+        summary = SUMMARY.search(result.stdout)
+        assert summary, result.stdout
+        assert summary.groups() == ("0", "1", "1"), result.stdout
+
+    def test_unstaged_change_is_judged(self, repo: Path) -> None:
+        """The authoring-hook shape: REF is HEAD and the edit is not staged."""
+        path = "docs/GUIDE.md"
+        write(repo, path, "Clean line.\n")
+        commit(repo, "chore: baseline")
+        write(repo, path, "Clean line.\nUnstaged %EMDASH% line.\n")
+        result = run_checker("--diff", "HEAD", cwd=repo)
+        assert result.returncode == 1, result.stdout
+        assert_reported(result, "FAIL", path, 2, label("EMDASH"))
+
+    def test_committed_staged_and_unstaged_additions_all_count(self, repo: Path) -> None:
+        for name in "ABC":
+            write(repo, f"docs/{name}.md", "Clean line.\n")
+        commit(repo, "chore: baseline")
+        git(repo, "tag", "base")
+        write(repo, "docs/A.md", "Clean line.\nCommitted %EMDASH% line.\n")
+        commit(repo, "docs: committed line")
+        write(repo, "docs/B.md", "Clean line.\nStaged %EMDASH% line.\n")
+        git(repo, "add", "docs/B.md")
+        write(repo, "docs/C.md", "Clean line.\nUnstaged %EMDASH% line.\n")
+        result = run_checker("--diff", "base", cwd=repo)
+        assert result.returncode == 1, result.stdout
+        for name in "ABC":
+            assert_reported(result, "FAIL", f"docs/{name}.md", 2, label("EMDASH"))
+
+    def test_new_tracked_file_is_judged_whole(self, repo: Path) -> None:
+        """Every line of a file added after REF is an added line."""
+        write(repo, "docs/GUIDE.md", "Clean line.\n")
+        commit(repo, "chore: baseline")
+        write(repo, "docs/NEW.md", "First %RARR% line.\n")
+        git(repo, "add", "docs/NEW.md")
+        result = run_checker("--diff", "HEAD", cwd=repo)
+        assert result.returncode == 1, result.stdout
+        assert_reported(result, "FAIL", "docs/NEW.md", 1, label("RARR"))
+
+    def test_added_line_in_renamed_file_fails(self, repo: Path) -> None:
+        legacy = "Legacy %EMDASH% text.\nSecond legacy line.\nThird legacy line.\n"
+        write(repo, "docs/OLD.md", legacy)
+        commit(repo, "chore: baseline")
+        git(repo, "mv", "docs/OLD.md", "docs/NEW.md")
+        write(repo, "docs/NEW.md", legacy + "New %RARR% line.\n")
+        git(repo, "add", "docs/NEW.md")
+        result = run_checker("--diff", "HEAD", cwd=repo)
+        assert result.returncode == 1, result.stdout
+        assert_reported(result, "FAIL", "docs/NEW.md", 4, label("RARR"))
+        assert located(result, "FAIL", "docs/NEW.md", 1) == [], result.stdout
+
+    def test_merge_first_parent_is_the_pull_request_base(self, repo: Path) -> None:
+        """CI shape: on a merge commit, --diff HEAD^1 reports the merged branch's lines only."""
+        write(repo, "docs/GUIDE.md", "Legacy %EMDASH% text.\n")
+        commit(repo, "chore: baseline")
+        git(repo, "switch", "-q", "-c", "feature")
+        write(repo, "docs/GUIDE.md", "Legacy %EMDASH% text.\nBranch %RARR% line.\n")
+        commit(repo, "docs: branch line")
+        git(repo, "switch", "-q", "main")
+        write(repo, "docs/BASE.md", "Base %EMDASH% moved on.\n")
+        commit(repo, "docs: the base moves on")
+        git(repo, "merge", "-q", "--no-ff", "-m", "Merge branch feature", "feature")
+        result = run_checker("--diff", "HEAD^1", cwd=repo)
+        assert result.returncode == 1, result.stdout
+        assert_reported(result, "FAIL", "docs/GUIDE.md", 2, label("RARR"))
+        assert located(result, "FAIL", "docs/GUIDE.md", 1) == [], result.stdout
+        assert flagged(result, "docs/BASE.md") == [], result.stdout
+
+    def test_whole_file_finding_is_reported_regardless_of_lines(self, repo: Path) -> None:
+        """Invalid UTF-8 has no line number, so a line filter must not drop it."""
+        path = "docs/GUIDE.md"
+        write(repo, path, "Clean line.\n")
+        commit(repo, "chore: baseline")
+        write_raw(repo, path, b"Clean line.\nCaf\xe9 society\n")
+        result = run_checker("--diff", "HEAD", cwd=repo)
+        assert result.returncode == 1, result.stdout
+        assert any("not valid UTF-8" in line for line in flagged(result, path)), result.stdout
+
+
+class TestContractDiff:
+    """--diff keeps the preflight contract and fails loudly when misused."""
+
+    def test_help_names_the_diff_mode(self, tmp_path: Path) -> None:
+        result = run_checker("--help", cwd=tmp_path)
+        assert result.returncode == 0, result.stderr
+        assert "--diff" in result.stdout, result.stdout
+
+    def test_missing_ref_is_a_usage_error(self, tmp_path: Path) -> None:
+        result = run_checker("--diff", cwd=tmp_path)
+        assert result.returncode == 2, result.stdout
+        assert "usage" in result.stderr.lower(), result.stderr
+        assert "expected one argument" in result.stderr, result.stderr
+
+    def test_diff_with_another_mode_is_rejected(self, tmp_path: Path) -> None:
+        result = run_checker("--diff", "HEAD", "--all", cwd=tmp_path)
+        assert result.returncode == 2, result.stdout
+        assert "not allowed with argument" in result.stderr, result.stderr
+
+    def test_fix_with_diff_is_rejected(self, tmp_path: Path) -> None:
+        """--fix rewrites whole files, which --diff never judges."""
+        result = run_checker("--fix", "--diff", "HEAD", cwd=tmp_path)
+        assert result.returncode == 2, result.stdout
+        assert "--fix works only with --files or --all" in result.stderr, result.stderr
+
+    def test_unknown_ref_aborts(self, repo: Path) -> None:
+        write(repo, "docs/GUIDE.md", "Clean line.\n")
+        commit(repo, "chore: baseline")
+        result = run_checker("--diff", "no-such-ref", cwd=repo)
+        assert "Traceback" not in result.stderr, result.stderr
+        assert result.returncode == 2, result.stdout
+        assert "[ABORT]" in result.stderr, result.stderr
+
+    def test_ref_naming_a_file_aborts(self, repo: Path) -> None:
+        """git diff would take a file name as a pathspec and compare it with the index."""
+        write(repo, "README.md", "Clean line.\n")
+        commit(repo, "chore: baseline")
+        write(repo, "README.md", "Clean line.\nEdited %EMDASH% line.\n")
+        result = run_checker("--diff", "README.md", cwd=repo)
+        assert result.returncode == 2, result.stdout
+        assert "[ABORT]" in result.stderr, result.stderr
+
+    def test_option_like_ref_aborts_without_running_git_diff(self, repo: Path) -> None:
+        """Passed on to git diff, --output=FILE would write a file; REF must name a commit."""
+        write(repo, "docs/GUIDE.md", "Clean line.\n")
+        commit(repo, "chore: baseline")
+        result = run_checker("--diff=--output=OUT.txt", cwd=repo)
+        assert result.returncode == 2, result.stdout
+        assert "[ABORT]" in result.stderr, result.stderr
+        assert not (repo / "OUT.txt").exists(), "git diff ran with an injected option"
+
+    def test_diff_outside_a_repository_aborts(self, tmp_path: Path) -> None:
+        result = run_checker("--diff", "HEAD", cwd=tmp_path)
+        assert result.returncode == 2, result.stdout
+        assert "[ABORT]" in result.stderr, result.stderr
