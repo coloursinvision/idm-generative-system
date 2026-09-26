@@ -99,63 +99,63 @@ class TestValueTransforms:
     """Parameter value transforms produce correct target-language values."""
 
     def test_ms_to_s(self) -> None:
-        """Milliseconds → seconds conversion."""
+        """Milliseconds -> seconds conversion."""
         pm = SC_EFFECTS["delay"].sc_params["delay_ms"]
         assert transform_param(pm, 375.0) == pytest.approx(0.375)
 
     def test_db_to_linear(self) -> None:
-        """dB → linear amplitude: -78 dB ≈ 0.000126."""
+        """dB -> linear amplitude: -78 dB ≈ 0.000126."""
         pm = SC_EFFECTS["noise_floor"].sc_params["noise_floor_db"]
         result = transform_param(pm, -78.0)
         assert result == pytest.approx(0.000126, rel=0.01)
 
     def test_db_to_linear_zero_db(self) -> None:
-        """0 dB → 1.0 linear."""
+        """0 dB -> 1.0 linear."""
         pm = SC_EFFECTS["noise_floor"].sc_params["noise_floor_db"]
         assert transform_param(pm, 0.0) == pytest.approx(1.0)
 
     def test_resonance_to_rq_low(self) -> None:
-        """Low resonance (0.0) → wide bandwidth (rq ≈ 1.0)."""
+        """Low resonance (0.0) -> wide bandwidth (rq ≈ 1.0)."""
         pm = SC_EFFECTS["filter"].sc_params["resonance"]
         result = transform_param(pm, 0.0)
         assert result == pytest.approx(1.0)
 
     def test_resonance_to_rq_high(self) -> None:
-        """High resonance (0.9) → narrow bandwidth (rq << 0.1)."""
+        """High resonance (0.9) -> narrow bandwidth (rq << 0.1)."""
         pm = SC_EFFECTS["filter"].sc_params["resonance"]
         result = transform_param(pm, 0.9)
         assert result < 0.05
 
     def test_ratio_to_slope_above(self) -> None:
-        """Compression ratio 4:1 → slopeAbove 0.25."""
+        """Compression ratio 4:1 -> slopeAbove 0.25."""
         pm = SC_EFFECTS["compressor"].sc_params["ratio"]
         assert transform_param(pm, 4.0) == pytest.approx(0.25)
 
     def test_ratio_to_slope_above_unity(self) -> None:
-        """Ratio 1:1 → slopeAbove 1.0 (no compression)."""
+        """Ratio 1:1 -> slopeAbove 1.0 (no compression)."""
         pm = SC_EFFECTS["compressor"].sc_params["ratio"]
         assert transform_param(pm, 1.0) == pytest.approx(1.0)
 
     def test_feedback_to_decaytime(self) -> None:
-        """Feedback 0.45 → reasonable CombC decay time (> 1s)."""
+        """Feedback 0.45 -> reasonable CombC decay time (> 1s)."""
         pm = SC_EFFECTS["delay"].sc_params["feedback"]
         result = transform_param(pm, 0.45)
         assert 1.0 < result < 20.0
 
     def test_sr_reduction_to_effective_rate(self) -> None:
-        """SR reduction factor 2 → effective 22050 Hz."""
+        """SR reduction factor 2 -> effective 22050 Hz."""
         pm = SC_EFFECTS["bitcrusher"].sc_params["sample_rate_reduction"]
         assert transform_param(pm, 2) == pytest.approx(22050.0)
 
     def test_pan_to_tidal(self) -> None:
-        """Python pan [-1,1] → Tidal pan [0,1]."""
+        """Python pan [-1,1] -> Tidal pan [0,1]."""
         pm = TIDAL_EFFECTS["spatial"]["pan"]
         assert transform_param(pm, -1.0) == pytest.approx(0.0)
         assert transform_param(pm, 0.0) == pytest.approx(0.5)
         assert transform_param(pm, 1.0) == pytest.approx(1.0)
 
     def test_crush_to_tidal(self) -> None:
-        """Python bit_depth 12 → Tidal crush value (reasonable range)."""
+        """Python bit_depth 12 -> Tidal crush value (reasonable range)."""
         pm = TIDAL_EFFECTS["bitcrusher"]["bit_depth"]
         result = transform_param(pm, 12)
         assert 1.0 <= result <= 16.0
@@ -422,7 +422,7 @@ class TestTidalCyclesOutput:
         assert "# lpf" in result.code
 
     def test_filter_type_selects_correct_tidal_effect(self) -> None:
-        """filter_type='hp' → # hpf, not # lpf."""
+        """filter_type='hp' -> # hpf, not # lpf."""
         result = generate_tidal(
             generator="fm_blip",
             effects={"filter": {"cutoff_hz": 800, "filter_type": "hp"}},
@@ -536,7 +536,7 @@ class TestCodegenOptions:
             pattern={"type": "euclidean", "pulses": {"kick": 4}, "steps": 16},
             bpm=180,
         )
-        # Faster BPM → shorter dur value
+        # Faster BPM -> shorter dur value
         dur_pattern = re.compile(r"\\dur,\s*([\d.]+)")
         dur1 = float(dur_pattern.search(r1.code).group(1))
         dur2 = float(dur_pattern.search(r2.code).group(1))

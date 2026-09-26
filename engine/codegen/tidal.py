@@ -5,7 +5,7 @@ TidalCycles code generator for the IDM Generative System.
 
 Generates structurally valid Haskell DSL code for TidalCycles, including:
 
-    - Pattern translation (Euclidean → e(k,n), probabilistic → ?, density)
+    - Pattern translation (Euclidean -> e(k,n), probabilistic -> ?, density)
     - Effect mapping (reverb, delay, filter, bitcrusher, saturation, pan)
     - Multi-track stack for multi-voice patterns
     - Studio mode (full setup with setcps, hush) or live mode (bare d1/d2)
@@ -274,7 +274,7 @@ class TidalCyclesCodegen(BaseCodegen):
             tidal_params = get_tidal_effect_params(key)
             tidal_unmapped = get_tidal_unmapped(key)
 
-            # Handle filter_type → correct Tidal effect name
+            # Handle filter_type -> correct Tidal effect name
             if key == "filter":
                 filter_type = user_params.get("filter_type", "lp")
                 tidal_filter_names = {"lp": "lpf", "hp": "hpf", "bp": "bpf"}

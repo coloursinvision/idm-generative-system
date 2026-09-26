@@ -300,7 +300,7 @@ class KnowledgeBase:
 
     def ingest_markdown(self, filepath: str | Path) -> dict[str, Any]:
         """
-        Full ingestion pipeline: read → chunk → embed → upload to Qdrant.
+        Full ingestion pipeline: read -> chunk -> embed -> upload to Qdrant.
 
         Args:
             filepath: Path to markdown file.

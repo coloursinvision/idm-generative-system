@@ -260,10 +260,10 @@ def prepare_data(
     """Prepare feature matrix and target matrix from raw DataFrame.
 
     Handles NaN imputation for features and targets:
-    - ``sub_region`` NaN → ``"__NaN__"`` sentinel (OrdinalEncoder
+    - ``sub_region`` NaN -> ``"__NaN__"`` sentinel (OrdinalEncoder
       compatible).
-    - ``swing`` NaN → 0.5 (neutral midpoint).
-    - Target NaN (absent ``freq_*`` columns) → 0.0 (absent resonant
+    - ``swing`` NaN -> 0.5 (neutral midpoint).
+    - Target NaN (absent ``freq_*`` columns) -> 0.0 (absent resonant
       point carries no frequency contribution).
 
     Args:

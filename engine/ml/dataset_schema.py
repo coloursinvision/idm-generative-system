@@ -19,7 +19,7 @@ Two pandera DataFrameSchemas live here.
 :data:`InferenceSchema`
     Validates the **narrow inference DataFrame** built by the V2.3
     ``/tuning`` endpoint handler from a single :class:`TuningRequest`,
-    after the ``swing_pct → swing`` boundary conversion and the
+    after the ``swing_pct -> swing`` boundary conversion and the
     Pydantic-level cross-field validation. Five columns only; ``strict=True``
     to reject any accidental feature injection upstream.
 

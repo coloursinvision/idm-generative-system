@@ -30,7 +30,7 @@ Historical context:
     exceeds the clipping threshold, producing complex overtone structures used
     in Braindance sound design.
 
-Signal position: ResonantFilter → [Block 4] → Reverb → ...
+Signal position: ResonantFilter -> [Block 4] -> Reverb -> ...
 """
 
 from __future__ import annotations

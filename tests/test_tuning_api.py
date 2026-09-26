@@ -150,7 +150,7 @@ class TestPydanticFieldValidation:
         assert r.status_code == expected_status
 
     def test_region_invalid_literal_rejected(self, client: Any) -> None:
-        """region must match RegionCode Literal; arbitrary strings → 422."""
+        """region must match RegionCode Literal; arbitrary strings -> 422."""
         r = client.post("/tuning", json=_valid_payload(region="MARS_TECHNO"))
         assert r.status_code == 422
 
@@ -162,7 +162,7 @@ class TestCrossFieldRule:
     """TuningRequest @model_validator enforces sub_region scope rule."""
 
     def test_japan_idm_requires_sub_region(self, client: Any) -> None:
-        """region == 'JAPAN_IDM' without sub_region → 422."""
+        """region == 'JAPAN_IDM' without sub_region -> 422."""
         r = client.post(
             "/tuning",
             json=_valid_payload(region="JAPAN_IDM", sub_region=None),
@@ -172,7 +172,7 @@ class TestCrossFieldRule:
         assert "sub_region" in r.text.lower()
 
     def test_non_japan_forbids_sub_region(self, client: Any) -> None:
-        """region != 'JAPAN_IDM' with sub_region set → 422."""
+        """region != 'JAPAN_IDM' with sub_region set -> 422."""
         r = client.post(
             "/tuning",
             json=_valid_payload(region="UK_IDM", sub_region="TOKYO"),
@@ -181,7 +181,7 @@ class TestCrossFieldRule:
         assert "sub_region" in r.text.lower()
 
     def test_japan_idm_with_sub_region_passes(self, client: Any) -> None:
-        """region == 'JAPAN_IDM' with sub_region set → 200 (happy path)."""
+        """region == 'JAPAN_IDM' with sub_region set -> 200 (happy path)."""
         r = client.post(
             "/tuning",
             json=_valid_payload(region="JAPAN_IDM", sub_region="TOKYO"),
@@ -269,10 +269,10 @@ class TestResponseShape:
 
 
 class TestFailSoft:
-    """Lifespan fail-soft → handler returns 503 (not 500 or 200)."""
+    """Lifespan fail-soft -> handler returns 503 (not 500 or 200)."""
 
     def test_no_model_returns_503(self, client: Any, monkeypatch: pytest.MonkeyPatch) -> None:
-        """app.state.tuning_model = None → /tuning returns 503.
+        """app.state.tuning_model = None -> /tuning returns 503.
 
         Simulates the lifespan fail-soft outcome (mlflow load failure,
         network blip, no Production version in registry).
@@ -285,7 +285,7 @@ class TestFailSoft:
     def test_no_target_columns_returns_503(
         self, client: Any, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Empty target_columns in metadata → /tuning returns 503.
+        """Empty target_columns in metadata -> /tuning returns 503.
 
         Simulates the case where MLflow run params don't contain
         'target_columns' (e.g. model trained before train() was
@@ -307,7 +307,7 @@ class TestExtraFieldsRejected:
     """TuningRequest model_config = ConfigDict(extra='forbid')."""
 
     def test_unknown_field_rejected(self, client: Any) -> None:
-        """Extra field in payload → 422 (not silent acceptance)."""
+        """Extra field in payload -> 422 (not silent acceptance)."""
         payload = _valid_payload()
         payload["effects_density"] = 0.5  # dropped field
         r = client.post("/tuning", json=payload)
@@ -344,7 +344,7 @@ class TestLatencyAndMetadata:
         )
 
 
-# Langfuse fail-open: trace breaks → request still succeeds
+# Langfuse fail-open: trace breaks -> request still succeeds
 
 
 class TestLangfuseFailOpen:

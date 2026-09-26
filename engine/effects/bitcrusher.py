@@ -24,7 +24,7 @@ Historical context:
     bit depth. The RZ-1 has no anti-aliasing filter whatsoever — resulting in
     the most extreme lo-fi texture of the era.
 
-Signal position: NoiseFloor → [Block 2] → ResonantFilter → ...
+Signal position: NoiseFloor -> [Block 2] -> ResonantFilter -> ...
 """
 
 from __future__ import annotations

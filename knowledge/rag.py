@@ -344,7 +344,7 @@ class RAGPipeline:
             },
         }
 
-    # Tuning request extraction (V2.4 - frontend free-text → API contract)
+    # Tuning request extraction (V2.4 - frontend free-text -> API contract)
 
     def extract_tuning_request(self, text: str) -> dict[str, Any]:
         """

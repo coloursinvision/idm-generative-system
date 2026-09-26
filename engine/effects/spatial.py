@@ -18,7 +18,7 @@ Historical context:
     The Haas effect (inter-channel delays up to 23ms) was used to create
     width in pads and reverb tails without pitch-shifting artefacts.
 
-Signal position: TapeDelay → [Block 7] → GlitchEngine → ...
+Signal position: TapeDelay -> [Block 7] -> GlitchEngine -> ...
 
 Note:
     This block operates on stereo signals (two arrays).

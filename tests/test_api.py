@@ -10,7 +10,7 @@ Coverage:
     GET  /health    — liveness, version string
     GET  /effects   — schema completeness, canonical order
     POST /generate  — all generators, overrides, skip, bypass, error cases
-    POST /process   — WAV upload, stereo→mono, bypass, error cases
+    POST /process   - WAV upload, stereo->mono, bypass, error cases
 
 Run:
     pytest tests/test_api.py -v
@@ -235,7 +235,7 @@ class TestProcess:
     """POST /process — upload WAV, process through chain, return WAV."""
 
     def test_process_mono_wav(self, client: TestClient, mono_wav_bytes: bytes) -> None:
-        """Upload mono WAV → processed WAV returned."""
+        """Upload mono WAV -> processed WAV returned."""
         resp = client.post(
             "/process",
             files={"file": ("test.wav", mono_wav_bytes, "audio/wav")},

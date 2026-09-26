@@ -8,7 +8,7 @@ Output follows idiomatic SC patterns:
 
     - Composable SynthDefs (one per generator, one per active effect)
     - Private bus routing with ReplaceOut for in-place effect processing
-    - Group-based execution ordering (genGroup → fxGroup)
+    - Group-based execution ordering (genGroup -> fxGroup)
     - Pbind (studio) or Pdef (live) pattern output
     - s.waitForBoot wrapper (studio) or bare code (live)
 

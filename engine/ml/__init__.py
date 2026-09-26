@@ -29,13 +29,13 @@ Public API — regional profiles and their composed specs:
     SpokeParseError          — raised on any parse / validation failure
 
 Public API — resonance rules (physical — 4):
-    bpm_to_hz                — BPM → audible harmonic
+    bpm_to_hz                - BPM -> audible harmonic
     AudibleHarmonic          — return type of bpm_to_hz
-    schumann_mode            — Earth-ionosphere cavity mode n → Hz
-    schumann_bpm_anchor      — Schumann mode → BPM anchor
+    schumann_mode            - Earth-ionosphere cavity mode n -> Hz
+    schumann_bpm_anchor      - Schumann mode -> BPM anchor
     SCHUMANN_MODES_HZ        — canonical mode frequencies
     midi_to_hz, hz_to_midi   — 12-TET conversions with tuning override
-    hz_to_nearest_note       — Hz → nearest 12-TET note (scientific pitch)
+    hz_to_nearest_note       - Hz -> nearest 12-TET note (scientific pitch)
     tuning_difference_hz     — A4 reference delta (e.g. 432 vs 440)
     TuningReference          — Literal[432.0, 440.0]
     mains_hum_profile        — regional mains-hum harmonic stack
@@ -45,12 +45,12 @@ Public API — resonance rules (physical — 4):
     GRID_HZ                  — grid fundamental per region
 
 Public API — resonance rules (aesthetic — 1):
-    solfeggio_cutoff_seed    — profile → Solfeggio seed Hz (NON-PHYSICAL)
+    solfeggio_cutoff_seed    - profile -> Solfeggio seed Hz (NON-PHYSICAL)
     SOLFEGGIO_HZ             — full Solfeggio frequency table by label
     REGIONAL_SOLFEGGIO_SEED  — per-region seed assignment
 
 Public API — deterministic mapper (Layer 3 — complete S5):
-    deterministic_map        — scene + track → tuning + resonant stack
+    deterministic_map        - scene + track -> tuning + resonant stack
     DeterministicMapping     — structured mapper output
     ResonantPoint            — one resonant frequency + provenance tag
 
@@ -59,7 +59,7 @@ Public API — Gaussian noise injection (Layer 4 — complete S6):
     PerturbationConfig       — per-parameter sigma configuration
 
 Public API — synthetic dataset generation (Layer 5 — complete S6):
-    SyntheticDatasetGenerator — composes Layers 3+4 → pd.DataFrame
+    SyntheticDatasetGenerator - composes Layers 3+4 -> pd.DataFrame
     TrackSpec                — frozen input spec for one track/scene
 
 Public API — dataset schema validation (Layer 5–6 boundary — complete S7):

@@ -10,17 +10,17 @@ Consumed by:    Layer 4 dataset generator (gaussian_noise.py)
 Status:         complete
 
 Contract (stated by Tom):
-    f(bpm, pitch, swing, genre, effects) → (tuning_hz, resonant_points)
+    f(bpm, pitch, swing, genre, effects) -> (tuning_hz, resonant_points)
 
 Signature expansions from the stated spec, each justified below:
 
-1. ``pitch`` → ``pitch_midi: float``
+1. ``pitch`` -> ``pitch_midi: float``
    Unambiguous numeric encoding. Integrates directly with
    ``hz_to_midi`` / ``midi_to_hz`` from :mod:`engine.ml.resonance_rules`
    without needing a note-name parser. Fractional values accepted for
    microtuning.
 
-2. ``genre`` → ``region: RegionCode``
+2. ``genre`` -> ``region: RegionCode``
    Precise Layer 2 type alias, prevents genre/region confusion at call
    sites. Literal-constrained so mypy strict catches typos.
 
@@ -36,7 +36,7 @@ Signature expansions from the stated spec, each justified below:
    many mapper calls without re-hitting the lru_cache. Tests can inject
    synthetic profiles without touching the filesystem.
 
-5. Return ``(float, Sequence[float])`` → :class:`DeterministicMapping`
+5. Return ``(float, Sequence[float])`` -> :class:`DeterministicMapping`
    Structured output with typed ``resonant_points: tuple[ResonantPoint,
    ...]``. Each :class:`ResonantPoint` carries a ``source`` provenance
    tag (e.g. ``"mains_harmonic_3"``, ``"solfeggio_seed"``) so downstream
@@ -316,8 +316,8 @@ class DeterministicMapping:
         resonant_points: Ordered stack of resonant frequencies with
             per-point provenance. Ordering is deterministic for a given
             ``(bpm, pitch_midi, swing, region, sub_region, effects)``
-            tuple: pitch_ref → bpm_harmonic → mains (ref then regional)
-            → solfeggio_seed → schumann_bpm_anchor → sub_bass.
+            tuple: pitch_ref -> bpm_harmonic -> mains (ref then regional)
+            -> solfeggio_seed -> schumann_bpm_anchor -> sub_bass.
     """
 
     tuning_hz: float

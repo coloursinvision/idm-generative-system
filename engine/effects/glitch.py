@@ -53,11 +53,11 @@ Historical context:
         Loop mod — positional displacement (read-pointer warping)
         Bit mangle — data-level corruption (bitwise operations)
 
-    Processing order: stutter → loop modulation → XOR mangle.
+    Processing order: stutter -> loop modulation -> XOR mangle.
     Each stage operates independently and can be bypassed by setting
     its intensity/density parameter to 0.
 
-Signal position: SpatialProcessor → [Block 8] → Compressor → ...
+Signal position: SpatialProcessor -> [Block 8] -> Compressor -> ...
 """
 
 from __future__ import annotations
@@ -193,7 +193,7 @@ class GlitchEngine(BaseEffect):
         """
         Apply glitch processing to the input signal.
 
-        Processing order: stutter → loop modulation → XOR mangle.
+        Processing order: stutter -> loop modulation -> XOR mangle.
         Each stage is skipped when its intensity parameter is 0.
 
         Args:
@@ -324,7 +324,7 @@ class GlitchEngine(BaseEffect):
         n = len(signal)
         mask = XOR_MASKS.get(self.xor_mode, XOR_MASKS["subtle"])
 
-        # Float → int16 (clamp to prevent overflow at ±1.0 boundary)
+        # Float -> int16 (clamp to prevent overflow at ±1.0 boundary)
         clamped = np.clip(signal, -1.0, 1.0)
         int_signal = (clamped * 32767.0).astype(np.int16)
 
@@ -334,5 +334,5 @@ class GlitchEngine(BaseEffect):
         # Apply XOR at selected positions
         int_signal[apply_where] ^= np.int16(mask)
 
-        # int16 → float, normalised back to [-1.0, 1.0]
+        # int16 -> float, normalised back to [-1.0, 1.0]
         return int_signal.astype(np.float64) / 32767.0

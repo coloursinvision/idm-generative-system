@@ -63,10 +63,10 @@ Historical context:
         In IDM, this texture is often deliberately emphasised — it unifies
         disparate timbres under a shared physical medium identity.
 
-    Processing order: RIAA pre-emphasis → DAT brick-wall → surface
-    noise addition → final peak limiter.
+    Processing order: RIAA pre-emphasis -> DAT brick-wall -> surface
+    noise addition -> final peak limiter.
 
-Signal position: Compressor → [Block 10] → OUTPUT
+Signal position: Compressor -> [Block 10] -> OUTPUT
 """
 
 from __future__ import annotations
@@ -212,8 +212,8 @@ class VinylMastering(BaseEffect):
         """
         Apply vinyl mastering chain to the input signal.
 
-        Processing order: RIAA pre-emphasis → DAT brick-wall →
-        surface noise → peak limiter.
+        Processing order: RIAA pre-emphasis -> DAT brick-wall ->
+        surface noise -> peak limiter.
 
         Args:
             signal: Input audio array, normalised to [-1.0, 1.0].
