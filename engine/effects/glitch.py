@@ -1,7 +1,7 @@
 """
 engine/effects/glitch.py
 
-Block 8 — Glitch Engine (Braindance Stutter · ASR-10 Loop Modulation · XOR Bit Mangle).
+Block 8: Glitch Engine (Braindance Stutter, ASR-10 Loop Modulation, XOR Bit Mangle).
 
 Source:
     MASTER_DATASET — Glitch & Micro-Edit Processing
