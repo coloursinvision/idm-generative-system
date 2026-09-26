@@ -10,6 +10,11 @@ default_language_version:
 # One `pre-commit install` wires up both hook types this file uses.
 default_install_hook_types: [pre-commit, commit-msg]
 
+# Without this, a hook that declares no stage runs at every installed stage, so
+# the whole set executes twice per commit: once before it and once against the
+# message. Only commitizen overrides this, below.
+default_stages: [pre-commit]
+
 repos:
   # ---- General file hygiene ------------------------------------------------
   - repo: https://github.com/pre-commit/pre-commit-hooks
