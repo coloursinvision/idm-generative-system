@@ -96,6 +96,7 @@ FAIL_CLASSES = [
     "RDARR",
     "BULLET",
     "SQBULLET",
+    "MIDDOT",
     "ROBOT",
     "GREENDOT",
     "YELLOWDOT",
@@ -103,9 +104,9 @@ FAIL_CLASSES = [
     "CHECKMARK",
 ]
 
-# Surfaced without blocking. The middle dot and box drawing wait on operator
-# decisions; the skill asks for judgement on the multiplication and degree signs.
-WARN_CLASSES = ["MIDDOT", "BOXFIRST", "BOXLAST", "TIMES", "DEGREE"]
+# Surfaced without blocking. Box drawing waits on an operator decision; the
+# skill asks for judgement on the multiplication and degree signs.
+WARN_CLASSES = ["BOXFIRST", "BOXLAST", "TIMES", "DEGREE"]
 
 # The only rewrites --fix may make, each with exactly one replacement. They
 # touch prose only: Markdown outside fenced blocks, comments and docstrings in
@@ -582,7 +583,7 @@ class TestNegativeFix:
         kept = dedent(
             """\
             TR-808 into a Mackie CR-1604, 80%ENDASH%180 BPM, C%SHARP% minor, CLAUDE.md %SECTION%4.4.
-            Glue %MIDDOT% knee %MIDDOT% target, 128 BPM %TIMES% 64, 90%DEGREE% phase.
+            Glue knee target, 128 BPM %TIMES% 64, 90%DEGREE% phase.
             %BOXFIRST%%BOXFIRST% diagram %BOXLAST%
             """
         )
@@ -592,11 +593,11 @@ class TestNegativeFix:
         assert read(tmp_path, path) == expand(kept + "Signal -> bus\n")
 
     def test_judgement_classes_are_reported_not_rewritten(self, tmp_path: Path) -> None:
-        """Em dash, stray en dash, curly quotes, bullets and emoji have no single safe rewrite."""
+        """Em dash, stray en dash, curly quotes, bullets, the middle dot and emoji have no single safe rewrite."""
         path = "docs/NOTES.md"
         text = (
             "A %EMDASH% B, Detroit%ENDASH%Berlin, %LDQUO%dub%RDQUO%, it%RSQUO%s, "
-            "%BULLET% one, %CHECKMARK% done\n"
+            "%BULLET% one, Glue %MIDDOT% knee, %CHECKMARK% done\n"
         )
         write(tmp_path, path, text)
         result = run_checker("--fix", "--files", path, cwd=tmp_path)
@@ -690,6 +691,16 @@ class TestPositiveTypography:
         assert result.returncode == 0, result.stdout
         assert lines_tagged(result, "FAIL") == [], result.stdout
         assert_reported(result, "WARN", path, 2, label(name))
+
+    def test_middle_dot_fails_as_a_separator(self, tmp_path: Path) -> None:
+        """Banned in every position: between words as much as at the start of a line."""
+        path = "docs/NOTES.md"
+        write(tmp_path, path, "Intro line.\nGlue %MIDDOT% knee %MIDDOT% target\n")
+        result = run_checker("--files", path, cwd=tmp_path)
+        assert result.returncode == 1, result.stdout
+        assert_reported(result, "FAIL", path, 2, label("MIDDOT"))
+        hits = [line.split()[1] for line in located(result, "FAIL", path, 2)]
+        assert hits == [f"{path}:2:6", f"{path}:2:13"], result.stdout
 
     @pytest.mark.parametrize(
         "text",
@@ -956,7 +967,7 @@ class TestContract:
     """The preflight contract: tagged lines, a summary, exit 0, 1 or 2."""
 
     def test_summary_counts_match_the_outcome_lines(self, tmp_path: Path) -> None:
-        write(tmp_path, "docs/A.md", "Fails %EMDASH% here.\nWarns %MIDDOT% here.\n")
+        write(tmp_path, "docs/A.md", "Fails %EMDASH% here.\nWarns %TIMES% here.\n")
         write(tmp_path, "docs/B.md", "Clean.\n")
         result = run_checker("--files", "docs/A.md", "docs/B.md", cwd=tmp_path)
         summary = SUMMARY.search(result.stdout)
@@ -1174,12 +1185,12 @@ class TestPositiveDiff:
         write(repo, path, "Legacy %EMDASH% text.\n")
         commit(repo, "chore: baseline")
         git(repo, "tag", "base")
-        write(repo, path, "Legacy %EMDASH% text.\nNew %RARR% line.\nGlue %MIDDOT% knee.\n")
+        write(repo, path, "Legacy %EMDASH% text.\nNew %RARR% line.\n128 BPM %TIMES% 64.\n")
         commit(repo, "docs: add two lines")
         result = run_checker("--diff", "base", cwd=repo)
         assert result.returncode == 1, result.stdout
         assert_reported(result, "FAIL", path, 2, label("RARR"))
-        assert_reported(result, "WARN", path, 3, label("MIDDOT"))
+        assert_reported(result, "WARN", path, 3, label("TIMES"))
         assert located(result, "FAIL", path, 1) == [], result.stdout
         summary = SUMMARY.search(result.stdout)
         assert summary, result.stdout
