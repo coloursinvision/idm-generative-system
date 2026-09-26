@@ -7,14 +7,29 @@
 default_language_version:
   python: python3.11
 
+# One `pre-commit install` wires up both hook types this file uses.
+default_install_hook_types: [pre-commit, commit-msg]
+
 repos:
   # ---- General file hygiene ------------------------------------------------
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
     hooks:
+      # These two rewrite files, so they are scoped. DVC stage outputs under
+      # data/ and models/ are hashed in dvc.lock, and editing them by hand
+      # makes dvc report the stages as changed. The three acid_* modules are
+      # legacy and already excluded from ruff and mypy in pyproject. The
+      # read-only checks below deliberately keep seeing every file.
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
+        exclude: &generated_or_legacy |
+          (?x)^(
+            data/.*|
+            models/.*|
+            engine/acid_(dsp_model|engine_v2|granular_experiment)\.py
+          )$
       - id: end-of-file-fixer
+        exclude: *generated_or_legacy
       - id: check-yaml
       - id: check-toml
       - id: check-json
@@ -26,8 +41,10 @@ repos:
       - id: detect-private-key
 
   # ---- Ruff (lint + format) ------------------------------------------------
+  # Must match the exact ruff pin in pyproject [dev] and the one installed by
+  # the CI lint job; ruff formats differently between minor releases.
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.8
+    rev: v0.15.16
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
@@ -35,20 +52,14 @@ repos:
       - id: ruff-format
         types_or: [python, pyi]
 
-  # ---- mypy (type checking) ------------------------------------------------
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.10.0
-    hooks:
-      - id: mypy
-        additional_dependencies:
-          - numpy>=1.26.0
-          - types-requests
-          - pydantic>=2.0.0
-          - fastapi>=0.110.0
-        args: [--config-file=pyproject.toml]
-        # Only run on files that are part of the Python packages.
-        files: ^(engine|api|knowledge)/
-        pass_filenames: false
+  # ---- Type checking: deliberately absent ----------------------------------
+  # mypy runs in CI only. An isolated hook environment with a hand-listed
+  # subset of the project's dependencies disagrees with CI on missing imports
+  # and inference, and keeping that list in step with pyproject is a standing
+  # source of drift. Running the interpreter's own mypy instead would require
+  # the conda environment to be active for every commit, which it is not by
+  # default. CI type-checks on every push and pull request and blocks the
+  # merge, so nothing is uncovered here; only the local minute is saved.
 
   # ---- Secrets detection ---------------------------------------------------
   - repo: https://github.com/gitleaks/gitleaks
