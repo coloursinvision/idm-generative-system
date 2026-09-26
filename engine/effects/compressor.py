@@ -5,7 +5,7 @@ Block 9: Bus Compressor (SSL-Style Glue, Soft Knee, DR8-DR10 Target).
 
 Source:
     MASTER_DATASET — Bus Summing, Dynamics Processing
-    IDM mastering references: DR8–DR10 target dynamic range
+    IDM mastering references: DR8-DR10 target dynamic range
 
 Hardware references:
     - SSL 4000 G Series Bus Compressor (1987): The defining mix-bus
@@ -28,7 +28,7 @@ Hardware references:
       punchy sound of breakbeat processing.
 
 Historical context:
-    Dynamic range in IDM sits in a narrow sweet spot: DR8–DR10. This
+    Dynamic range in IDM sits in a narrow sweet spot: DR8-DR10. This
     range preserves micro-dynamic detail (ghost notes, velocity layers,
     reverb tails) while maintaining enough density to translate on
     small speakers and club systems.
