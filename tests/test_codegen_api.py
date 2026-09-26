@@ -3,12 +3,12 @@ tests/test_codegen_api.py
 
 Integration test suite for the codegen API endpoints.
 
-Uses FastAPI TestClient (ASGI in-process) — same convention as test_api.py.
+Uses FastAPI TestClient (ASGI in-process) - same convention as test_api.py.
 
 Coverage:
-    POST /synthdef  — valid requests, all generators, effects, modes, errors
-    POST /tidal     — valid requests, all generators, effects, modes, errors
-    Shared          — response schema validation, default behaviour
+    POST /synthdef  - valid requests, all generators, effects, modes, errors
+    POST /tidal     - valid requests, all generators, effects, modes, errors
+    Shared          - response schema validation, default behaviour
 
 Run:
     pytest tests/test_codegen_api.py -v
@@ -28,7 +28,7 @@ from api.main import app
 
 @pytest.fixture(scope="module")
 def client() -> TestClient:
-    """Shared test client — single instance for the module."""
+    """Shared test client - single instance for the module."""
     return TestClient(app)
 
 
@@ -184,7 +184,7 @@ class TestSynthdefEndpoint:
         assert resp.status_code == 400
 
     def test_all_ten_effects(self, client: TestClient) -> None:
-        """All 10 effects active — no crash."""
+        """All 10 effects active - no crash."""
         all_fx = {
             k: {}
             for k in [
@@ -313,7 +313,7 @@ class TestTidalEndpoint:
 
 
 class TestCrossEndpoint:
-    """Same input to both endpoints — consistent behaviour."""
+    """Same input to both endpoints - consistent behaviour."""
 
     def test_same_input_different_targets(self, client: TestClient) -> None:
         payload = {

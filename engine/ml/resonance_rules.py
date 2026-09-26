@@ -1,4 +1,4 @@
-"""resonance_rules — Layer 2 Part 5.1 rule implementations.
+"""resonance_rules - Layer 2 Part 5.1 rule implementations.
 
 Pipeline layer: 3
 Consumes:       02-Knowledge/supporting/resonance/*.md (5 rule spokes)
@@ -341,7 +341,7 @@ class RegionalNoiseFloor:
         region: Grid region identifier.
         fundamental_hz: Grid fundamental (50 Hz or 60 Hz).
         harmonics: Harmonics starting with the fundamental at ``harmonics[0]``.
-        tonal_centre: Nearest note to the fundamental — the perceived pitch
+        tonal_centre: Nearest note to the fundamental - the perceived pitch
             centre of the noise floor.
     """
 

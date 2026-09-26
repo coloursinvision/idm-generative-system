@@ -1,4 +1,4 @@
-"""regional_profiles — Layer 2 profile spoke loader.
+"""regional_profiles - Layer 2 profile spoke loader.
 
 Pipeline layer: 3
 Consumes:       02-Knowledge/supporting/profiles/*.md (6 spokes)
@@ -562,7 +562,7 @@ def load_profile(
     Args:
         region: Canonical region code.
         sub_region: Optional sub-region discriminator. Currently only
-            ``"OSAKA"`` has a non-default effect — it swaps
+            ``"OSAKA"`` has a non-default effect - it swaps
             mains-frequency-driven fields on ``JAPAN_IDM`` from 50 Hz to
             60 Hz.
         profiles_dir: Override for the spoke directory. Defaults to the

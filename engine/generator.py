@@ -202,7 +202,7 @@ def markov_evolve(
     Markov chain evolution: each step has `influence` probability of
     inheriting the value of the previous step.
 
-    Introduces temporal coherence and "runs" into the pattern — characteristic
+    Introduces temporal coherence and "runs" into the pattern - characteristic
     of IDM sequencing where rhythms develop organic momentum over time.
 
     Args:

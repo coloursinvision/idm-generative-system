@@ -13,9 +13,9 @@ Coverage:
     - fm_blip() default output: shape, dtype, range, peak-normalisation
     - fm_blip() determinism (no RNG): repeated calls are identical
     - fm_blip() value pins: global min/max and sampled points (np.allclose,
-      portable across platforms — no architecture-brittle full-array hash)
+      portable across platforms - no architecture-brittle full-array hash)
 
-Refs: feat/fm_blip-fm-expansion (Stage 1, Commit 1 — pre-expansion contract)
+Refs: feat/fm_blip-fm-expansion (Stage 1, Commit 1 - pre-expansion contract)
 """
 
 from __future__ import annotations
@@ -121,7 +121,7 @@ _ANALOG_LENGTH = int(SAMPLE_RATE * 600.0 / 1000)  # 600 ms default
 
 
 def _spectral_centroid(x: np.ndarray) -> float:
-    """Magnitude-weighted mean frequency (Hz) — a brightness proxy."""
+    """Magnitude-weighted mean frequency (Hz) - a brightness proxy."""
     mag = np.abs(np.fft.rfft(x))
     total = float(mag.sum())
     if total < 1e-12:

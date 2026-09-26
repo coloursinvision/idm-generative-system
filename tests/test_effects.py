@@ -500,7 +500,7 @@ class TestCombFilterKernelRegression:
         density: float,
         n: int,
     ) -> np.ndarray:
-        """Pure-Python reference — original pre-Numba implementation."""
+        """Pure-Python reference - original pre-Numba implementation."""
         buf = np.zeros(delay_samp + n)
         buf[:n] += signal
         for i in range(n):
@@ -538,7 +538,7 @@ class TestCombFilterKernelRegression:
         np.testing.assert_array_equal(jit, ref)
 
     def test_parity_extreme_feedback(self, signal_short: np.ndarray) -> None:
-        """Near-unity feedback — maximum accumulation stress test."""
+        """Near-unity feedback - maximum accumulation stress test."""
         delay_samp = 500
         g_eff = 0.999
         density = 1.0
@@ -574,7 +574,7 @@ class TestAllpassKernelRegression:
         g_ap: float,
         n: int,
     ) -> np.ndarray:
-        """Pure-Python reference — original pre-Numba implementation."""
+        """Pure-Python reference - original pre-Numba implementation."""
         out = np.zeros(n)
         buf = np.zeros(delay_samp)
         ptr = 0
@@ -639,7 +639,7 @@ class TestDelayLineKernelRegression:
         n: int,
         buf_len: int,
     ) -> np.ndarray:
-        """Pure-Python reference — original pre-Numba implementation."""
+        """Pure-Python reference - original pre-Numba implementation."""
         wet = np.zeros(n)
         for i in range(n):
             mod_offset = int(modulation[i] * sr)
@@ -705,7 +705,7 @@ class TestDelayLineKernelRegression:
         np.testing.assert_allclose(jit, ref, rtol=NUMBA_RTOL, atol=NUMBA_ATOL)
 
     def test_parity_high_feedback(self, signal_medium: np.ndarray) -> None:
-        """Near self-oscillation — stress test for accumulated precision."""
+        """Near self-oscillation - stress test for accumulated precision."""
         n = len(signal_medium)
         sr = 44100
         delay_samples = int(200.0 * sr / 1000)
@@ -753,7 +753,7 @@ class TestDelayLineKernelRegression:
         np.testing.assert_allclose(jit, ref, rtol=NUMBA_RTOL, atol=NUMBA_ATOL)
 
     def test_parity_zero_modulation(self, signal_short: np.ndarray) -> None:
-        """No wow/flutter — pure delay line without pitch instability."""
+        """No wow/flutter - pure delay line without pitch instability."""
         n = len(signal_short)
         sr = 44100
         delay_samples = 500
@@ -802,7 +802,7 @@ class TestSmoothEnvelopeKernelRegression:
         release_coeff: float,
         env_init: float,
     ) -> tuple[np.ndarray, float]:
-        """Pure-Python reference — original single-detector envelope."""
+        """Pure-Python reference - original single-detector envelope."""
         smoothed = np.zeros(n)
         env = env_init
         for i in range(n):
@@ -823,7 +823,7 @@ class TestSmoothEnvelopeKernelRegression:
         slow_release_coeff: float,
         env_init: float,
     ) -> tuple[np.ndarray, float]:
-        """Pure-Python reference — original dual-detector auto-release envelope."""
+        """Pure-Python reference - original dual-detector auto-release envelope."""
         smoothed = np.zeros(n)
         env_fast = env_init
         env_slow = env_init
@@ -969,7 +969,7 @@ class TestRMSEnvelopeVectorisation:
         signal: np.ndarray,
         window_samp: int,
     ) -> np.ndarray:
-        """Pure-Python reference — original sequential loop."""
+        """Pure-Python reference - original sequential loop."""
         n = len(signal)
         sq = signal**2
         cumsum = np.cumsum(sq)
@@ -993,7 +993,7 @@ class TestRMSEnvelopeVectorisation:
         np.testing.assert_allclose(vectorised, reference, rtol=1e-12, atol=1e-15)
 
     def test_parity_short_window(self, signal_short: np.ndarray) -> None:
-        """1ms window — most transient-responsive setting."""
+        """1ms window - most transient-responsive setting."""
         window_samp = max(int(1.0 * 44100 / 1000), 1)
         comp = Compressor(rms_window_ms=1.0)
         vectorised = comp._compute_rms_envelope(signal_short)
@@ -1002,7 +1002,7 @@ class TestRMSEnvelopeVectorisation:
         np.testing.assert_allclose(vectorised, reference, rtol=1e-12, atol=1e-15)
 
     def test_parity_long_window(self, signal_medium: np.ndarray) -> None:
-        """50ms window — smoothest RMS detection."""
+        """50ms window - smoothest RMS detection."""
         window_samp = max(int(50.0 * 44100 / 1000), 1)
         comp = Compressor(rms_window_ms=50.0)
         vectorised = comp._compute_rms_envelope(signal_medium)

@@ -56,7 +56,7 @@ def glitch_click(
     """
     Percussive glitch click: band-limited noise with exponential decay.
 
-    Emulates the transient artefacts found in early digital hardware —
+    Emulates the transient artefacts found in early digital hardware,
     characteristic of Autechre's Braindance micro-percussion style.
 
     Args:
