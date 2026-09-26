@@ -439,7 +439,7 @@ The "British Detroit" sound (B12, Stasis, Likemind) relies on the interplay betw
 *   **Filter Modulation (The "Evolving" Texture):**
     *   **Cutoff:** Controlled by a slow Envelope (Attack: 4s, Decay: 2s, Sustain: 80%).
     *   **Resonance (Q):** Low (15%). High resonance ruins the "airy" feel.
-*   **Artifact:** Model the "Chorus II" noise from the Juno-106. It’s a BBD-based (Bucket Brigade Device) analog hiss that adds a 100Hz "warmth" to the pads.
+*   **Artifact:** Model the "Chorus II" noise from the Juno-106. It's a BBD-based (Bucket Brigade Device) analog hiss that adds a 100Hz "warmth" to the pads.
 
 ---
 

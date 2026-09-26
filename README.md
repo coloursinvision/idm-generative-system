@@ -6,7 +6,7 @@ Built around a 10-block effects chain that models specific hardware units — fr
 
 Output targets: **Teenage Engineering PO-33 K.O!** and **EP-133 K.O.II** — the application generates samples, maps them to device-specific slot configurations, and produces step-by-step programming instructions for each hardware sequencer.
 
-**Live:** [idm.coloursinvision.ai](https://idm.coloursinvision.ai) · **Release:** `v0.9.0`
+**Live:** [idm.coloursinvision.ai](https://idm.coloursinvision.ai) | **Release:** `v0.9.0`
 
 ---
 
@@ -29,8 +29,8 @@ Output targets: **Teenage Engineering PO-33 K.O!** and **EP-133 K.O.II** — the
 ┌──────▼──────┐   ┌────────▼────────┐   ┌──────────▼───────────┐
 │   Engine    │   │    Knowledge    │   │   ML Tuning Pipeline │
 │  Generators │   │  Qdrant Cloud   │   │  engine/ml — L1→L6   │
-│  Effects    │   │  GPT-4o RAG     │   │  XGBoost · MLflow    │
-│  Chain      │   │  Langfuse       │   │  DVC · DO Spaces     │
+│  Effects    │   │  GPT-4o RAG     │   │  XGBoost / MLflow    │
+│  Chain      │   │  Langfuse       │   │  DVC / DO Spaces     │
 └─────────────┘   └─────────────────┘   └──────────────────────┘
 ```
 
@@ -347,7 +347,7 @@ Indexed in Qdrant with `text-embedding-3-large` (3072 dimensions); cosine-simila
 - Roland TB-303 Service Notes, Akai S950 Technical Manual, E-mu SP-1200 Service Manual, Alesis Quadraverb Owner's Manual
 
 ### Cultural and Technical Sources
-- Warp Records — [warp.net](https://warp.net/) · Rephlex Records archive
+- Warp Records: [warp.net](https://warp.net/), Rephlex Records archive
 - The Designers Republic — [thedesignersrepublic.com](https://thedesignersrepublic.com/)
 - Hans Cousto — *The Cosmic Octave* (Earth frequency calculations)
 
