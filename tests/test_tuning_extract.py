@@ -1,6 +1,6 @@
-"""test_tuning_extract — integration tests for V2.4 /tuning/extract endpoint.
+"""test_tuning_extract - integration tests for V2.4 /tuning/extract endpoint.
 
-Pipeline layer:  6 — V2.4 Frontend LLM extraction boundary
+Pipeline layer:  6 - V2.4 Frontend LLM extraction boundary
 Targets:         api.main.tuning_extract handler + V2.4 Pydantic models
                  + RAGPipeline.extract_tuning_request mock contract
 
@@ -8,10 +8,10 @@ Architectural conventions:
     - F.1: module-scoped TestClient fixture (mirrors test_tuning_api.py).
     - F.2: synchronous TestClient (match V1 test convention).
     - F.3: GPT-4o calls fully mocked via monkeypatch on rag.extract_tuning_request.
-           No real OpenAI traffic in unit tests — pinned to mock return values.
+           No real OpenAI traffic in unit tests - pinned to mock return values.
 
 Test environment requirements:
-    - api.main must import — same [ml] + OPENAI_API_KEY env-var requirements
+    - api.main must import - same [ml] + OPENAI_API_KEY env-var requirements
       as test_tuning_api.py (RAGPipeline check at construction time).
     - No live OpenAI / Qdrant traffic.
 
@@ -53,13 +53,13 @@ def app() -> FastAPI:
 
 @pytest.fixture(scope="module")
 def client(app: FastAPI) -> Any:
-    """Module-scoped TestClient — lifespan runs once per file."""
+    """Module-scoped TestClient - lifespan runs once per file."""
     with TestClient(app) as c:
         yield c
 
 
 def _valid_extracted() -> dict[str, Any]:
-    """Baseline valid extraction payload — UK_IDM, no sub_region."""
+    """Baseline valid extraction payload - UK_IDM, no sub_region."""
     return {
         "bpm": 130.0,
         "pitch_midi": 69.0,

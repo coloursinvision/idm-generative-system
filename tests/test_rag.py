@@ -3,7 +3,7 @@ tests/test_rag.py
 
 Unit tests for the RAG pipeline and knowledge base endpoints.
 
-All external dependencies (OpenAI, Qdrant) are mocked — no API keys or
+All external dependencies (OpenAI, Qdrant) are mocked - no API keys or
 network access required. Tests verify:
     - /ask endpoint returns structured response
     - /compose endpoint returns parsed JSON config
@@ -65,7 +65,7 @@ def _mock_openai_response(content: str) -> MagicMock:
 
 
 class TestAskEndpoint:
-    """POST /ask — sound design advisor."""
+    """POST /ask - sound design advisor."""
 
     @patch("api.main.rag")
     def test_ask_returns_200_with_answer(self, mock_rag: MagicMock, client: TestClient) -> None:
@@ -131,7 +131,7 @@ class TestAskEndpoint:
 
 
 class TestComposeEndpoint:
-    """POST /compose — auto-composer."""
+    """POST /compose - auto-composer."""
 
     @patch("api.main.rag")
     def test_compose_returns_200_with_config(self, mock_rag: MagicMock, client: TestClient) -> None:

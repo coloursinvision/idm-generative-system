@@ -1,8 +1,8 @@
-"""model_training — XGBoost training pipeline with Optuna HPO and MLflow tracking.
+"""model_training - XGBoost training pipeline with Optuna HPO and MLflow tracking.
 
 Pipeline layer: 6
-Consumes:       dataset_generator (pd.DataFrame — validated by dataset_schema)
-                dataset_schema (DATASET_SCHEMA — validation gate)
+Consumes:       dataset_generator (pd.DataFrame - validated by dataset_schema)
+                dataset_schema (DATASET_SCHEMA - validation gate)
 Consumed by:    scripts/train_model.py (DVC pipeline entry point)
                 V2.3 model serving (/tuning endpoint)
 Status:         complete
@@ -131,7 +131,7 @@ def extract_feature_target_columns(
     ``sub_region`` (input specification columns).
 
     Target columns: all ``freq_*`` columns (model prediction targets).
-    ``tuning_hz`` is reframed out of the target set — it is a
+    ``tuning_hz`` is reframed out of the target set - it is a
     deterministic A4 reference, not a learned quantity.
 
     Columns in :data:`_EXCLUDE_COLUMNS` (metadata) are excluded from
@@ -351,7 +351,7 @@ def split_train_val_test_by_group(
     """Group-aware three-way split: train / validation / test.
 
     Holds out the test partition first, then carves a validation partition
-    from the remaining train pool — both via :func:`split_by_group`, so a
+    from the remaining train pool - both via :func:`split_by_group`, so a
     ``spec_id`` group never straddles any two partitions. ``val_size`` is
     applied to the *post-test remainder*, i.e. validation is
     ``val_size * (1 - test_size)`` of the whole dataset.
@@ -564,7 +564,7 @@ def run_optuna_study(
     the **validation** set. The best trial's hyperparameters are then used to
     refit on train + validation, and final metrics are reported once on the
     held-out **test** set (so the metric optimised by HPO is never the metric
-    reported — fixes HPO-on-test).
+    reported - fixes HPO-on-test).
 
     Args:
         X_train: Training feature matrix.

@@ -1,13 +1,13 @@
-# DVC Pipeline — IDM Generative System V2
+# DVC Pipeline - IDM Generative System V2
 #
 # Reproducible pipeline: dataset generation -> schema validation -> model training.
 # All stage parameters are externalised in params.yaml (single source of truth).
 #
 # Usage:
-#   dvc repro              — run full pipeline
-#   dvc repro generate     — run only dataset generation
-#   dvc repro validate     — run generation + validation
-#   dvc repro train        — run full pipeline including training
+#   dvc repro              - run full pipeline
+#   dvc repro generate     - run only dataset generation
+#   dvc repro validate     - run generation + validation
+#   dvc repro train        - run full pipeline including training
 #
 # Prerequisites:
 #   pip install -e ".[ml]"

@@ -10,8 +10,8 @@ Usage:
     dvc repro validate                            # via DVC pipeline
 
 Exit codes:
-    0 — validation passed
-    1 — validation failed (SchemaError details in report + stderr)
+    0 - validation passed
+    1 - validation failed (SchemaError details in report + stderr)
 """
 
 from __future__ import annotations

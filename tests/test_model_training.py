@@ -1,4 +1,4 @@
-"""Tests for engine.ml.model_training — XGBoost training scaffold.
+"""Tests for engine.ml.model_training - XGBoost training scaffold.
 
 Covers:
     - Pipeline construction (single + multi-output).

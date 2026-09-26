@@ -9,7 +9,7 @@ Handles:
     - Qdrant collection management (create, ingest, search)
     - Semantic search with metadata filtering
 
-The primary data source is THE_MASTER_DATASET_SPECIFICATION.md — a 667-line
+The primary data source is THE_MASTER_DATASET_SPECIFICATION.md - a 667-line
 technical document covering hardware specs, DSP algorithms, regional aesthetics,
 and synthesis architecture for 1987–1999 underground electronic music.
 
@@ -58,7 +58,7 @@ EMBEDDING_DIMS = 3072
 QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333")
 
 # Chunking
-MAX_CHUNK_CHARS = 2000  # Soft limit — split further on ### if exceeded
+MAX_CHUNK_CHARS = 2000  # Soft limit - split further on ### if exceeded
 MIN_CHUNK_CHARS = 100  # Skip trivially small chunks
 
 
@@ -70,7 +70,7 @@ def chunk_markdown(text: str) -> list[dict[str, Any]]:
     Split a markdown document into semantically meaningful chunks.
 
     Strategy:
-        1. Split on ## headers (PART level) — each becomes a chunk.
+        1. Split on ## headers (PART level) - each becomes a chunk.
         2. If a chunk exceeds MAX_CHUNK_CHARS, further split on ### headers.
         3. Each chunk carries metadata: part, subsection, title.
         4. Table of Contents (lines before first ## header) is a single chunk.
@@ -199,7 +199,7 @@ def _deterministic_id(text: str) -> str:
     """Generate a deterministic point ID from content text via SHA-256.
 
     SHA-256 is collision-resistant and produces a 64-character hex string.
-    The first 32 characters are used as the Qdrant point ID — sufficient
+    The first 32 characters are used as the Qdrant point ID - sufficient
     for uniqueness across the knowledge base corpus.
 
     Note: changing this function invalidates existing point IDs. A full
@@ -367,7 +367,7 @@ class KnowledgeBase:
         Args:
             query:       Natural language query.
             limit:       Max results to return.
-            part_filter: Optional — restrict to a specific PART number.
+            part_filter: Optional - restrict to a specific PART number.
 
         Returns:
             List of dicts: {text, part, subsection, title, score}

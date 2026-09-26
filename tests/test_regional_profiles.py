@@ -1,4 +1,4 @@
-"""Unit tests for engine.ml.regional_profiles — profile spoke loader.
+"""Unit tests for engine.ml.regional_profiles - profile spoke loader.
 
 Covers the full parse pipeline end-to-end:
 
@@ -167,8 +167,8 @@ _SYNTHETIC_SPOKES: dict[str, str] = {
 def _build_spoke_markdown(yaml_body: str) -> str:
     """Wrap a DSP spec YAML body in a full spoke markdown document.
 
-    The surrounding scaffolding — YAML frontmatter, introductory sections,
-    trailing sections — mirrors the real-vault spoke layout so the parser
+    The surrounding scaffolding - YAML frontmatter, introductory sections,
+    trailing sections - mirrors the real-vault spoke layout so the parser
     exercises the same regex path it does in production.
     """
     return (
@@ -561,7 +561,7 @@ def _real_vault_profiles_dir() -> Path | None:
 
     Honours ``IDM_VAULT_PATH``; otherwise tries the default
     ``../IDM_Obsidian`` sibling directory. Returns ``None`` when neither
-    resolves to an existing directory — the integration test skips in
+    resolves to an existing directory - the integration test skips in
     that case.
     """
     env = os.environ.get("IDM_VAULT_PATH")

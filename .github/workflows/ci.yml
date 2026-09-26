@@ -1,5 +1,5 @@
 # =============================================================================
-# IDM Generative System — CI Pipeline
+# IDM Generative System - CI Pipeline
 # Gitflow: develop = active dev, main = release-ready only.
 #
 # Triggers:
@@ -35,7 +35,7 @@ env:
 
 jobs:
   # ---------------------------------------------------------------------------
-  # Job 1 — Lint & Format
+  # Job 1: Lint & Format
   # ---------------------------------------------------------------------------
   lint:
     name: "Lint & Format"
@@ -62,7 +62,7 @@ jobs:
         run: ruff format --check .
 
   # ---------------------------------------------------------------------------
-  # Job 2 — Type Check
+  # Job 2: Type Check
   # ---------------------------------------------------------------------------
   typecheck:
     name: "Type Check (mypy)"
@@ -91,7 +91,7 @@ jobs:
         run: mypy engine/ api/ knowledge/ --config-file pyproject.toml
 
   # ---------------------------------------------------------------------------
-  # Job 3 — Test
+  # Job 3: Test
   # ---------------------------------------------------------------------------
   test:
     name: "Test Suite"
@@ -121,7 +121,7 @@ jobs:
 
       - name: Run tests
         env:
-          # Stub keys — external services are mocked in tests.
+          # Stub keys - external services are mocked in tests.
           OPENAI_API_KEY: "sk-test-000000000000000000000000000000000000000000000000"
           QDRANT_URL: "http://localhost:6333"
           QDRANT_API_KEY: "test-key"
@@ -143,7 +143,7 @@ jobs:
           retention-days: 14
 
   # ---------------------------------------------------------------------------
-  # Job 4 — Docker Build (+ Push on main)
+  # Job 4: Docker Build (+ Push on main)
   # ---------------------------------------------------------------------------
   docker:
     name: "Docker"
