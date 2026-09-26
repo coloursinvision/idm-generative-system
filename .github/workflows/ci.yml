@@ -49,7 +49,9 @@ jobs:
       - name: Install ruff
         # Pinned to the workstation version. Unpinned, CI drifts with upstream:
         # 0.16 began formatting Python blocks inside Markdown, which reddens
-        # untouched docs on every PR.
+        # untouched docs on every PR. Installed directly rather than through
+        # the dev extra to keep this job fast, since three others wait on it;
+        # the version must therefore be kept in step with pyproject [dev].
         run: pip install ruff==0.15.16
 
       - name: Ruff lint
