@@ -1,4 +1,4 @@
-# IDM Generative System — End User Manual
+# IDM Generative System - End User Manual
 
 **Version:** 1.1
 **Revision date:** April 7, 2026
@@ -32,7 +32,7 @@
 
 ## 1. Introduction
 
-The IDM Generative System is a generative audio application for experimental electronic music production. It reconstructs the analog and digital signal chain of 1987–1999 underground electronic music — UK IDM, Detroit Techno, Japanese Acid, and adjacent scenes — through DSP modeling, algorithmic composition, and retrieval-augmented sound design.
+The IDM Generative System is a generative audio application for experimental electronic music production. It reconstructs the analog and digital signal chain of 1987–1999 underground electronic music - UK IDM, Detroit Techno, Japanese Acid, and adjacent scenes - through DSP modeling, algorithmic composition, and retrieval-augmented sound design.
 
 The system is not a DAW, sampler, or drum machine. It is a generative engine that produces audio material through algorithmic processes, shapes it through a historically accurate effects chain, and outputs it in formats ready for hardware sequencers (Teenage Engineering PO-33 K.O! and EP-133 K.O.II).
 
@@ -50,9 +50,9 @@ Three principles govern the system's behavior:
 
 **Form over melody.** The system prioritises rhythm, density, texture, and temporal structure. Melody is treated as an emergent property of algorithmic processes, not a primary compositional target.
 
-**System over song.** The application designs generative processes, not individual tracks. Output is non-repeatable — each generation pass produces unique material from the same parameter set.
+**System over song.** The application designs generative processes, not individual tracks. Output is non-repeatable - each generation pass produces unique material from the same parameter set.
 
-**Historical fidelity over convenience.** Every effects block models specific hardware constraints from the era. The system deliberately introduces noise floors, bandwidth limits, quantisation artifacts, and saturation curves that modern production tools eliminate. This is by design — the constraints are the aesthetic.
+**Historical fidelity over convenience.** Every effects block models specific hardware constraints from the era. The system deliberately introduces noise floors, bandwidth limits, quantisation artifacts, and saturation curves that modern production tools eliminate. This is by design - the constraints are the aesthetic.
 
 ---
 
@@ -138,7 +138,7 @@ The development server starts at `http://localhost:5173`. CORS is pre-configured
 
 1. Open `http://localhost:5173` in your browser
 2. The StatusBar at the bottom should show a green connection indicator and the API version (v0.2.0)
-3. Navigate to the Effects tab — the 10-block signal chain should load and display
+3. Navigate to the Effects tab - the 10-block signal chain should load and display
 
 ---
 
@@ -159,7 +159,7 @@ The application consists of six tabs accessible from the top navigation bar. Eac
 
 ### Operating Modes
 
-**Manual mode** gives the user full control over algorithmic parameters. The LLM (GPT-4o) is available exclusively as a sound design advisor — it answers questions about hardware, techniques, and parameter selection but does not intervene in the generative process.
+**Manual mode** gives the user full control over algorithmic parameters. The LLM (GPT-4o) is available exclusively as a sound design advisor - it answers questions about hardware, techniques, and parameter selection but does not intervene in the generative process.
 
 **Auto mode** extends Manual mode. The LLM actively participates in composition: it interprets aesthetic descriptions, generates effects chain configurations, suggests pattern evolution directions, and provides narrative context for generated material.
 
@@ -175,15 +175,15 @@ The mode distinction affects only the Advisor and Composer tabs. The Generator, 
 **API endpoint:** `POST /ask`
 **Mode:** Manual
 
-The Advisor is a retrieval-augmented Q&A interface. It answers sound design questions by searching the project's knowledge base (THE_MASTER_DATASET_SPECIFICATION — 43 indexed chunks covering hardware specs, DSP algorithms, and regional aesthetics) and generating grounded responses via GPT-4o.
+The Advisor is a retrieval-augmented Q&A interface. It answers sound design questions by searching the project's knowledge base (THE_MASTER_DATASET_SPECIFICATION - 43 indexed chunks covering hardware specs, DSP algorithms, and regional aesthetics) and generating grounded responses via GPT-4o.
 
 **Interface elements:**
 
-- **Question input** — free-text field. Accepts any sound design, DSP, or production-related query. The more specific the question, the more targeted the retrieval.
-- **Context chunks slider** (1–10) — controls how many knowledge base chunks are included in the LLM context. Lower values produce more focused answers; higher values provide broader context at the cost of response specificity.
+- **Question input:** free-text field. Accepts any sound design, DSP, or production-related query. The more specific the question, the more targeted the retrieval.
+- **Context chunks slider** (1–10) - controls how many knowledge base chunks are included in the LLM context. Lower values produce more focused answers; higher values provide broader context at the cost of response specificity.
 - **Submit:** triggers the RAG pipeline: embed query -> cosine similarity search in Qdrant -> retrieve top-k chunks -> construct prompt with context -> GPT-4o completion.
-- **Answer display** — rendered response with inline source attribution tags showing which parts of the knowledge base contributed to each claim. Each tag displays the source part number and relevance score.
-- **Token usage footer** — displays prompt and completion token counts for the current query.
+- **Answer display:** rendered response with inline source attribution tags showing which parts of the knowledge base contributed to each claim. Each tag displays the source part number and relevance score.
+- **Token usage footer:** displays prompt and completion token counts for the current query.
 
 **Example queries:**
 - "What filter topology does the TB-303 use and how does accent affect resonance?"
@@ -191,7 +191,7 @@ The Advisor is a retrieval-augmented Q&A interface. It answers sound design ques
 - "What is the difference between Akai S950 and E-mu SP-1200 time-stretching artifacts?"
 - "Describe the Mackie CR-1604 bus saturation characteristics for modeling purposes."
 
-**What the Advisor does not do:** It does not generate audio, modify parameters, or control the Generator. It is a reference tool — a technically grounded alternative to searching documentation manually.
+**What the Advisor does not do:** It does not generate audio, modify parameters, or control the Generator. It is a reference tool - a technically grounded alternative to searching documentation manually.
 
 ---
 
@@ -205,18 +205,18 @@ The Composer translates natural language aesthetic descriptions into machine-rea
 
 **Interface elements:**
 
-- **Description input** — free-text field for aesthetic direction. Accepts any combination of timbral adjectives, genre references, hardware names, spatial characteristics, and temporal qualities.
-- **Submit** — triggers the RAG-augmented composition pipeline. The description is embedded, relevant knowledge chunks are retrieved, and GPT-4o generates a JSON configuration covering all 10 effects chain blocks with specific parameter values.
-- **JSON config display** — the generated configuration, rendered in a collapsible JSON viewer. Each block shows the target parameters, their values, and the hardware reference informing the choice.
-- **Reasoning section** — GPT-4o's explanation of why each parameter was chosen, referencing specific knowledge base entries (hardware characteristics, regional aesthetics, historical production techniques).
-- **Source attribution tags** — indicate which knowledge base chunks contributed to the configuration.
-- **Send to Generator** — transfers the JSON config to the Generator tab, pre-filling all parameter controls with the Composer's output. No manual transcription required.
+- **Description input:** free-text field for aesthetic direction. Accepts any combination of timbral adjectives, genre references, hardware names, spatial characteristics, and temporal qualities.
+- **Submit:** triggers the RAG-augmented composition pipeline. The description is embedded, relevant knowledge chunks are retrieved, and GPT-4o generates a JSON configuration covering all 10 effects chain blocks with specific parameter values.
+- **JSON config display:** the generated configuration, rendered in a collapsible JSON viewer. Each block shows the target parameters, their values, and the hardware reference informing the choice.
+- **Reasoning section:** GPT-4o's explanation of why each parameter was chosen, referencing specific knowledge base entries (hardware characteristics, regional aesthetics, historical production techniques).
+- **Source attribution tags:** indicate which knowledge base chunks contributed to the configuration.
+- **Send to Generator:** transfers the JSON config to the Generator tab, pre-filling all parameter controls with the Composer's output. No manual transcription required.
 
 **Example descriptions:**
-- "Early Warp Records bleep techno — heavy sub-bass, clinical high-frequency content, Alesis Quadraverb plate reverb, minimal saturation, wide stereo field"
-- "Rephlex-era braindance — extreme glitch processing, micro-edits, aggressive bitcrushing to 8-bit, short stutter loops, dry mix"
-- "Japanese precision acid — TB-303 with full key tracking, clean resonance without distortion, surgical frequency separation, crystal reverb"
-- "Basic Channel dub techno — deep delay self-oscillation, heavy tape saturation on repeats, narrow bandwidth, mono bass, fog-like spatial density"
+- "Early Warp Records bleep techno - heavy sub-bass, clinical high-frequency content, Alesis Quadraverb plate reverb, minimal saturation, wide stereo field"
+- "Rephlex-era braindance - extreme glitch processing, micro-edits, aggressive bitcrushing to 8-bit, short stutter loops, dry mix"
+- "Japanese precision acid - TB-303 with full key tracking, clean resonance without distortion, surgical frequency separation, crystal reverb"
+- "Basic Channel dub techno - deep delay self-oscillation, heavy tape saturation on repeats, narrow bandwidth, mono bass, fog-like spatial density"
 
 ---
 
@@ -230,14 +230,14 @@ The Generator is the core audio production module. It creates samples using one 
 
 **Interface elements:**
 
-- **Generator selector** — choose between `glitch_click`, `noise_burst`, or `fm_blip`. Each generator produces fundamentally different source material (see Section 7 for algorithm details).
-- **Parameter controls** — dynamic controls populated from the `/effects` endpoint. Each effects block has individually adjustable parameters. Controls update when a different generator is selected.
-- **Chain overrides / skip toggles** — per-block bypass switches. Disable any combination of the 10 effects blocks to isolate specific processing stages or hear raw generator output.
-- **Generate** — sends the current configuration to the API. The backend generates the source sample, applies the enabled effects chain blocks in order (with 2s tail padding), trims silence, and returns a 24-bit WAV file.
-- **Waveform display** — canvas-based amplitude visualisation of the generated audio. Renders after generation completes.
-- **Play / Stop** — Web Audio API playback of the generated sample. Playback occurs in the browser — no external audio application required.
-- **Download** — saves the generated 24-bit WAV to disk.
-- **Pattern grid** — visual representation of the rhythmic pattern produced by the generator's algorithmic layer (Euclidean distribution, Markov state, or mutation result).
+- **Generator selector:** choose between `glitch_click`, `noise_burst`, or `fm_blip`. Each generator produces fundamentally different source material (see Section 7 for algorithm details).
+- **Parameter controls:** dynamic controls populated from the `/effects` endpoint. Each effects block has individually adjustable parameters. Controls update when a different generator is selected.
+- **Chain overrides / skip toggles:** per-block bypass switches. Disable any combination of the 10 effects blocks to isolate specific processing stages or hear raw generator output.
+- **Generate:** sends the current configuration to the API. The backend generates the source sample, applies the enabled effects chain blocks in order (with 2s tail padding), trims silence, and returns a 24-bit WAV file.
+- **Waveform display:** canvas-based amplitude visualisation of the generated audio. Renders after generation completes.
+- **Play / Stop:** Web Audio API playback of the generated sample. Playback occurs in the browser - no external audio application required.
+- **Download:** saves the generated 24-bit WAV to disk.
+- **Pattern grid:** visual representation of the rhythmic pattern produced by the generator's algorithmic layer (Euclidean distribution, Markov state, or mutation result).
 
 **Generation workflow:**
 1. Select a generator
@@ -255,13 +255,13 @@ The Generator is the core audio production module. It creates samples using one 
 **API endpoint:** `GET /effects`
 **Mode:** Both
 
-A read-only reference view of the complete signal chain. Not an editor — use the Generator tab for active parameter control.
+A read-only reference view of the complete signal chain. Not an editor - use the Generator tab for active parameter control.
 
 **Interface elements:**
 
-- **Signal chain diagram** — horizontal flow visualisation of all 10 blocks in processing order. Each block is a card showing its name, hardware source, and processing category.
-- **Expandable block cards** — click any block to expand its parameter list with default values, ranges, and descriptions. Parameters are documented with their hardware-derived constraints (e.g., "Bandwidth LPF: 8–11kHz, modeling Quadraverb internal processing rate").
-- **Hardware source reference** — each block card displays the specific equipment being modeled and a brief explanation of how the original hardware's characteristics are implemented in the DSP algorithm.
+- **Signal chain diagram:** horizontal flow visualisation of all 10 blocks in processing order. Each block is a card showing its name, hardware source, and processing category.
+- **Expandable block cards:** click any block to expand its parameter list with default values, ranges, and descriptions. Parameters are documented with their hardware-derived constraints (e.g., "Bandwidth LPF: 8–11kHz, modeling Quadraverb internal processing rate").
+- **Hardware source reference:** each block card displays the specific equipment being modeled and a brief explanation of how the original hardware's characteristics are implemented in the DSP algorithm.
 
 This tab is educational. Use it to understand what each block does before adjusting parameters in the Generator, or as a reference while formulating Composer descriptions.
 
@@ -276,13 +276,13 @@ An interactive programming interface for the Teenage Engineering PO-33 K.O! The 
 
 **Interface elements:**
 
-- **16-step grid** — 4×4 matrix matching the physical PO-33 button layout. Each cell represents one step in the sequencer. Active steps are highlighted per sound.
-- **Track selector** — switch between sounds (kick, snare, hat, and up to 5 additional glitch/texture layers) to view and edit their step patterns independently.
-- **Step input mode** — click grid cells to toggle steps on/off. Mirrors the PO-33's write mode workflow.
+- **16-step grid:** 4×4 matrix matching the physical PO-33 button layout. Each cell represents one step in the sequencer. Active steps are highlighted per sound.
+- **Track selector:** switch between sounds (kick, snare, hat, and up to 5 additional glitch/texture layers) to view and edit their step patterns independently.
+- **Step input mode:** click grid cells to toggle steps on/off. Mirrors the PO-33's write mode workflow.
 - **Sample slot mapping panel:**
   - **Auto mode:** kick->slot 1, snare->slot 2, hat->slot 3, glitch->slots 4-8, textures->slots 9-16
   - **Manual mode:** drag any generated sample to any slot position
-- **Instruction generator** — given a pattern, produces a numbered list of PO-33 button sequences:
+- **Instruction generator:** given a pattern, produces a numbered list of PO-33 button sequences:
   ```
   1. Hold SOUND + press 1       -> Select kick sound
   2. Press WRITE                 -> Enter record mode
@@ -291,13 +291,13 @@ An interactive programming interface for the Teenage Engineering PO-33 K.O! The 
   5. Press steps 5, 13          -> Program backbeat snare
   ...
   ```
-- **Effects reference** — table of PO-33 FX 1-16 with descriptions and recommended usage contexts per sound type.
-- **Pattern chaining** — visual builder for linking patterns 1-16 into longer sequences. Drag patterns into a chain timeline.
-- **Sync guide** — instructions for synchronising the PO-33 with external devices via the SY-1 mini-jack protocol.
-- **Web Audio sequencer** — 8-track playback engine. Load generated samples into the sequencer, set BPM, and preview the full pattern in the browser before transferring to hardware.
-  - **LOAD SAMPLES** — imports generated WAV files into the browser sequencer
-  - **PLAY / STOP** — start and stop sequencer playback
-  - **BPM slider** — adjusts tempo in real-time during playback
+- **Effects reference:** table of PO-33 FX 1-16 with descriptions and recommended usage contexts per sound type.
+- **Pattern chaining:** visual builder for linking patterns 1-16 into longer sequences. Drag patterns into a chain timeline.
+- **Sync guide:** instructions for synchronising the PO-33 with external devices via the SY-1 mini-jack protocol.
+- **Web Audio sequencer:** 8-track playback engine. Load generated samples into the sequencer, set BPM, and preview the full pattern in the browser before transferring to hardware.
+  - **LOAD SAMPLES:** imports generated WAV files into the browser sequencer
+  - **PLAY / STOP:** start and stop sequencer playback
+  - **BPM slider:** adjusts tempo in real-time during playback
 
 **Typical workflow:**
 1. Generate samples in the Generator tab
@@ -315,20 +315,20 @@ An interactive programming interface for the Teenage Engineering PO-33 K.O! The 
 **Route:** `/guide/ep133`
 **Mode:** Both
 
-An interactive programming interface for the Teenage Engineering EP-133 K.O.II. The EP-133 has a more complex architecture than the PO-33 — 4 groups, variable timing resolutions, scene management, and per-group FX routing — and the Guide reflects this complexity.
+An interactive programming interface for the Teenage Engineering EP-133 K.O.II. The EP-133 has a more complex architecture than the PO-33 - 4 groups, variable timing resolutions, scene management, and per-group FX routing - and the Guide reflects this complexity.
 
 **Interface elements:**
 
-- **12-pad grid** — 3×4 matrix × 4 groups (A/B/C/D), matching the physical EP-133 layout. Switch between groups using the group selector.
+- **12-pad grid:** 3×4 matrix × 4 groups (A/B/C/D), matching the physical EP-133 layout. Switch between groups using the group selector.
 - **Group management:**
-  - **Group A — Drums:** kicks (slots 1-99), snares (100-199), hats (200-299), percussion (300-399)
-  - **Group B — Bass:** bass sounds (slots 400-499)
-  - **Group C — Melodic:** melodic samples (slots 500-599)
-  - **Group D — Samples/Loops:** user samples and loops
-- **Timing mode selector** — 1/8, 1/8T (triplet), 1/16, 1/16T, 1/32. Changes the step resolution of the sequencer view. Triplet modes display a modified grid reflecting the uneven step distribution.
-- **Step input mode** — click pads and steps to program patterns. Mirrors the EP-133 step sequencer workflow (RECORD + PAD at target step).
-- **Live record simulation** — visual representation of real-time recording. Shows which pad would be captured at which step position when recording in real-time mode.
-- **Instruction generator** — produces step-by-step EP-133 workflow with exact button combinations:
+  - **Group A - Drums:** kicks (slots 1-99), snares (100-199), hats (200-299), percussion (300-399)
+  - **Group B - Bass:** bass sounds (slots 400-499)
+  - **Group C - Melodic:** melodic samples (slots 500-599)
+  - **Group D - Samples/Loops:** user samples and loops
+- **Timing mode selector:** 1/8, 1/8T (triplet), 1/16, 1/16T, 1/32. Changes the step resolution of the sequencer view. Triplet modes display a modified grid reflecting the uneven step distribution.
+- **Step input mode:** click pads and steps to program patterns. Mirrors the EP-133 step sequencer workflow (RECORD + PAD at target step).
+- **Live record simulation:** visual representation of real-time recording. Shows which pad would be captured at which step position when recording in real-time mode.
+- **Instruction generator:** produces step-by-step EP-133 workflow with exact button combinations:
   ```
   1. Press MAIN                       -> Enter main mode
   2. Press Group A                    -> Select drums group
@@ -338,12 +338,12 @@ An interactive programming interface for the Teenage Engineering EP-133 K.O.II. 
   ...
   12. Press SHIFT + MAIN              -> Commit pattern to scene
   ```
-- **Scene/pattern workflow** — visual representation of the EP-133 commit flow. Shows how patterns are committed to scenes (SHIFT+MAIN) and how scenes are chained into arrangements.
-- **Keys mode** — chromatic keyboard visualisation for melodic input. Displays which pads correspond to which notes when Keys mode is active on the physical device.
-- **FX routing panel** — per-group effects assignment. Shows how to route each group through the EP-133's built-in effects and adjust parameters.
-- **Swing knob visualisation** — displays the current swing amount and its effect on step timing.
-- **Sample slot reference** — category-based numbering system: 1-99 kicks, 100-199 snares, 200-299 hats, 300-399 percussion, 400-499 bass, 500-599 melodic.
-- **Web Audio sequencer** — 4-group playback engine with variable timing resolution. Operates identically to the PO-33 sequencer but with group switching, variable step counts, and per-group timing modes.
+- **Scene/pattern workflow:** visual representation of the EP-133 commit flow. Shows how patterns are committed to scenes (SHIFT+MAIN) and how scenes are chained into arrangements.
+- **Keys mode:** chromatic keyboard visualisation for melodic input. Displays which pads correspond to which notes when Keys mode is active on the physical device.
+- **FX routing panel:** per-group effects assignment. Shows how to route each group through the EP-133's built-in effects and adjust parameters.
+- **Swing knob visualisation:** displays the current swing amount and its effect on step timing.
+- **Sample slot reference:** category-based numbering system: 1-99 kicks, 100-199 snares, 200-299 hats, 300-399 percussion, 400-499 bass, 500-599 melodic.
+- **Web Audio sequencer:** 4-group playback engine with variable timing resolution. Operates identically to the PO-33 sequencer but with group switching, variable step counts, and per-group timing modes.
 
 **Typical workflow:**
 1. Generate samples in the Generator tab (multiple generators for different sound categories)
@@ -368,27 +368,27 @@ The Codegen tab generates runnable SuperCollider (sclang) and TidalCycles (Haske
 
 **Interface elements:**
 
-- **Target tabs — SC | TIDAL** — toggle between SuperCollider and TidalCycles output. Always visible in the top toolbar.
-- **GENERATE button** — sends the current configuration to `/synthdef` or `/tidal`. The primary action — designed for rapid, repeated use. Always visible.
-- **Code display block** — solarized dark background (`#002b36`) with dual syntax highlighting:
+- **Target tabs - SC | TIDAL:** toggle between SuperCollider and TidalCycles output. Always visible in the top toolbar.
+- **GENERATE button:** sends the current configuration to `/synthdef` or `/tidal`. The primary action - designed for rapid, repeated use. Always visible.
+- **Code display block:** solarized dark background (`#002b36`) with dual syntax highlighting:
   - **sclang:** keywords in TE orange (#FF6600), strings in amber (#f59e0b), numbers in cyan (#2aa198), UGens in magenta (#d33682), comments in muted gray (#586e75)
   - **Haskell/Tidal:** same palette applied to Tidal functions, operators, and pattern syntax
   - Line numbers in left gutter on darker background (#073642)
-- **Toolbar labels** — precise language identifiers: `SCLANG .SCD` for SuperCollider, `HASKELL / TIDAL .TIDAL` for TidalCycles. These match the actual file extensions and language names.
-- **COPY button** — copies generated code to clipboard. Paste directly into SuperCollider IDE or Atom/VS Code with TidalCycles plugin.
-- **DOWNLOAD button** — saves code as `.scd` (SuperCollider) or `.tidal` (TidalCycles) file.
-- **CONFIG drawer** — collapsible panel (collapsed by default, one-line summary visible). Contains:
+- **Toolbar labels:** precise language identifiers: `SCLANG .SCD` for SuperCollider, `HASKELL / TIDAL .TIDAL` for TidalCycles. These match the actual file extensions and language names.
+- **COPY button:** copies generated code to clipboard. Paste directly into SuperCollider IDE or Atom/VS Code with TidalCycles plugin.
+- **DOWNLOAD button:** saves code as `.scd` (SuperCollider) or `.tidal` (TidalCycles) file.
+- **CONFIG drawer:** collapsible panel (collapsed by default, one-line summary visible). Contains:
   - Generator selector (glitch_click, noise_burst, fm_blip)
   - Mode toggle: **Studio** (self-contained script with server boot, full comments, cleanup) or **Live** (minimal boilerplate, hot-swap via Pdef/Ndef)
   - BPM control
   - Effects chain block toggles (enable/disable individual blocks)
-- **Popout button (⧉)** — detaches the codegen panel to a separate browser window. Enables dual-monitor workflows: main app on one screen, SuperCollider IDE on the other. State is synchronised between windows via `BroadcastChannel` API.
+- **Popout button (⧉):** detaches the codegen panel to a separate browser window. Enables dual-monitor workflows: main app on one screen, SuperCollider IDE on the other. State is synchronised between windows via `BroadcastChannel` API.
 
 **Popout window:**
 
 The detached window (`/codegen-popout`) operates in two modes:
-1. **Connected** — receives config and code updates from the main window in real-time. Connection status shown by a green indicator with heartbeat monitoring (2s interval, 5s timeout).
-2. **Standalone** — if the main window is closed, the popout switches to local operation with fallback defaults. All controls (GENERATE, COPY, DOWNLOAD) work independently.
+1. **Connected** - receives config and code updates from the main window in real-time. Connection status shown by a green indicator with heartbeat monitoring (2s interval, 5s timeout).
+2. **Standalone** - if the main window is closed, the popout switches to local operation with fallback defaults. All controls (GENERATE, COPY, DOWNLOAD) work independently.
 
 **Codegen workflow:**
 1. Configure generator and effects in CONFIG drawer (or accept defaults)
@@ -397,7 +397,7 @@ The detached window (`/codegen-popout`) operates in two modes:
 4. Review code in the solarized dark display
 5. Click COPY or DOWNLOAD
 6. Paste/open in SuperCollider IDE or TidalCycles environment
-7. Evaluate — the generated code is self-contained and runnable
+7. Evaluate - the generated code is self-contained and runnable
 
 **Studio vs Live mode:**
 - **Studio** generates a complete script: `s.boot`, SynthDef definitions with bus routing and Group ordering, pattern scheduling via Pbind (SC) or full `d1 $` stack (Tidal), and cleanup (`s.freeAll`).
@@ -411,11 +411,11 @@ The effects chain processes audio through 10 blocks in fixed sequential order. E
 
 For a summary table of all blocks, see the README. This section provides detailed per-block documentation.
 
-### Block 1 — Noise Floor (`noise_floor.py`)
+### Block 1: Noise Floor (`noise_floor.py`)
 
 **Hardware model:** Mackie CR-1604 mixing console
 
-Adds a calibrated noise floor to the signal, modeling the analog mixer bus sum that was present in every 1987–1999 production. The noise floor is not an error — it is a fundamental characteristic of the era's sound. Recordings from this period have an integrated noise level of approximately -75 to -78 dB RMS.
+Adds a calibrated noise floor to the signal, modeling the analog mixer bus sum that was present in every 1987–1999 production. The noise floor is not an error - it is a fundamental characteristic of the era's sound. Recordings from this period have an integrated noise level of approximately -75 to -78 dB RMS.
 
 **Parameters:**
 - **Noise type:** Pink (1/f spectrum, default) or white (flat spectrum)
@@ -426,7 +426,7 @@ Adds a calibrated noise floor to the signal, modeling the analog mixer bus sum t
 
 **Design note:** This is the Anti-GIGO block. It sets the environmental floor before any processing occurs. Without it, subsequent blocks operate on an unrealistically clean signal that has no analog equivalent from the target era.
 
-### Block 2 — Bitcrusher (`bitcrusher.py`)
+### Block 2: Bitcrusher (`bitcrusher.py`)
 
 **Hardware models:** E-mu SP-1200 (12-bit, 26.04 kHz), Akai S950 (12-bit, variable), Casio RZ-1 (8-bit, 20 kHz), Roland TR-909 cymbals (6-bit)
 
@@ -435,15 +435,15 @@ Reduces bit depth and sample rate to model the quantisation artifacts of period-
 **Parameters:**
 - **Bit depth:** Target bit depth (6–24 bits)
 - **Sample rate:** Target sample rate in Hz
-- **Device preset:** SP-1200, S950, RZ-1, TR-909 cymbal — each preset configures bit depth, sample rate, and filter characteristics to match the specific hardware
+- **Device preset:** SP-1200, S950, RZ-1, TR-909 cymbal - each preset configures bit depth, sample rate, and filter characteristics to match the specific hardware
 
 **Design note:** Bitcrushing before filtering (Block 3) is historically accurate. In the original hardware, the DAC's quantisation artifacts existed before any analog filtering stage.
 
-### Block 3 — Resonant Filter (`filter.py`)
+### Block 3: Resonant Filter (`filter.py`)
 
 **Hardware models:** Roland TB-303 (18 dB/oct, 3-pole), Roland SH-101 (24 dB/oct, 4-pole IR3109)
 
-Voltage-controlled filter emulation with resonance, key tracking, and accent coupling. The TB-303 implementation models the specific nonlinear interaction between accent, resonance, and filter decay that defines the acid sound — accent is not a simple gain boost but a three-way parameter coupling (see THE_MASTER_DATASET_SPECIFICATION Part 4.2).
+Voltage-controlled filter emulation with resonance, key tracking, and accent coupling. The TB-303 implementation models the specific nonlinear interaction between accent, resonance, and filter decay that defines the acid sound - accent is not a simple gain boost but a three-way parameter coupling (see THE_MASTER_DATASET_SPECIFICATION Part 4.2).
 
 **Parameters:**
 - **Filter type:** Low-pass, high-pass, or band-pass
@@ -451,13 +451,13 @@ Voltage-controlled filter emulation with resonance, key tracking, and accent cou
 - **Resonance (Q):** Resonance amount (0–1, self-oscillation at values approaching 1.0)
 - **Topology:** 3-pole (TB-303, 18 dB/oct) or 4-pole (SH-101, 24 dB/oct)
 - **Accent coupling:** When enabled, high-velocity notes shorten filter decay by ~50%, boost resonance by ~15%, and apply tanh saturation on the VCA stage
-- **Key tracking:** Filter cutoff follows MIDI note (0–100%, 100% = filter tracks pitch perfectly, characteristic of Japanese acid — see Susumu Yokota entry in MASTER_DATASET Part 12.4)
+- **Key tracking:** Filter cutoff follows MIDI note (0–100%, 100% = filter tracks pitch perfectly, characteristic of Japanese acid - see Susumu Yokota entry in MASTER_DATASET Part 12.4)
 
-### Block 4 — Saturation (`saturation.py`)
+### Block 4: Saturation (`saturation.py`)
 
 **Hardware model:** Mackie CR-1604 bus overdrive
 
-Asymmetric soft-clipping that models the harmonic distortion of analog mixer bus stages driven into the red. The asymmetry is deliberate — positive and negative signal excursions are clipped differently, producing odd and even harmonics in the distortion spectrum.
+Asymmetric soft-clipping that models the harmonic distortion of analog mixer bus stages driven into the red. The asymmetry is deliberate - positive and negative signal excursions are clipped differently, producing odd and even harmonics in the distortion spectrum.
 
 **Parameters:**
 - **Drive:** Gain before clipping (1.0 = unity, 2.0+ = overdrive)
@@ -469,11 +469,11 @@ Asymmetric soft-clipping that models the harmonic distortion of analog mixer bus
 
 **Design note:** Division by zero is handled with a safe denominator clamp at the signal boundary where `x = 2/drive`. This was a bug fix from the March 23, 2026 session.
 
-### Block 5 — Reverb (`reverb.py`)
+### Block 5: Reverb (`reverb.py`)
 
 **Hardware model:** Alesis Quadraverb (1989)
 
-Schroeder diffusion network modeling the specific characteristics of the Quadraverb — the standard reverb unit of early Warp Records (Aphex Twin, Autechre, LFO). The Quadraverb's character comes from its 16-bit internal processing at 31.25 kHz, which introduces subtle aliasing in the reverb tail and a hard bandwidth ceiling on reflections.
+Schroeder diffusion network modeling the specific characteristics of the Quadraverb - the standard reverb unit of early Warp Records (Aphex Twin, Autechre, LFO). The Quadraverb's character comes from its 16-bit internal processing at 31.25 kHz, which introduces subtle aliasing in the reverb tail and a hard bandwidth ceiling on reflections.
 
 **Parameters:**
 - **Type:** Plate, hall, room, chamber, spring
@@ -486,7 +486,7 @@ Schroeder diffusion network modeling the specific characteristics of the Quadrav
 
 **Design note:** The reverb return is stereo with phase alignment for mono compatibility. The 2s tail padding added to the signal chain in March 2026 was specifically implemented to allow this block's decay tails to ring out naturally.
 
-### Block 6 — Tape Delay (`delay.py`)
+### Block 6: Tape Delay (`delay.py`)
 
 **Hardware model:** Roland Space Echo RE-201
 
@@ -498,10 +498,10 @@ Models the physical tape transport of the RE-201, including wow and flutter (tap
 - **Wow and flutter:** Tape speed modulation depth (LFO at ~0.5 Hz with noise component)
 - **Tape age:** High-frequency loss per repetition, modeling tape oxide degradation
 - **Head configuration:** Number of playback heads and spacing ratios (1:2, 1:3, 1:4 for rhythmic multi-tap delays)
-- **Tape saturation:** Per-repetition saturation via `tanh(input × gain)` — each echo is progressively warmer and grittier
+- **Tape saturation:** Per-repetition saturation via `tanh(input × gain)` - each echo is progressively warmer and grittier
 - **Mix:** Dry/wet blend
 
-### Block 7 — Spatial (`spatial.py`)
+### Block 7: Spatial (`spatial.py`)
 
 **Hardware reference:** MASTER_DATASET Part 15 stereo field rules
 
@@ -517,7 +517,7 @@ Controls stereo image width with frequency-dependent processing, enforcing the s
 - Pads and reverb returns are widened via phase decorrelation
 - Percussion is set to approximately 70% width (TR-909 style panning convention)
 
-### Block 8 — Glitch Engine (`glitch.py`)
+### Block 8: Glitch Engine (`glitch.py`)
 
 **Hardware references:** Ensoniq ASR-10 (loop-point modulation), Autechre Tri Repetae (bit manipulation), Aphex Twin / Rephlex catalog (micro-edit techniques)
 
@@ -529,13 +529,13 @@ Applies destructive rhythmic processing: stutter, reverse, loop-point drift, and
 - **Stutter count:** Number of re-triggers per event
 - **Loop drift:** LFO rate for loop-point modulation (models ASR-10 loop start drift: `Loop_Start = Base_Start + LFO(0.5Hz)`)
 - **XOR mask:** Bit pattern for XOR mangle mode (flips specific bits in the audio data, producing unpredictable timbral destruction)
-- **Mix:** Dry/wet blend (critical — 100% wet glitch is often unusable; 20–40% blends glitch artifacts into the source texture)
+- **Mix:** Dry/wet blend (critical - 100% wet glitch is often unusable; 20–40% blends glitch artifacts into the source texture)
 
-### Block 9 — Compressor (`compressor.py`)
+### Block 9: Compressor (`compressor.py`)
 
 **Hardware references:** Alesis 3630, analog bus summing (Mackie CR-1604 master bus)
 
-Bus-style compression targeting a dynamic range of DR 8–10 — the characteristic loudness profile of 1990s underground releases, which were mastered louder than acoustic recordings but without the brick-wall limiting of modern EDM production.
+Bus-style compression targeting a dynamic range of DR 8–10 - the characteristic loudness profile of 1990s underground releases, which were mastered louder than acoustic recordings but without the brick-wall limiting of modern EDM production.
 
 **Parameters:**
 - **Threshold:** Compression onset level in dB
@@ -548,15 +548,15 @@ Bus-style compression targeting a dynamic range of DR 8–10 — the characteris
 
 **Design note:** The DR 8–10 target is a quality check, not a hard constraint. Output that falls outside this range may still be musically valid but diverges from the historical mastering aesthetic.
 
-### Block 10 — Vinyl Mastering (`vinyl.py`)
+### Block 10: Vinyl Mastering (`vinyl.py`)
 
 **Hardware references:** DAT recorder anti-aliasing filters (Sony PCM-2700, Panasonic SV-3700), vinyl lathe pre-emphasis curves
 
 The final processing stage, modeling two characteristics of 1990s distribution media:
 
-1. **DAT brick-wall filter** — steep low-pass at 16 kHz, modeling the anti-aliasing filters of period DAT recorders. This constrains the output bandwidth to match the era's delivery medium.
+1. **DAT brick-wall filter** - steep low-pass at 16 kHz, modeling the anti-aliasing filters of period DAT recorders. This constrains the output bandwidth to match the era's delivery medium.
 
-2. **Vinyl pre-emphasis** — an S-curve saturation applied to the 2–5 kHz range, modeling the excitement that vinyl cutting lathes impart to the signal. Underground tracks were typically cut "hot" on vinyl, producing a subtle brightness and presence in the upper midrange.
+2. **Vinyl pre-emphasis** - an S-curve saturation applied to the 2–5 kHz range, modeling the excitement that vinyl cutting lathes impart to the signal. Underground tracks were typically cut "hot" on vinyl, producing a subtle brightness and presence in the upper midrange.
 
 **Parameters:**
 - **DAT cutoff:** Brick-wall LPF frequency (default: 16 kHz; 19 kHz for DAT-accurate modeling)
@@ -571,33 +571,33 @@ The final processing stage, modeling two characteristics of 1990s distribution m
 
 Three generator functions produce the raw source material before effects chain processing.
 
-**glitch_click** — Percussive transient with exponential amplitude decay and spectral shaping. Produces sharp, short-duration clicks suitable for hi-hat and percussion roles. The decay curve and spectral tilt are randomised within configured bounds on each generation pass.
+**glitch_click** - Percussive transient with exponential amplitude decay and spectral shaping. Produces sharp, short-duration clicks suitable for hi-hat and percussion roles. The decay curve and spectral tilt are randomised within configured bounds on each generation pass.
 
-**noise_burst** — Filtered noise with configurable tone (low-pass, high-pass, or band-pass). Duration, filter cutoff, and resonance are parameterised. Produces textural material ranging from deep thuds (LP, low cutoff) to bright hissing transients (HP, high cutoff).
+**noise_burst** - Filtered noise with configurable tone (low-pass, high-pass, or band-pass). Duration, filter cutoff, and resonance are parameterised. Produces textural material ranging from deep thuds (LP, low cutoff) to bright hissing transients (HP, high cutoff).
 
-**fm_blip** — Two-operator FM synthesis modeled on the Yamaha DX100/TX81Z architecture. Carrier-to-modulator ratio, modulation index, and envelope shape determine the timbral character. At low modulation indices, produces clean tonal blips; at high indices, produces metallic, inharmonic transients characteristic of the "Detroit stab" sound.
+**fm_blip** - Two-operator FM synthesis modeled on the Yamaha DX100/TX81Z architecture. Carrier-to-modulator ratio, modulation index, and envelope shape determine the timbral character. At low modulation indices, produces clean tonal blips; at high indices, produces metallic, inharmonic transients characteristic of the "Detroit stab" sound.
 
 ### 7.2 Pattern Algorithms
 
-**Euclidean rhythm** — `euclidean_rhythm(k, n)`: distributes k pulses as evenly as possible across n steps using the Bjorklund algorithm. Produces rhythmic patterns found in West African drumming, Balkan folk music, and IDM polyrhythms. The implementation was corrected during the March 23 session — the original notebook version produced incorrect output lengths for most k/n combinations.
+**Euclidean rhythm** - `euclidean_rhythm(k, n)`: distributes k pulses as evenly as possible across n steps using the Bjorklund algorithm. Produces rhythmic patterns found in West African drumming, Balkan folk music, and IDM polyrhythms. The implementation was corrected during the March 23 session - the original notebook version produced incorrect output lengths for most k/n combinations.
 
-**Probabilistic generation** — `generate_pattern()`: each step is independently activated based on a per-track probability value. Produces stochastic patterns with configurable density. No inter-step memory — purely random.
+**Probabilistic generation** - `generate_pattern()`: each step is independently activated based on a per-track probability value. Produces stochastic patterns with configurable density. No inter-step memory - purely random.
 
-**Density generation** — `generate_pattern_density()`: generates patterns with a target density (ratio of active to total steps), distributing pulses uniformly. Unlike Euclidean distribution, does not optimise for evenness.
+**Density generation** - `generate_pattern_density()`: generates patterns with a target density (ratio of active to total steps), distributing pulses uniformly. Unlike Euclidean distribution, does not optimise for evenness.
 
-**Markov evolution** — `markov_evolve()`: applies a Markov transition matrix to an existing pattern. Each step's next state depends on its current state and the states of adjacent steps. Produces temporal coherence — patterns develop motifs and structural repetition over successive evolution passes.
+**Markov evolution** - `markov_evolve()`: applies a Markov transition matrix to an existing pattern. Each step's next state depends on its current state and the states of adjacent steps. Produces temporal coherence - patterns develop motifs and structural repetition over successive evolution passes.
 
-**Mutation** — `mutate_pattern(pattern, mutation_rate)`: probabilistic bit-flip on each step with configurable mutation rate. Applied post-generation to introduce controlled entropy. At low rates (0.01–0.05), produces subtle micro-variations; at high rates (0.2+), produces radical pattern transformation.
+**Mutation** - `mutate_pattern(pattern, mutation_rate)`: probabilistic bit-flip on each step with configurable mutation rate. Applied post-generation to introduce controlled entropy. At low rates (0.01–0.05), produces subtle micro-variations; at high rates (0.2+), produces radical pattern transformation.
 
 ### 7.3 Acid DSP Model
 
 The `acid_dsp_model.py` module implements three TB-303 and Detroit Techno-specific DSP algorithms:
 
-**Acid slide** — nonlinear frequency glide modeling the TB-303 capacitor discharge: `Current_Pitch += Alpha × (Target_Pitch - Current_Pitch)` where `Alpha = 1 - exp(-1 / (Fs × 0.03))`. The 30ms time constant is fixed — it is a physical property of the 303 circuit, not a user parameter.
+**Acid slide** - nonlinear frequency glide modeling the TB-303 capacitor discharge: `Current_Pitch += Alpha × (Target_Pitch - Current_Pitch)` where `Alpha = 1 - exp(-1 / (Fs × 0.03))`. The 30ms time constant is fixed - it is a physical property of the 303 circuit, not a user parameter.
 
-**Detroit chord memory** — parallel oscillator stacking for the Minor 9th voicing (Root, +3, +7, +10, +14 semitones). All oscillators are summed before a single mono 24 dB/oct LPF. The filter processes the composite harmonic spectrum, not individual voices.
+**Detroit chord memory** - parallel oscillator stacking for the Minor 9th voicing (Root, +3, +7, +10, +14 semitones). All oscillators are summed before a single mono 24 dB/oct LPF. The filter processes the composite harmonic spectrum, not individual voices.
 
-**Accent saturation** — nonlinear VCA modeling via `tanh(input × accent_gain)` where accent_gain is 2.4 for accented steps and 1.0 for normal steps. This is applied after the filter stage, matching the 303's internal signal flow.
+**Accent saturation** - nonlinear VCA modeling via `tanh(input × accent_gain)` where accent_gain is 2.4 for accented steps and 1.0 for normal steps. This is applied after the filter stage, matching the 303's internal signal flow.
 
 ---
 
@@ -609,7 +609,7 @@ The system's retrieval-augmented generation (RAG) pipeline operates over a singl
 
 The document is chunked and embedded using OpenAI's `text-embedding-3-large` model (3072 dimensions). 43 chunks are indexed in a Qdrant Cloud collection with cosine similarity as the distance metric.
 
-Chunking preserves section boundaries — each chunk corresponds to a coherent topical unit (a hardware specification table, a DSP algorithm description, a regional aesthetic profile, etc.). Chunks do not split mid-paragraph or mid-table.
+Chunking preserves section boundaries - each chunk corresponds to a coherent topical unit (a hardware specification table, a DSP algorithm description, a regional aesthetic profile, etc.). Chunks do not split mid-paragraph or mid-table.
 
 ### Retrieval
 
@@ -655,7 +655,7 @@ Generator -> Generate samples (WAV)
 
 **Sample transfer:** The PO-33 samples audio via its built-in microphone or 3.5mm line-in jack. Play the generated WAV from your computer while the PO-33 is in sampling mode. Trim the captured sample on the device using the start/end controls.
 
-**Limitations:** The PO-33 has 40 seconds of total sample memory and 16 slots. Plan sample selection accordingly — shorter, more percussive samples maximise the available slot count.
+**Limitations:** The PO-33 has 40 seconds of total sample memory and 16 slots. Plan sample selection accordingly - shorter, more percussive samples maximise the available slot count.
 
 ### 9.2 EP-133 K.O.II Workflow
 
@@ -696,10 +696,10 @@ Returns the complete effects chain configuration: all 10 blocks with their param
 Generates a sample using the specified generator and effects chain configuration.
 
 **Request body:**
-- `generator`: string — `glitch_click`, `noise_burst`, or `fm_blip`
-- `params`: object — generator-specific parameters
-- `chain_config`: object — per-block parameter overrides
-- `skip_blocks`: array — list of block indices to bypass (0-indexed)
+- `generator`: string - `glitch_click`, `noise_burst`, or `fm_blip`
+- `params`: object - generator-specific parameters
+- `chain_config`: object - per-block parameter overrides
+- `skip_blocks`: array - list of block indices to bypass (0-indexed)
 
 **Response:** Binary WAV file (24-bit, 44100 Hz)
 
@@ -713,8 +713,8 @@ Processes an uploaded audio file through the effects chain.
 RAG-augmented sound design Q&A.
 
 **Request body:**
-- `question`: string — the query
-- `num_chunks`: integer (1–10) — number of knowledge base chunks to retrieve
+- `question`: string - the query
+- `num_chunks`: integer (1–10) - number of knowledge base chunks to retrieve
 
 **Response:** JSON with `answer`, `sources` (array of chunk references with scores), and `usage` (token counts)
 
@@ -722,8 +722,8 @@ RAG-augmented sound design Q&A.
 Aesthetic description to effects chain configuration.
 
 **Request body:**
-- `description`: string — natural language aesthetic description
-- `num_chunks`: integer (1–10) — retrieval depth
+- `description`: string - natural language aesthetic description
+- `num_chunks`: integer (1–10) - retrieval depth
 
 **Response:** JSON with `config` (effects chain parameter object), `reasoning` (GPT-4o explanation), `sources`, and `usage`
 
@@ -731,14 +731,14 @@ Aesthetic description to effects chain configuration.
 Generates SuperCollider (sclang) code from engine configuration.
 
 **Request body:**
-- `generator`: string — `glitch_click`, `noise_burst`, or `fm_blip`
-- `generator_params`: object — optional generator-specific parameters
-- `effects`: object — per-block parameter overrides and skip list
-- `pattern`: object — optional pattern configuration (euclidean/probabilistic/density)
-- `mode`: string — `studio` (full script) or `live` (hot-swap)
-- `include_pattern`: boolean — include pattern scheduling code
-- `bpm`: integer — tempo (default: 120)
-- `bus_offset`: integer — starting bus number for SynthDef routing
+- `generator`: string - `glitch_click`, `noise_burst`, or `fm_blip`
+- `generator_params`: object - optional generator-specific parameters
+- `effects`: object - per-block parameter overrides and skip list
+- `pattern`: object - optional pattern configuration (euclidean/probabilistic/density)
+- `mode`: string - `studio` (full script) or `live` (hot-swap)
+- `include_pattern`: boolean - include pattern scheduling code
+- `bpm`: integer - tempo (default: 120)
+- `bus_offset`: integer - starting bus number for SynthDef routing
 
 **Response:** JSON with `code` (sclang string), `target`, `mode`, `warnings`, `unmapped_params`, `metadata` (SynthDef names, bus allocation, effects chain), `setup_notes`
 
@@ -760,24 +760,24 @@ The frontend polls `/health` every 30 seconds. If the indicator is red:
 3. Verify CORS origins include your frontend URL (default: `localhost:5173`)
 
 ### No audio on Play
-Web Audio API requires user interaction before first playback (browser security policy). Click Play again after the first attempt — most browsers unlock audio context on the second user gesture.
+Web Audio API requires user interaction before first playback (browser security policy). Click Play again after the first attempt - most browsers unlock audio context on the second user gesture.
 
 ### Generated samples are silent or extremely quiet
-1. Check if all effects blocks are skipped — raw generator output without the effects chain may be very short duration
+1. Check if all effects blocks are skipped - raw generator output without the effects chain may be very short duration
 2. Verify the Generator selector is set to a valid generator
-3. Check the waveform display — a flat line indicates no signal generation; a visible waveform with no audio suggests a Web Audio routing issue
+3. Check the waveform display - a flat line indicates no signal generation; a visible waveform with no audio suggests a Web Audio routing issue
 
 ### Advisor/Composer returns empty or generic responses
 1. Verify `OPENAI_API_KEY` is set and valid
 2. Verify `QDRANT_URL` and `QDRANT_API_KEY` are set and the collection is accessible
-3. Increase the context chunks slider — too few chunks may not provide sufficient grounding
+3. Increase the context chunks slider - too few chunks may not provide sufficient grounding
 4. Check Langfuse traces (if configured) for LLM completion errors
 
 ### Reverb/delay effects are inaudible
 This was resolved in the March 26, 2026 session. The fix (2s tail padding) is included in V1. If effects still appear inaudible:
 1. Ensure blocks 5 (reverb) and 6 (delay) are not in the skip list
 2. Increase reverb decay time or delay feedback
-3. Check the dry/wet mix — a low wet value will make spatial effects imperceptible
+3. Check the dry/wet mix - a low wet value will make spatial effects imperceptible
 
 ### Tests fail after environment changes
 ```bash
@@ -801,13 +801,13 @@ Key terms used in this manual:
 
 | Term | Definition |
 |------|-----------|
-| Anti-GIGO | "Garbage In, Garbage Out" prevention — enforcing bandwidth limits, noise floors, and saturation curves to maintain historical accuracy |
+| Anti-GIGO | "Garbage In, Garbage Out" prevention - enforcing bandwidth limits, noise floors, and saturation curves to maintain historical accuracy |
 | Braindance | Experimental electronic music focused on complex rhythms and hardware manipulation (term: Rephlex Records) |
 | Chord memory | Triggering a parallel harmonic stack (e.g., Minor 9th) from a single note |
 | DR (Dynamic Range) | Measured loudness range of audio; DR 8–10 is the target for 1990s underground mastering |
 | Euclidean rhythm | Even distribution of k pulses across n steps (Bjorklund algorithm) |
-| PPQN | Pulses Per Quarter Note — sequencer timing resolution (96 PPQN for TR-909, EP-133) |
-| RAG | Retrieval-Augmented Generation — grounding LLM responses in retrieved knowledge base content |
+| PPQN | Pulses Per Quarter Note - sequencer timing resolution (96 PPQN for TR-909, EP-133) |
+| RAG | Retrieval-Augmented Generation - grounding LLM responses in retrieved knowledge base content |
 | Schroeder diffusion | Reverb architecture using allpass filters and comb filters in series/parallel (Quadraverb implementation) |
 | SY-1 | Teenage Engineering sync protocol via 3.5mm mini-jack |
 | Tail padding | 2s silence appended before effects chain processing to allow reverb/delay decay |
