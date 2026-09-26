@@ -79,12 +79,14 @@ T1_FAIL = frozenset(
     ]
 )
 
+# Allowlist item 9: a diagram or tree output is not an artifact. The range is
+# kept so that --fix leaves a diagram line alone, since a wider replacement
+# would shift its edge.
 BOX_DRAWING = range(0x2500, 0x2580)
 
-# Reported but never blocking and never rewritten: box drawing waits on an
-# operator decision, and the skill asks for judgement on the multiplication
-# and degree signs.
-T1_WARN = frozenset([0x00D7, 0x00B0, *BOX_DRAWING])
+# Reported but never blocking and never rewritten: the skill asks for
+# judgement on the multiplication and degree signs.
+T1_WARN = frozenset([0x00D7, 0x00B0])
 
 EN_DASH = 0x2013
 DIGITS = frozenset("0123456789")

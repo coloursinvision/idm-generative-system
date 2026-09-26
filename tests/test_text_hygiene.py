@@ -104,9 +104,9 @@ FAIL_CLASSES = [
     "CHECKMARK",
 ]
 
-# Surfaced without blocking. Box drawing waits on an operator decision; the
-# skill asks for judgement on the multiplication and degree signs.
-WARN_CLASSES = ["BOXFIRST", "BOXLAST", "TIMES", "DEGREE"]
+# Surfaced without blocking: the skill asks for judgement on the
+# multiplication and degree signs.
+WARN_CLASSES = ["TIMES", "DEGREE"]
 
 # The only rewrites --fix may make, each with exactly one replacement. They
 # touch prose only: Markdown outside fenced blocks, comments and docstrings in
@@ -419,6 +419,19 @@ class TestNegativeOtherAllowedText:
         """The namespace is TODO-<id> backlog items; a bare TODO marker is not one."""
         path = "engine/ml/mapper.py"
         write(tmp_path, path, "# TODO: handle the stereo case\nX = 1\n")
+        assert_clean(run_checker("--files", path, cwd=tmp_path), path)
+
+    @pytest.mark.parametrize(
+        ("path", "text"),
+        [
+            ("README.md", "%BOXFIRST%%BOXFIRST% Frontend %BOXLAST%\nPlain line.\n"),
+            ("engine/generator.py", "# %BOXFIRST%%BOXFIRST% signal chain %BOXLAST%\nX = 1\n"),
+        ],
+        ids=["markdown", "python-comment"],
+    )
+    def test_box_drawing_passes(self, tmp_path: Path, path: str, text: str) -> None:
+        """Allowlist item 9: a hand-drawn diagram or tree output is not an authorship trace."""
+        write(tmp_path, path, text)
         assert_clean(run_checker("--files", path, cwd=tmp_path), path)
 
 
