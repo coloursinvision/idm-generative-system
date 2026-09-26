@@ -72,18 +72,19 @@ T1_FAIL = frozenset(
         0x2192,
         0x2190,
         0x21D2,
-        # bullet glyphs; the middle dot is in T1_WARN
+        # bullet glyphs; the middle dot is banned as a separator too
         0x2022,
         0x25AA,
+        0x00B7,
     ]
 )
 
 BOX_DRAWING = range(0x2500, 0x2580)
 
-# Reported but never blocking and never rewritten: the middle dot and box
-# drawing wait on operator decisions, and the skill asks for judgement on the
-# multiplication and degree signs.
-T1_WARN = frozenset([0x00B7, 0x00D7, 0x00B0, *BOX_DRAWING])
+# Reported but never blocking and never rewritten: box drawing waits on an
+# operator decision, and the skill asks for judgement on the multiplication
+# and degree signs.
+T1_WARN = frozenset([0x00D7, 0x00B0, *BOX_DRAWING])
 
 EN_DASH = 0x2013
 DIGITS = frozenset("0123456789")
