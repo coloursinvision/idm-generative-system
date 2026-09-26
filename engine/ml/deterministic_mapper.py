@@ -1,4 +1,4 @@
-"""deterministic_mapper — canonical mapping from scene + track params to DSP targets.
+"""deterministic_mapper - canonical mapping from scene + track params to DSP targets.
 
 Pipeline layer: 3
 Consumes:       regional_profiles (RegionalProfile, RegionCode,
@@ -244,7 +244,7 @@ def _apply_effects_filter(
 
     Currently recognised effects:
 
-    - ``"notch_mains"`` — removes all mains-derived points (both reference
+    - ``"notch_mains"`` - removes all mains-derived points (both reference
       and regional stacks). Physically models a notch filter at the grid
       fundamental that eliminates hum from the signal path.
 
@@ -282,15 +282,15 @@ class ResonantPoint:
         source: Machine-readable provenance tag identifying which rule
             emitted this point. Conventional values:
 
-            - ``"pitch_ref"`` — scene pitch reference at ``tuning_hz``
-            - ``"bpm_harmonic"`` — audible harmonic from :func:`bpm_to_hz`
-            - ``"mains_fundamental"`` — regional grid fundamental (50 / 60 Hz)
-            - ``"mains_harmonic_<k>"`` — ``k``-th regional mains harmonic
-            - ``"mains_ref_fundamental"`` — UK 50 Hz reference fundamental
-            - ``"mains_ref_harmonic_<k>"`` — ``k``-th UK reference harmonic
-            - ``"solfeggio_seed"`` — aesthetic Solfeggio seed
-            - ``"schumann_bpm_anchor"`` — BPM-anchor derived from Schumann mode 1
-            - ``"sub_bass"`` — profile sub-bass fundamental
+            - ``"pitch_ref"`` - scene pitch reference at ``tuning_hz``
+            - ``"bpm_harmonic"`` - audible harmonic from :func:`bpm_to_hz`
+            - ``"mains_fundamental"`` - regional grid fundamental (50 / 60 Hz)
+            - ``"mains_harmonic_<k>"`` - ``k``-th regional mains harmonic
+            - ``"mains_ref_fundamental"`` - UK 50 Hz reference fundamental
+            - ``"mains_ref_harmonic_<k>"`` - ``k``-th UK reference harmonic
+            - ``"solfeggio_seed"`` - aesthetic Solfeggio seed
+            - ``"schumann_bpm_anchor"`` - BPM-anchor derived from Schumann mode 1
+            - ``"sub_bass"`` - profile sub-bass fundamental
 
             The tag enables Layer 4 Gaussian-noise perturbation to be
             source-aware (e.g. leave ``mains_*`` fixed while perturbing

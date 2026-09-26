@@ -4,14 +4,14 @@ api/main.py
 FastAPI backend for the IDM Generative System.
 
 Endpoints:
-    GET  /health    — liveness check
-    GET  /effects   — list available effect blocks with parameter schemas
-    POST /generate  — generate a sample and process through effects chain
-    POST /process   — upload audio, process through effects chain, return WAV
-    POST /synthdef  — generate SuperCollider code from engine configuration
-    POST /tidal     — generate TidalCycles code from engine configuration
-    POST /ask       — sound design advisor (RAG: Qdrant + GPT-4o)
-    POST /compose   — auto-composer (RAG: Qdrant + GPT-4o)
+    GET  /health    - liveness check
+    GET  /effects   - list available effect blocks with parameter schemas
+    POST /generate  - generate a sample and process through effects chain
+    POST /process   - upload audio, process through effects chain, return WAV
+    POST /synthdef  - generate SuperCollider code from engine configuration
+    POST /tidal     - generate TidalCycles code from engine configuration
+    POST /ask       - sound design advisor (RAG: Qdrant + GPT-4o)
+    POST /compose   - auto-composer (RAG: Qdrant + GPT-4o)
 
 The API is a thin transport layer. All DSP logic lives in engine/.
 All audio I/O uses 24-bit WAV at 44100 Hz (matching PO-33/EP-133 specs).
@@ -113,11 +113,11 @@ _TUNING_MODEL_PROD_URI = "models:/TuningEstimator/Production"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    """FastAPI lifespan — load /tuning model once at startup.
+    """FastAPI lifespan - load /tuning model once at startup.
 
     On any failure (mlflow not installed, no Production version in registry,
     network or artefact-store error) the lifespan logs a WARNING and leaves
-    ``app.state.tuning_model = None`` — the /tuning handler
+    ``app.state.tuning_model = None`` - the /tuning handler
     will then return HTTP 503 Service Unavailable. V1 endpoints are
     unaffected.
 
@@ -491,7 +491,7 @@ def _process_through_chain(
 
     Pads the input with silence so reverb/delay tails decay naturally,
     then trims trailing silence from the output. This is the canonical
-    processing path — both /generate and /process must use it.
+    processing path - both /generate and /process must use it.
 
     Args:
         signal:               Input audio array.
@@ -634,7 +634,7 @@ async def list_effects() -> list[dict[str, Any]]:
     class name, position in the chain (0–9), and a full parameter schema
     with types and defaults.
 
-    This endpoint is self-documenting — a frontend can use it to
+    This endpoint is self-documenting - a frontend can use it to
     dynamically build a configuration UI for the effects chain.
     """
     result = []
@@ -747,7 +747,7 @@ async def process_audio(
     Upload a WAV file, process it through the effects chain, return WAV.
 
     Chain configuration is passed as JSON strings in form fields
-    (multipart/form-data limitation — file + JSON body not supported).
+    (multipart/form-data limitation - file + JSON body not supported).
 
     Args:
         file:            WAV audio file.
@@ -965,7 +965,7 @@ class TuningRequest(BaseModel):
     materialised by Layer 5 (``dataset_generator``) and Layer 6
     (``model_training``). The ``region`` and ``sub_region`` fields use
     type aliases from ``engine.ml.regional_profiles`` rather than
-    hardcoded Literal unions — single source of truth, no drift risk
+    hardcoded Literal unions - single source of truth, no drift risk
     (same pattern as ``engine.ml.dataset_schema``).
     """
 
@@ -1214,7 +1214,7 @@ if _HAS_MLFLOW:
         :class:`TuningResponse` on success; raises HTTPException(503) when
         the model is unavailable (lifespan fail-soft path) and
         HTTPException(422) on pandera schema violations from the inference
-        DataFrame (defence in depth — TuningRequest @model_validator
+        DataFrame (defence in depth - TuningRequest @model_validator
         catches the same case earlier).
         """
         # 503 gate. Lifespan fail-soft sets tuning_model = None when
@@ -1403,16 +1403,16 @@ async def tuning_extract(request: TuningExtractRequest) -> TuningExtractResponse
 
     Pipeline:
         1. Open Langfuse span (fail-open).
-        2. Call RAGPipeline.extract_tuning_request — GPT-4o + parser.
+        2. Call RAGPipeline.extract_tuning_request - GPT-4o + parser.
         3. Validate via TuningRequest Pydantic model (defence in depth;
            parser already validates types/ranges/cross-field rule).
         4. Update + end Langfuse span (fail-open).
         5. Return TuningExtractResponse.
 
     Errors:
-        HTTP 422 — GPT-4o returned invalid extraction (ValueError from parser
+        HTTP 422 - GPT-4o returned invalid extraction (ValueError from parser
                    or Pydantic).
-        HTTP 502 — OpenAI transient error after retries exhausted.
+        HTTP 502 - OpenAI transient error after retries exhausted.
     """
     trace_input = {"text": request.text}
     trace_span = None
@@ -1501,7 +1501,7 @@ if STATIC_DIR.is_dir():
 
     @app.get("/{full_path:path}")
     async def serve_spa(full_path: str) -> FileResponse:
-        """SPA catch-all — return index.html for any unmatched GET request.
+        """SPA catch-all - return index.html for any unmatched GET request.
 
         FastAPI evaluates routes in registration order. All API routes are
         registered before this catch-all, so /health, /generate, etc. take

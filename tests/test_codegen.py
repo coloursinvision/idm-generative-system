@@ -555,7 +555,7 @@ class TestEdgeCases:
         assert "idm_fx_" not in result.code
 
     def test_all_effects_enabled(self) -> None:
-        """All 10 effects active simultaneously — no crashes."""
+        """All 10 effects active simultaneously - no crashes."""
         all_effects = {key: {} for key in SC_EFFECTS}
         result = generate_synthdef(
             generator="fm_blip",

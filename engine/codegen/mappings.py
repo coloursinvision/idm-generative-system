@@ -8,7 +8,7 @@ SuperCollider and TidalCycles equivalent. Provides value transforms for
 range/unit conversions and tracks unmappable parameters explicitly.
 
 Architecture:
-    - Pure data module — no I/O, no audio, no dependencies beyond stdlib
+    - Pure data module - no I/O, no audio, no dependencies beyond stdlib
     - Consumed by synthdef.py and tidal.py via lookup helpers
     - Single source of truth for all parameter translations
     - Every engine parameter is either mapped or in UNMAPPED_* sets (zero silent drops)
@@ -53,7 +53,7 @@ class ParamMapping:
 
 @dataclass(frozen=True, slots=True)
 class GeneratorMapping:
-    """Generator mapping — Python sample generator to target language.
+    """Generator mapping - Python sample generator to target language.
 
     Attributes:
         python_name:     Python function name (e.g. 'fm_blip').
@@ -76,7 +76,7 @@ class GeneratorMapping:
 
 @dataclass(frozen=True, slots=True)
 class EffectBlockMapping:
-    """Effect block mapping — Python effect class to target language.
+    """Effect block mapping - Python effect class to target language.
 
     Attributes:
         block_key:       Canonical chain key (e.g. 'reverb', 'delay').
@@ -822,7 +822,7 @@ SC_EFFECTS: dict[str, EffectBlockMapping] = {
 # TidalCycles effect mappings
 
 TIDAL_EFFECTS: dict[str, dict[str, ParamMapping]] = {
-    "noise_floor": {},  # No standard SuperDirt equivalent — omitted from Tidal output
+    "noise_floor": {},  # No standard SuperDirt equivalent - omitted from Tidal output
     "bitcrusher": {
         "bit_depth": ParamMapping(
             target_name="crush",
@@ -912,7 +912,7 @@ TIDAL_EFFECTS: dict[str, dict[str, ParamMapping]] = {
             approximate=True,
         ),
     },
-    "compressor": {},  # No standard SuperDirt compressor — omitted
+    "compressor": {},  # No standard SuperDirt compressor - omitted
     "vinyl": {
         "riaa_intensity": ParamMapping(
             target_name="lpf",
@@ -1037,11 +1037,11 @@ VINYL_CONDITION_SC: dict[str, dict[str, float]] = {
 # Pattern mapping - Tidal mini-notation equivalents
 
 TIDAL_PATTERN_MAP: dict[str, str] = {
-    "euclidean": "e",  # e(k, n) — native Tidal Euclidean
-    "probabilistic": "?",  # ? operator — per-step probability
+    "euclidean": "e",  # e(k, n) - native Tidal Euclidean
+    "probabilistic": "?",  # ? operator - per-step probability
     "density": "?",  # density -> uniform probability per step
     "markov": "markov",  # no native Tidal; approximated with weighted choice
-    "mutation": "degrade",  # degrade / degradeBy — probabilistic step removal
+    "mutation": "degrade",  # degrade / degradeBy - probabilistic step removal
 }
 
 

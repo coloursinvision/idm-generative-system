@@ -5,7 +5,7 @@ Covers all 6 regional profiles via synthetic RegionalProfile injection
 dual-stack mains emission, Solfeggio seed presence/absence,
 Schumann BPM anchor, sub-bass emission, and effects filtering.
 
-No spoke filesystem access required — all profiles are constructed
+No spoke filesystem access required - all profiles are constructed
 in-memory.
 """
 

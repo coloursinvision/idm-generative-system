@@ -1,16 +1,16 @@
 """
 engine/__init__.py
 
-IDM Generative System — core engine package.
+IDM Generative System - core engine package.
 
 Modules:
-    generator       — Euclidean rhythms, Markov evolution, pattern mutation
-    sample_maker    — Algorithmic sample generators (glitch, noise, FM)
-    effects         — DSP effects chain (10 blocks, hardware-sourced)
+    generator       - Euclidean rhythms, Markov evolution, pattern mutation
+    sample_maker    - Algorithmic sample generators (glitch, noise, FM)
+    effects         - DSP effects chain (10 blocks, hardware-sourced)
 
 Primary entry points:
-    build_chain()       — build the canonical 10-block signal chain
-    CANONICAL_ORDER     — ordered list of (key, class) tuples defining the chain
+    build_chain()       - build the canonical 10-block signal chain
+    CANONICAL_ORDER     - ordered list of (key, class) tuples defining the chain
 
 Block classes are available via the effects subpackage:
     from engine.effects import NoiseFloor, Bitcrusher, GlitchEngine, ...

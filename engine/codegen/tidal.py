@@ -146,7 +146,7 @@ class TidalCyclesCodegen(BaseCodegen):
     def _build_generator_code(self, codegen_input: CodegenInput) -> str:
         """Build Tidal sound string for the generator.
 
-        Not used directly — incorporated into pattern building.
+        Not used directly - incorporated into pattern building.
         Returns the sound name string.
         """
         gen_mapping = SC_GENERATORS.get(codegen_input.generator)

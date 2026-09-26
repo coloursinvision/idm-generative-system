@@ -1,4 +1,4 @@
-"""dataset_generator — synthetic labeled dataset generation for XGBoost training.
+"""dataset_generator - synthetic labeled dataset generation for XGBoost training.
 
 Pipeline layer: 5
 Consumes:       deterministic_mapper (deterministic_map, DeterministicMapping)
@@ -32,16 +32,16 @@ DataFrame schema (wide format):
     frequency columns (NaN when a resonant point is absent for a given
     region), and perturbed DSP parameter columns. Column prefixes:
 
-    - ``bpm``, ``pitch_midi``, ``swing``, ``region``, ``sub_region`` —
+    - ``bpm``, ``pitch_midi``, ``swing``, ``region``, ``sub_region``:
       input specification (from :class:`TrackSpec`).
-    - ``tuning_hz`` — A4 reference selected by the mapper.
-    - ``freq_<source_tag>`` — resonant-point frequency by provenance.
+    - ``tuning_hz`` - A4 reference selected by the mapper.
+    - ``freq_<source_tag>`` - resonant-point frequency by provenance.
       Absent sources receive ``NaN``.
     - ``swing_amount``, ``reverb_decay``, ``reverb_diffusion``,
-      ``noise_sub_bass_hz``, ``noise_floor_hz``, ``noise_floor_db`` —
+      ``noise_sub_bass_hz``, ``noise_floor_hz``, ``noise_floor_db``:
       profile-level DSP parameters (perturbed in rows 1..n).
-    - ``is_perturbed`` — boolean flag.
-    - ``perturbation_idx`` — 0 for baseline, 1..n for perturbed.
+    - ``is_perturbed`` - boolean flag.
+    - ``perturbation_idx`` - 0 for baseline, 1..n for perturbed.
 
 Reproducibility:
     A master ``numpy.random.Generator`` (seeded by ``master_seed``) spawns
@@ -76,7 +76,7 @@ from engine.ml.regional_profiles import (
 
 @dataclass(frozen=True)
 class TrackSpec:
-    """One track/scene specification — input to the dataset generator.
+    """One track/scene specification - input to the dataset generator.
 
     Mirrors the positional and keyword arguments of :func:`deterministic_map`
     so that a batch of specs can be iterated without unpacking.
@@ -122,7 +122,7 @@ def _flatten_profile_dsp(
 ) -> dict[str, Any]:
     """Extract perturbable numeric DSP parameters from a profile.
 
-    Non-numeric and categorical fields are excluded — they are not
+    Non-numeric and categorical fields are excluded - they are not
     perturbed and would bloat the DataFrame with invariant columns.
 
     Args:

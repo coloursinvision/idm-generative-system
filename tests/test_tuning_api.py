@@ -1,11 +1,11 @@
-"""test_tuning_api — integration tests for V2.3 /tuning endpoint.
+"""test_tuning_api - integration tests for V2.3 /tuning endpoint.
 
-Pipeline layer:  6 — V2.3 Model Serving boundary
+Pipeline layer:  6 - V2.3 Model Serving boundary
 Targets:         api.main.tuning handler + lifespan + V2 Pydantic models
 Note:            these tests require the [ml] extras (lazy mlflow imports).
 
 Architectural conventions:
-    - F.1: module-scoped TestClient fixture — lifespan + model load runs
+    - F.1: module-scoped TestClient fixture - lifespan + model load runs
       once per file (real Langfuse + real MLflow Registry connection).
     - F.2: synchronous TestClient (match V1 test convention).
     - F.3: fail-soft 503 paths exercised via monkeypatch on
@@ -14,11 +14,11 @@ Architectural conventions:
 
 Test environment requirements:
     - [ml] extras installed (mlflow, pandera, sklearn, xgboost, optuna)
-    - [monitoring] extras installed (langfuse) — fail-open in handler means
+    - [monitoring] extras installed (langfuse) - fail-open in handler means
       tests still pass without it, but Langfuse-specific tests are skipped
     - LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY / LANGFUSE_HOST env vars
     - MLFLOW_TRACKING_URI + AWS credentials for model registry access
-    - OPENAI_API_KEY (any value — only used by V1 RAGPipeline at import)
+    - OPENAI_API_KEY (any value - only used by V1 RAGPipeline at import)
     - Active Production version of TuningEstimator in MLflow Registry
 
 Run:
@@ -68,7 +68,7 @@ def app() -> FastAPI:
 
 @pytest.fixture(scope="module")
 def client(app: FastAPI) -> Any:
-    """Module-scoped TestClient — lifespan runs once per file.
+    """Module-scoped TestClient - lifespan runs once per file.
 
     Yields the active TestClient. On context exit (after all tests in this
     file), lifespan shutdown runs and Langfuse flush is called. This
@@ -197,7 +197,7 @@ class TestHappyPathAllRegions:
 
     Variable resonant_points cardinality per region is expected; the test
     asserts cardinality > 0 only,
-    not a specific count — exact counts are an emergent property of the
+    not a specific count - exact counts are an emergent property of the
     trained model and Layer 2 spokes.
     """
 

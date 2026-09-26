@@ -1,4 +1,4 @@
-"""IDM Generative System — API package.
+"""IDM Generative System - API package.
 
 FastAPI backend for audio generation, effects processing,
 and RAG-augmented sound design.
