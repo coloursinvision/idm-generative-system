@@ -4,7 +4,7 @@ Jupyter notebooks for **documentation, demos, and exploration** in the IDM Gener
 
 ## Pattern: literate documentation, not source of truth
 
-Notebooks here follow **Pattern A — notebooks-as-documentation**. They are *consumers* of `engine/`, not *definers* of logic. Production code lives in `engine/`, `api/`, and `knowledge/` — never in notebooks.
+Notebooks here follow **Pattern A - notebooks-as-documentation**. They are *consumers* of `engine/`, not *definers* of logic. Production code lives in `engine/`, `api/`, and `knowledge/` - never in notebooks.
 
 ### Allowed in notebooks
 
@@ -17,8 +17,8 @@ Notebooks here follow **Pattern A — notebooks-as-documentation**. They are *co
 
 - Function definitions that should live in `engine/` (use `from engine.X import Y` instead)
 - Logic referenced from `api/`, `dvc.yaml`, or production code paths
-- Hard-coded paths to local data — use `params.yaml` config or env vars
-- Committed cell outputs (use nbstripout — see below)
+- Hard-coded paths to local data - use `params.yaml` config or env vars
+- Committed cell outputs (use nbstripout - see below)
 
 If you find yourself defining a non-trivial function inside a notebook and considering reusing it elsewhere, **stop and refactor it into `engine/`** first. Then import it back into the notebook.
 
@@ -27,20 +27,20 @@ If you find yourself defining a non-trivial function inside a notebook and consi
 Notebooks should import from the package, not redefine:
 
 ```python
-# ✓ Good
+# Good
 from engine.generator import euclidean_rhythm, generate_pattern
 from engine.sample_maker import glitch_click, noise_burst, fm_blip
 from engine.effects import EffectChain
 
-# ✗ Bad — copies logic out of single source of truth
+# Bad - copies logic out of single source of truth
 def euclidean_rhythm(k, n):
     pattern = [1] * k + [0] * (n - k)
     # ...
 ```
 
-If you need a one-off helper for visualisation (e.g., `plot_pattern(df)` matplotlib wrapper), defining it inline in the notebook is fine — that is exploration tooling, not production logic.
+If you need a one-off helper for visualisation (e.g., `plot_pattern(df)` matplotlib wrapper), defining it inline in the notebook is fine - that is exploration tooling, not production logic.
 
-## Output hygiene — strip before commit
+## Output hygiene - strip before commit
 
 Notebook outputs (cell results, plot PNGs, DataFrame HTML) bloat the diff and the repo. Strip them at commit time:
 
