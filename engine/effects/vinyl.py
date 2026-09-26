@@ -33,7 +33,7 @@ Hardware references:
       IDM productions were bounced through DAT as the final master
       medium, imprinting this bandwidth limitation.
 
-    - Technics SL-1200 (1972–present): The reference turntable. Surface
+    - Technics SL-1200 (1972 to present): The reference turntable. Surface
       noise character depends on vinyl condition — new pressings exhibit
       minimal noise, while worn records develop crackle, pop, and
       continuous hiss from groove degradation.
@@ -346,7 +346,7 @@ class VinylMastering(BaseEffect):
         if hiss_level > 0.0:
             raw_hiss = rng.standard_normal(n) * hiss_level
 
-            # Shape hiss spectrum: bandpass 800 Hz – 8 kHz
+            # Shape hiss spectrum: bandpass 800 Hz to 8 kHz
             nyquist = self.sr / 2.0
             low_norm = np.clip(800.0 / nyquist, 0.001, 0.999)
             high_norm = np.clip(8000.0 / nyquist, 0.001, 0.999)
