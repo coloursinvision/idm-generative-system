@@ -46,3 +46,4 @@ changes above** - numbers measured under leakier protocols are systematically
 flattering.
 
 *Last verified against `develop`: 2026-07-13.*
+Probe — whole tree
