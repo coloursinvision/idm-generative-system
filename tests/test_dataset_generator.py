@@ -1,4 +1,4 @@
-"""Tests for engine.ml.dataset_generator — Layer 5 synthetic dataset generation.
+"""Tests for engine.ml.dataset_generator - Layer 5 synthetic dataset generation.
 
 Covers:
     - TrackSpec construction and frozen semantics
@@ -6,11 +6,11 @@ Covers:
     - Input validation (negative n_perturbations)
     - generate_rows: row count, baseline vs perturbed flags, column presence
     - generate_dataset: DataFrame shape, column ordering, NaN handling
-    - Reproducibility (seeded master RNG → identical DataFrames)
+    - Reproducibility (seeded master RNG -> identical DataFrames)
     - Zero-perturbation mode (baseline only)
     - Empty specifications edge case
 
-Fixtures construct RegionalProfile and TrackSpec directly — no spoke
+Fixtures construct RegionalProfile and TrackSpec directly - no spoke
 filesystem dependency. All tests are pure unit tests.
 """
 
@@ -79,7 +79,7 @@ def uk_spec() -> TrackSpec:
 
 @pytest.fixture
 def detroit_spec() -> TrackSpec:
-    """TrackSpec for DETROIT_UR — triggers dual-stack mains."""
+    """TrackSpec for DETROIT_UR - triggers dual-stack mains."""
     return TrackSpec(
         bpm=133.0,
         pitch_midi=60.0,
@@ -345,7 +345,7 @@ class TestGenerateDataset:
         uk_profile: RegionalProfile,
         zero_config: PerturbationConfig,
     ) -> None:
-        """Columns must follow: inputs → tuning → freq_* → DSP → metadata."""
+        """Columns must follow: inputs -> tuning -> freq_* -> DSP -> metadata."""
         gen = SyntheticDatasetGenerator(zero_config, n_perturbations=0, master_seed=42)
         df = gen.generate_dataset([uk_spec], profile=uk_profile)
         cols = list(df.columns)
@@ -361,7 +361,7 @@ class TestGenerateDataset:
         freq_start = 6
         freq_cols = [c for c in cols[freq_start:] if c.startswith("freq_")]
         assert freq_cols == sorted(freq_cols)
-        # Metadata columns come last (spec_id → is_perturbed → perturbation_idx)
+        # Metadata columns come last (spec_id -> is_perturbed -> perturbation_idx)
         assert cols[-3] == "spec_id"
         assert cols[-2] == "is_perturbed"
         assert cols[-1] == "perturbation_idx"
@@ -469,7 +469,7 @@ class TestNaNHandling:
         self,
         zero_config: PerturbationConfig,
     ) -> None:
-        """Profile with reverb=None → reverb_decay and reverb_diffusion are NaN."""
+        """Profile with reverb=None -> reverb_decay and reverb_diffusion are NaN."""
         profile = RegionalProfile(
             region="UK_BRAINDANCE",
             sub_region=None,

@@ -106,7 +106,7 @@ def generate_pattern(
 
     Args:
         steps: Number of steps (e.g. 16 for a standard bar).
-        probabilities: Dict mapping track name → trigger probability [0, 1].
+        probabilities: Dict mapping track name -> trigger probability [0, 1].
 
     Returns:
         pd.DataFrame with tracks as rows and steps as columns (int 0/1).
@@ -147,7 +147,7 @@ def generate_euclidean_pattern(
     Build a multi-track pattern from Euclidean rhythms.
 
     Args:
-        pulses: Dict mapping track name → number of pulses.
+        pulses: Dict mapping track name -> number of pulses.
                 Defaults to a preset IDM-style distribution.
         steps: Total number of steps per track.
 
@@ -176,7 +176,7 @@ def mutate_pattern(
     """
     Probabilistic mutation: randomly flip steps (bitwise XOR with a mask).
 
-    Each step has `mutation_rate` probability of being toggled (0→1 or 1→0).
+    Each step has `mutation_rate` probability of being toggled (0->1 or 1->0).
     Core operator for evolutionary pattern selection in the generator.
 
     Args:
@@ -202,7 +202,7 @@ def markov_evolve(
     Markov chain evolution: each step has `influence` probability of
     inheriting the value of the previous step.
 
-    Introduces temporal coherence and "runs" into the pattern — characteristic
+    Introduces temporal coherence and "runs" into the pattern - characteristic
     of IDM sequencing where rhythms develop organic momentum over time.
 
     Args:

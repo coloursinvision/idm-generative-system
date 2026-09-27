@@ -1,26 +1,26 @@
 """
 engine/effects/reverb.py
 
-Block 5 — Reverb (Quadraverb IDM Diffusion).
+Block 5: Reverb (Quadraverb IDM Diffusion).
 
 Source:
-    MASTER_DATASET Part 8 — Spatial Processing & Time-Based Effects
+    MASTER_DATASET Part 8 - Spatial Processing & Time-Based Effects
     Alesis Quadraverb (IDM Diffusion)
     Roland Space Echo RE-201 (spring reverb)
 
 Hardware references:
     - Alesis Quadraverb (1988): 16-bit PCM, hybrid analog/digital dry path
-      through VCA chips (CEM 3381). Reverb is grainy and metallic — a direct
+      through VCA chips (CEM 3381). Reverb is grainy and metallic - a direct
       consequence of 1988 DSP limits running four simultaneous effects at
       16-bit. Defined the spatial sound of IDM, hip-hop and ambient music of
       the early 90s.
       Notable users: Aphex Twin, Global Communication, Orbital, FSOL.
 
     - Roland Space Echo RE-201: Spring reverb component used for shorter,
-      more organic ambience — characteristic of dub-techno and Basic Channel.
+      more organic ambience - characteristic of dub-techno and Basic Channel.
 
 Historical context:
-    The Quadraverb used a Schroeder reverberator architecture — a network of
+    The Quadraverb used a Schroeder reverberator architecture - a network of
     parallel comb filters feeding into allpass diffusors. The 16-bit converters
     and limited DSP precision produced "thick, smeared, atmospheric reverb
     tails" that are deeply embedded in the IDM aesthetic.
@@ -31,7 +31,7 @@ Historical context:
     Reverb types (from Quadraverb manual):
         Room, Chamber, Hall, Plate, Reverse (spring approximated separately)
 
-Signal position: Saturation → [Block 5] → TapeDelay → ...
+Signal position: Saturation -> [Block 5] -> TapeDelay -> ...
 """
 
 from __future__ import annotations
@@ -48,7 +48,7 @@ from engine.effects.base import BaseEffect
 REVERB_TYPE_DECAY: dict[str, float] = {
     "room": 0.4,
     "chamber": 0.6,
-    "plate": 1.0,  # reference — Quadraverb plate is the IDM standard
+    "plate": 1.0,  # reference - Quadraverb plate is the IDM standard
     "hall": 1.4,
     "spring": 0.7,
 }
@@ -74,7 +74,7 @@ def _comb_filter_kernel(
     n: int,
 ) -> np.ndarray:
     """
-    Single comb filter inner loop — LLVM-compiled via Numba.
+    Single comb filter inner loop - LLVM-compiled via Numba.
 
     Feedback comb filter: each output sample feeds back into the buffer
     at (position + delay) with gain g_eff * density. This is the core
@@ -99,7 +99,7 @@ def _allpass_kernel(
     n: int,
 ) -> np.ndarray:
     """
-    Single allpass diffusor inner loop — LLVM-compiled via Numba.
+    Single allpass diffusor inner loop - LLVM-compiled via Numba.
 
     Circular-buffer allpass filter: smooths early reflections by
     decorrelating the phase of the comb filter output. The gain
@@ -128,17 +128,17 @@ class Reverb(BaseEffect):
 
     Args:
         reverb_type:   Space type. Options:
-                         'plate'   — Quadraverb plate (default, IDM standard)
-                         'room'    — small room, short tail
-                         'chamber' — medium diffuse space
-                         'hall'    — large, lush tail
-                         'spring'  — spring reverb character (RE-201 style)
+                         'plate'   - Quadraverb plate (default, IDM standard)
+                         'room'    - small room, short tail
+                         'chamber' - medium diffuse space
+                         'hall'    - large, lush tail
+                         'spring'  - spring reverb character (RE-201 style)
         decay_s:       Reverb time RT60 in seconds [0.1–10.0].
                        Default: 2.5 s.
         pre_delay_ms:  Pre-delay before reverb onset in ms [0–100].
                        Default: 15.0 ms.
         diffusion:     Early reflection density [0.0–1.0].
-                       Controls allpass gain — higher = smoother attack.
+                       Controls allpass gain - higher = smoother attack.
                        Default: 0.7.
         density:       Reverb tail density [0.0–1.0].
                        Blends LF and HF decay in the comb filter feedback.
@@ -229,7 +229,7 @@ class Reverb(BaseEffect):
         return dry * (1.0 - self.mix) + wet * self.mix
 
     def reset(self) -> None:
-        """Stateless effect — nothing to reset."""
+        """Stateless effect - nothing to reset."""
 
     # Private helpers
 
@@ -249,7 +249,7 @@ class Reverb(BaseEffect):
         effective_decay: float,
     ) -> np.ndarray:
         """
-        Parallel comb filter bank — core Schroeder reverberator.
+        Parallel comb filter bank - core Schroeder reverberator.
 
         Each comb filter contributes a decaying echo stream.
         The combination of 6 prime-spaced delays produces the characteristic
@@ -281,11 +281,11 @@ class Reverb(BaseEffect):
 
     def _allpass_chain(self, wet: np.ndarray, n: int) -> np.ndarray:
         """
-        Allpass diffusor chain — smooths early reflections.
+        Allpass diffusor chain - smooths early reflections.
 
         Three allpass filters with delay times derived from diffusion
         parameter. Higher diffusion = smoother, less grainy attack.
-        Emulates the Quadraverb's EQ → Pitch → Delay signal path.
+        Emulates the Quadraverb's EQ -> Pitch -> Delay signal path.
 
         Inner loop delegated to _allpass_kernel (Numba JIT-compiled).
         """
@@ -306,8 +306,8 @@ class Reverb(BaseEffect):
         Apply colour filter to the reverb tail.
 
         Replicates the Quadraverb's HF/LF decay colour control:
-            colour > 0 → high-pass (brighter tail, removes low-end mud)
-            colour < 0 → low-pass (darker tail, removes high-frequency content)
+            colour > 0 -> high-pass (brighter tail, removes low-end mud)
+            colour < 0 -> low-pass (darker tail, removes high-frequency content)
         """
         if self.colour > 0:
             # Positive = bright: high-pass removes low-end

@@ -1,10 +1,10 @@
 """
 engine/effects/delay.py
 
-Block 6 — Tape Delay (Roland Space Echo RE-201 Emulation).
+Block 6: Tape Delay (Roland Space Echo RE-201 Emulation).
 
 Source:
-    MASTER_DATASET Part 8 — Spatial Processing & Time-Based Effects
+    MASTER_DATASET Part 8 - Spatial Processing & Time-Based Effects
     Roland Space Echo (Tape Saturation)
 
 Hardware references:
@@ -13,7 +13,7 @@ Hardware references:
       The defining tape echo for reggae/dub, IDM, and post-rock.
 
     - Basic Channel (Maurizio / Mark Ernestus): Heavy use of RE-201 in
-      dub-techno delay chains — long feedback tails with tape saturation
+      dub-techno delay chains - long feedback tails with tape saturation
       creating evolving, self-similar textures.
 
 Historical context:
@@ -22,7 +22,7 @@ Historical context:
 
     Wow & Flutter:
         The tape motor and capstan/pinch roller introduce mechanical
-        instability — slow pitch variations (wow) and faster irregular
+        instability - slow pitch variations (wow) and faster irregular
         variations (flutter). Combined, they produce the characteristic
         "swimming" pitch instability of tape echo.
 
@@ -34,16 +34,16 @@ Historical context:
     Tape Age / HF Rolloff:
         Older tape loses high-frequency response due to oxide shedding
         and head wear. Three conditions modelled:
-            new  → 14 kHz cutoff
-            used → 8 kHz cutoff  (default — most period-accurate)
-            worn → 4.5 kHz cutoff
+            new  -> 14 kHz cutoff
+            used -> 8 kHz cutoff  (default, most period-accurate)
+            worn -> 4.5 kHz cutoff
 
     Self-Oscillation:
-        At feedback > 0.95, the delay enters self-oscillation — the
+        At feedback > 0.95, the delay enters self-oscillation - the
         tail builds into a resonant drone. Used deliberately in dub
         and IDM for sustained textural effects.
 
-Signal position: Reverb → [Block 6] → SpatialProcessor → ...
+Signal position: Reverb -> [Block 6] -> SpatialProcessor -> ...
 """
 
 from __future__ import annotations
@@ -83,12 +83,12 @@ def _delay_line_kernel(
     buf_len: int,
 ) -> np.ndarray:
     """
-    Tape delay line inner loop — LLVM-compiled via Numba.
+    Tape delay line inner loop - LLVM-compiled via Numba.
 
     Per-sample processing:
-      1. Read from buffer at (i + delay + modulation_offset) — wow/flutter
-      2. Apply tanh saturation to read sample — tape head distortion
-      3. Write saturated sample × feedback back into buffer — recirculation
+      1. Read from buffer at (i + delay + modulation_offset) - wow/flutter
+      2. Apply tanh saturation to read sample - tape head distortion
+      3. Write saturated sample × feedback back into buffer - recirculation
       4. Store wet output sample
 
     The modulation offset (from wow/flutter LFO) is converted to integer
@@ -235,7 +235,7 @@ class TapeDelay(BaseEffect):
         return dry * (1.0 - self.mix) + wet * self.mix
 
     def reset(self) -> None:
-        """Stateless effect — nothing to reset."""
+        """Stateless effect - nothing to reset."""
 
     # Private helpers
 
@@ -243,8 +243,8 @@ class TapeDelay(BaseEffect):
         """
         Generate combined wow & flutter modulation signal.
 
-        Wow: sine LFO at wow_flutter_hz — slow motor speed variation.
-        Flutter: sine LFO at 7.3× wow rate — faster capstan/roller variation.
+        Wow: sine LFO at wow_flutter_hz - slow motor speed variation.
+        Flutter: sine LFO at 7.3× wow rate - faster capstan/roller variation.
         The 7.3 ratio is inharmonic, preventing periodic beating artefacts.
         """
         t = np.arange(n) / self.sr
@@ -257,9 +257,9 @@ class TapeDelay(BaseEffect):
         Build low-pass SOS filter modelling tape HF rolloff.
 
         Cutoff frequency depends on tape_age:
-            new  → 14 kHz (minimal oxide loss)
-            used → 8 kHz  (moderate wear, period-accurate default)
-            worn → 4.5 kHz (heavy head wear, thick/dark character)
+            new  -> 14 kHz (minimal oxide loss)
+            used -> 8 kHz  (moderate wear, period-accurate default)
+            worn -> 4.5 kHz (heavy head wear, thick/dark character)
         """
         cutoff_hz = TAPE_AGE_CUTOFF.get(self.tape_age, 8000)
         cutoff_norm = np.clip(cutoff_hz / (self.sr / 2.0), 0.001, 0.999)

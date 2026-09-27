@@ -1,4 +1,4 @@
-"""Tests for engine.ml.dataset_schema — pandera schema validation.
+"""Tests for engine.ml.dataset_schema - pandera schema validation.
 
 Covers:
     - Schema accepts valid DataFrames (baseline + perturbed rows).
@@ -94,7 +94,7 @@ class TestSchemaAcceptsValid:
         DATASET_SCHEMA.validate(df)
 
     def test_all_regions(self) -> None:
-        """One row per region — all accepted."""
+        """One row per region - all accepted."""
         n = len(_VALID_REGIONS)
         df = _make_valid_df(
             bpm=[120.0] * n,
@@ -129,7 +129,7 @@ class TestSchemaAcceptsValid:
         DATASET_SCHEMA.validate(df)
 
     def test_nullable_dsp_columns(self) -> None:
-        """All DSP columns NaN — valid for profiles without those specs."""
+        """All DSP columns NaN - valid for profiles without those specs."""
         df = _make_valid_df(
             reverb_decay=[None, None, None],
             reverb_diffusion=[None, None, None],
@@ -150,7 +150,7 @@ class TestSchemaAcceptsValid:
         DATASET_SCHEMA.validate(df)
 
     def test_perturbed_rows(self) -> None:
-        """Multiple perturbation indices — valid."""
+        """Multiple perturbation indices - valid."""
         df = _make_valid_df(
             is_perturbed=[False, True, True],
             perturbation_idx=[0, 1, 2],
@@ -158,7 +158,7 @@ class TestSchemaAcceptsValid:
         DATASET_SCHEMA.validate(df)
 
     def test_freq_columns_nullable(self) -> None:
-        """freq_* columns with NaN — valid (absent resonant points)."""
+        """freq_* columns with NaN - valid (absent resonant points)."""
         df = _make_valid_df(
             freq_pitch_ref=[440.0, None, None],
             freq_bpm_harmonic=[None, None, 265.0],
@@ -271,7 +271,7 @@ class TestCrossColumnChecks:
             DATASET_SCHEMA.validate(df)
 
     def test_sub_region_on_non_japan(self) -> None:
-        """sub_region set on UK_IDM — rejected."""
+        """sub_region set on UK_IDM - rejected."""
         df = _make_valid_df(
             region=["UK_IDM", "UK_IDM", "UK_IDM"],
             sub_region=["TOKYO", None, None],
@@ -280,7 +280,7 @@ class TestCrossColumnChecks:
             DATASET_SCHEMA.validate(df)
 
     def test_sub_region_on_detroit(self) -> None:
-        """sub_region set on DETROIT_FIRST_WAVE — rejected."""
+        """sub_region set on DETROIT_FIRST_WAVE - rejected."""
         df = _make_valid_df(
             region=["DETROIT_FIRST_WAVE", "DETROIT_FIRST_WAVE", "UK_IDM"],
             sub_region=["OSAKA", None, None],

@@ -1,10 +1,10 @@
 """
 engine/effects/saturation.py
 
-Block 4 — Saturation & Console Warmth.
+Block 4: Saturation & Console Warmth.
 
 Source:
-    MASTER_DATASET Part 5 — Environmental Constraints (Anti-GIGO)
+    MASTER_DATASET Part 5 - Environmental Constraints (Anti-GIGO)
     Asymmetrical soft-clipper formula (exact implementation)
 
 Hardware references:
@@ -12,13 +12,13 @@ Hardware references:
                                   load. Bus saturation adds harmonic cohesion.
                                   Distinct from the cleaner VLZ series.
     - Unit Moebius / The Hague Sound: Extreme full-chain saturation as an
-                                  aesthetic choice — every element of the
+                                  aesthetic choice - every element of the
                                   signal path pushed into nonlinearity.
 
 Historical context:
     The asymmetric saturation curve from MASTER_DATASET Part 5 models the
     behaviour of analogue VCAs and mixer bus circuits. Positive and negative
-    signal excursions clip differently — positive half uses tanh, negative
+    signal excursions clip differently - positive half uses tanh, negative
     half uses a softer rational function. This asymmetry produces even-order
     harmonics (2nd, 4th) characteristic of transformer and tube saturation,
     which is perceived as "warm" rather than "harsh".
@@ -26,11 +26,11 @@ Historical context:
     Exact MASTER_DATASET Part 5 formula:
         output = (x > 0) ? tanh(x * drive) : (x / (1 - x * drive * 0.5))
 
-    Wavefold mode adds a second nonlinearity — the signal folds back when it
+    Wavefold mode adds a second nonlinearity - the signal folds back when it
     exceeds the clipping threshold, producing complex overtone structures used
     in Braindance sound design.
 
-Signal position: ResonantFilter → [Block 4] → Reverb → ...
+Signal position: ResonantFilter -> [Block 4] -> Reverb -> ...
 """
 
 from __future__ import annotations
@@ -46,7 +46,7 @@ class Saturation(BaseEffect):
 
     Four saturation algorithms, selectable via the `mode` parameter.
     The default 'asymmetric' mode is the exact MASTER_DATASET Part 5
-    formula — the reference implementation for this project.
+    formula - the reference implementation for this project.
 
     Args:
         drive:        Saturation depth [0.1–10.0].
@@ -54,12 +54,12 @@ class Saturation(BaseEffect):
                       At drive=5.0+ the signal clips heavily.
                       Default: 1.5.
         mode:         Saturation algorithm.
-                        'asymmetric' — MASTER_DATASET Part 5 formula (default)
+                        'asymmetric' - MASTER_DATASET Part 5 formula (default)
                                        warm, even-order harmonics
-                        'symmetric'  — tanh(x * drive), classic soft clip
-                        'tanh'       — normalised tanh: tanh(x*d)/tanh(d)
+                        'symmetric'  - tanh(x * drive), classic soft clip
+                        'tanh'       - normalised tanh: tanh(x*d)/tanh(d)
                                        unity gain at all drive levels
-                        'wavefold'   — signal folds back past threshold,
+                        'wavefold'   - signal folds back past threshold,
                                        complex overtone structures (Braindance)
         mix:          Dry/wet blend [0.0–1.0].
                       1.0 = fully wet (default: 0.8).
@@ -114,7 +114,7 @@ class Saturation(BaseEffect):
         return (dry * (1.0 - self.mix) + wet * self.mix) * self.output_gain
 
     def reset(self) -> None:
-        """Stateless effect — nothing to reset."""
+        """Stateless effect - nothing to reset."""
 
     # Private helpers
 
@@ -139,7 +139,7 @@ class Saturation(BaseEffect):
         Negative half:  x / (1 - x * drive * 0.5)
 
         The different clipping curves for positive and negative excursions
-        produce even-order harmonics — the signature of transformer and
+        produce even-order harmonics - the signature of transformer and
         tube saturation, perceived as "warm" analogue colour.
         """
         # Positive half: tanh soft-clip
@@ -161,7 +161,7 @@ class Saturation(BaseEffect):
         """
         Symmetric tanh soft-clipper.
 
-        Both polarities clip identically — produces odd-order harmonics
+        Both polarities clip identically - produces odd-order harmonics
         (3rd, 5th) characteristic of transistor saturation.
         """
         return np.tanh(x * self.drive)
@@ -184,7 +184,7 @@ class Saturation(BaseEffect):
 
         When the signal exceeds the threshold (1/drive), it folds back
         rather than clipping. Produces complex, inharmonic overtone
-        structures — characteristic of Braindance sound design and
+        structures - characteristic of Braindance sound design and
         extreme analogue synthesis.
         """
         threshold = 1.0 / self.drive

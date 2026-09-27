@@ -1,4 +1,4 @@
-"""regional_profiles — Layer 2 profile spoke loader.
+"""regional_profiles - Layer 2 profile spoke loader.
 
 Pipeline layer: 3
 Consumes:       02-Knowledge/supporting/profiles/*.md (6 spokes)
@@ -19,11 +19,11 @@ Loading strategy:
 
 Parse pipeline:
     markdown file
-      → python-frontmatter (YAML header + body)
-      → regex-extract ``## 5. DSP specification`` fenced block
-      → ``yaml.safe_load`` (raw dict)
-      → Pydantic v2 ``_DSPSpecModel`` (runtime validation, ``extra="forbid"``)
-      → composed frozen ``RegionalProfile`` dataclass
+      -> python-frontmatter (YAML header + body)
+      -> regex-extract ``## 5. DSP specification`` fenced block
+      -> ``yaml.safe_load`` (raw dict)
+      -> Pydantic v2 ``_DSPSpecModel`` (runtime validation, ``extra="forbid"``)
+      -> composed frozen ``RegionalProfile`` dataclass
 
 Japan Tokyo/Osaka split:
     ``load_profile("JAPAN_IDM", sub_region="OSAKA")`` swaps ``sub_bass_hz``
@@ -124,7 +124,7 @@ def _default_profiles_dir() -> Path:
     env = os.environ.get("IDM_VAULT_PATH")
     if env:
         return Path(env) / "02-Knowledge" / "supporting" / "profiles"
-    # /<repo>/engine/ml/regional_profiles.py → repo root at parent[2]
+    # /<repo>/engine/ml/regional_profiles.py -> repo root at parent[2]
     repo_root = Path(__file__).resolve().parent.parent.parent
     return repo_root.parent / "IDM_Obsidian" / "02-Knowledge" / "supporting" / "profiles"
 
@@ -562,7 +562,7 @@ def load_profile(
     Args:
         region: Canonical region code.
         sub_region: Optional sub-region discriminator. Currently only
-            ``"OSAKA"`` has a non-default effect — it swaps
+            ``"OSAKA"`` has a non-default effect - it swaps
             mains-frequency-driven fields on ``JAPAN_IDM`` from 50 Hz to
             60 Hz.
         profiles_dir: Override for the spoke directory. Defaults to the

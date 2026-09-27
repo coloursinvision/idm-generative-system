@@ -5,16 +5,16 @@
  *
  * Layout (v4 - live-ready):
  *   ┌─────────────────────────────────────┐
- *   │  SC │ TIDAL            ⧉  GENERATE  │  ← top bar
+ *   │  SC │ TIDAL            ⧉  GENERATE  │  <- top bar
  *   ├─────────────────────────────────────┤
- *   │  ▸ CONFIG  ─── GLITCH / STUDIO / …  │  ← collapsed drawer
+ *   │  ▸ CONFIG  ─── GLITCH / STUDIO / ...│  <- collapsed drawer
  *   ├─────────────────────────────────────┤
- *   │  SCLANG .SCD - 48 LINES   COPY SAVE │  ← code toolbar
- *   │  1 │ // IDM Generative System …      │
- *   │  2 │ // glitch_click | studio | 120  │  ← code output
- *   │  … │ …                               │     (85% of panel)
+ *   │  SCLANG .SCD - 48 LINES   COPY SAVE │  <- code toolbar
+ *   │  1 │ // IDM Generative System ...    │
+ *   │  2 │ // glitch_click | studio | 120  │  <- code output
+ *   │ ...│ ...                             │     (85% of panel)
  *   ├─────────────────────────────────────┤
- *   │  ▸ WARNINGS              3           │  ← collapsed strips
+ *   │  ▸ WARNINGS              3           │  <- collapsed strips
  *   │  ▸ UNMAPPED              8           │
  *   │  ▸ SETUP                             │
  *   └─────────────────────────────────────┘
@@ -24,7 +24,7 @@
  *   with a link to close the popout and return to docked mode.
  *   State is synchronised via BroadcastChannel("idm-codegen").
  *
- * 3-click live flow: SC|TIDAL → GENERATE → COPY
+ * 3-click live flow: SC|TIDAL -> GENERATE -> COPY
  */
 
 import { useState, useCallback, useEffect, useRef } from "react";

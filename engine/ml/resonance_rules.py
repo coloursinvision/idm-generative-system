@@ -1,4 +1,4 @@
-"""resonance_rules — Layer 2 Part 5.1 rule implementations.
+"""resonance_rules - Layer 2 Part 5.1 rule implementations.
 
 Pipeline layer: 3
 Consumes:       02-Knowledge/supporting/resonance/*.md (5 rule spokes)
@@ -15,11 +15,11 @@ aesthetic rule is at the bottom, visually separated by a divider and a
 header comment recording the non-physical character of its values.
 
 Spoke sources:
-    BPM_TO_HZ.md              → bpm_to_hz + AudibleHarmonic
-    SCHUMANN_RESONANCES.md    → schumann_mode + schumann_bpm_anchor
-    TUNING_432_440.md         → midi_to_hz + hz_to_midi + tuning_difference_hz
-    MAINS_HUM_REGIONAL.md     → mains_hum_profile + friends
-    SOLFEGGIO_FILTER_SEEDING.md → solfeggio_cutoff_seed (AESTHETIC, not physical)
+    BPM_TO_HZ.md              -> bpm_to_hz + AudibleHarmonic
+    SCHUMANN_RESONANCES.md    -> schumann_mode + schumann_bpm_anchor
+    TUNING_432_440.md         -> midi_to_hz + hz_to_midi + tuning_difference_hz
+    MAINS_HUM_REGIONAL.md     -> mains_hum_profile + friends
+    SOLFEGGIO_FILTER_SEEDING.md -> solfeggio_cutoff_seed (AESTHETIC, not physical)
 
 All functions are pure: no I/O, no hidden state, no module-level side effects
 beyond constant-table definitions. Downstream layers (Gaussian noise injection,
@@ -117,7 +117,7 @@ def bpm_to_hz(
         bpm: Tempo in beats per minute. Must be positive.
         octave_multiplier: Power-of-two factor that shifts the beat
             frequency into the audible range. ``64`` is the canonical choice
-            for typical IDM tempos (80–180 BPM land in the C2–F3 octave).
+            for typical IDM tempos (80–180 BPM land in the C2-F3 octave).
         tuning_hz: Reference pitch for A4. Defaults to concert ``440.0``;
             ``432.0`` supports alternative-tuning research.
 
@@ -189,7 +189,7 @@ def schumann_bpm_anchor(
 
     Args:
         mode: Schumann mode index, 1-indexed.
-        subharmonic_divisor: Power-of-two divisor applied after the Hz→BPM
+        subharmonic_divisor: Power-of-two divisor applied after the Hz->BPM
             conversion to drop the tempo into a musically useful range.
 
     Returns:
@@ -341,7 +341,7 @@ class RegionalNoiseFloor:
         region: Grid region identifier.
         fundamental_hz: Grid fundamental (50 Hz or 60 Hz).
         harmonics: Harmonics starting with the fundamental at ``harmonics[0]``.
-        tonal_centre: Nearest note to the fundamental — the perceived pitch
+        tonal_centre: Nearest note to the fundamental - the perceived pitch
             centre of the noise floor.
     """
 
@@ -416,8 +416,8 @@ def mains_hum_profile(
 # includes them; downstream consumers MUST treat them as stylistic anchors,
 # not as ground truth.
 #
-# See also: SOLFEGGIO_FILTER_SEEDING.md spoke, parked research TODO-6
-# (formal Solfeggio → filter cutoff mapping methodology).
+# See also: SOLFEGGIO_FILTER_SEEDING.md spoke and the parked research item on a
+# formal Solfeggio -> filter cutoff mapping methodology.
 
 SOLFEGGIO_HZ: dict[str, float] = {
     "foundation": 174.0,

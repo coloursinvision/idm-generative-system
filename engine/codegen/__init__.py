@@ -4,7 +4,7 @@ engine/codegen/__init__.py
 Public API for the IDM Generative System code generation module.
 
 Generates SuperCollider (.scd) and TidalCycles (Haskell DSL) code
-from engine configurations. Pure string transforms — no audio
+from engine configurations. Pure string transforms - no audio
 processing, no external dependencies.
 
 Usage:
@@ -62,7 +62,7 @@ def generate_synthdef(
     Args:
         generator:        Generator name ('glitch_click', 'noise_burst', 'fm_blip').
         generator_params: Generator kwargs dict.
-        effects:          Dict of block_key → effect kwargs dict.
+        effects:          Dict of block_key -> effect kwargs dict.
         pattern:          Pattern config dict (type, pulses/probabilities, steps).
         mode:             'studio' (self-contained) or 'live' (hot-swap).
         include_pattern:  Generate Pbind/Pdef pattern code.
@@ -104,7 +104,7 @@ def generate_tidal(
     Args:
         generator:        Generator name ('glitch_click', 'noise_burst', 'fm_blip').
         generator_params: Generator kwargs dict.
-        effects:          Dict of block_key → effect kwargs dict.
+        effects:          Dict of block_key -> effect kwargs dict.
         pattern:          Pattern config dict (type, pulses/probabilities, steps).
         mode:             'studio' (full setup) or 'live' (bare patterns).
         include_pattern:  Generate pattern code.

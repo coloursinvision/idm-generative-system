@@ -1,11 +1,11 @@
-"""test_tuning_api — integration tests for V2.3 /tuning endpoint.
+"""test_tuning_api - integration tests for V2.3 /tuning endpoint.
 
-Pipeline layer:  6 — V2.3 Model Serving boundary
+Pipeline layer:  6 - V2.3 Model Serving boundary
 Targets:         api.main.tuning handler + lifespan + V2 Pydantic models
 Note:            these tests require the [ml] extras (lazy mlflow imports).
 
 Architectural conventions:
-    - F.1: module-scoped TestClient fixture — lifespan + model load runs
+    - F.1: module-scoped TestClient fixture - lifespan + model load runs
       once per file (real Langfuse + real MLflow Registry connection).
     - F.2: synchronous TestClient (match V1 test convention).
     - F.3: fail-soft 503 paths exercised via monkeypatch on
@@ -14,11 +14,11 @@ Architectural conventions:
 
 Test environment requirements:
     - [ml] extras installed (mlflow, pandera, sklearn, xgboost, optuna)
-    - [monitoring] extras installed (langfuse) — fail-open in handler means
+    - [monitoring] extras installed (langfuse) - fail-open in handler means
       tests still pass without it, but Langfuse-specific tests are skipped
     - LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY / LANGFUSE_HOST env vars
     - MLFLOW_TRACKING_URI + AWS credentials for model registry access
-    - OPENAI_API_KEY (any value — only used by V1 RAGPipeline at import)
+    - OPENAI_API_KEY (any value - only used by V1 RAGPipeline at import)
     - Active Production version of TuningEstimator in MLflow Registry
 
 Run:
@@ -68,7 +68,7 @@ def app() -> FastAPI:
 
 @pytest.fixture(scope="module")
 def client(app: FastAPI) -> Any:
-    """Module-scoped TestClient — lifespan runs once per file.
+    """Module-scoped TestClient - lifespan runs once per file.
 
     Yields the active TestClient. On context exit (after all tests in this
     file), lifespan shutdown runs and Langfuse flush is called. This
@@ -150,7 +150,7 @@ class TestPydanticFieldValidation:
         assert r.status_code == expected_status
 
     def test_region_invalid_literal_rejected(self, client: Any) -> None:
-        """region must match RegionCode Literal; arbitrary strings → 422."""
+        """region must match RegionCode Literal; arbitrary strings -> 422."""
         r = client.post("/tuning", json=_valid_payload(region="MARS_TECHNO"))
         assert r.status_code == 422
 
@@ -162,7 +162,7 @@ class TestCrossFieldRule:
     """TuningRequest @model_validator enforces sub_region scope rule."""
 
     def test_japan_idm_requires_sub_region(self, client: Any) -> None:
-        """region == 'JAPAN_IDM' without sub_region → 422."""
+        """region == 'JAPAN_IDM' without sub_region -> 422."""
         r = client.post(
             "/tuning",
             json=_valid_payload(region="JAPAN_IDM", sub_region=None),
@@ -172,7 +172,7 @@ class TestCrossFieldRule:
         assert "sub_region" in r.text.lower()
 
     def test_non_japan_forbids_sub_region(self, client: Any) -> None:
-        """region != 'JAPAN_IDM' with sub_region set → 422."""
+        """region != 'JAPAN_IDM' with sub_region set -> 422."""
         r = client.post(
             "/tuning",
             json=_valid_payload(region="UK_IDM", sub_region="TOKYO"),
@@ -181,7 +181,7 @@ class TestCrossFieldRule:
         assert "sub_region" in r.text.lower()
 
     def test_japan_idm_with_sub_region_passes(self, client: Any) -> None:
-        """region == 'JAPAN_IDM' with sub_region set → 200 (happy path)."""
+        """region == 'JAPAN_IDM' with sub_region set -> 200 (happy path)."""
         r = client.post(
             "/tuning",
             json=_valid_payload(region="JAPAN_IDM", sub_region="TOKYO"),
@@ -197,7 +197,7 @@ class TestHappyPathAllRegions:
 
     Variable resonant_points cardinality per region is expected; the test
     asserts cardinality > 0 only,
-    not a specific count — exact counts are an emergent property of the
+    not a specific count - exact counts are an emergent property of the
     trained model and Layer 2 spokes.
     """
 
@@ -269,10 +269,10 @@ class TestResponseShape:
 
 
 class TestFailSoft:
-    """Lifespan fail-soft → handler returns 503 (not 500 or 200)."""
+    """Lifespan fail-soft -> handler returns 503 (not 500 or 200)."""
 
     def test_no_model_returns_503(self, client: Any, monkeypatch: pytest.MonkeyPatch) -> None:
-        """app.state.tuning_model = None → /tuning returns 503.
+        """app.state.tuning_model = None -> /tuning returns 503.
 
         Simulates the lifespan fail-soft outcome (mlflow load failure,
         network blip, no Production version in registry).
@@ -285,7 +285,7 @@ class TestFailSoft:
     def test_no_target_columns_returns_503(
         self, client: Any, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Empty target_columns in metadata → /tuning returns 503.
+        """Empty target_columns in metadata -> /tuning returns 503.
 
         Simulates the case where MLflow run params don't contain
         'target_columns' (e.g. model trained before train() was
@@ -307,7 +307,7 @@ class TestExtraFieldsRejected:
     """TuningRequest model_config = ConfigDict(extra='forbid')."""
 
     def test_unknown_field_rejected(self, client: Any) -> None:
-        """Extra field in payload → 422 (not silent acceptance)."""
+        """Extra field in payload -> 422 (not silent acceptance)."""
         payload = _valid_payload()
         payload["effects_density"] = 0.5  # dropped field
         r = client.post("/tuning", json=payload)
@@ -344,7 +344,7 @@ class TestLatencyAndMetadata:
         )
 
 
-# Langfuse fail-open: trace breaks → request still succeeds
+# Langfuse fail-open: trace breaks -> request still succeeds
 
 
 class TestLangfuseFailOpen:

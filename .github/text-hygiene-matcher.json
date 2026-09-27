@@ -1,0 +1,41 @@
+{
+  "problemMatcher": [
+    {
+      "owner": "text-hygiene-fail",
+      "severity": "error",
+      "pattern": [
+        {
+          "regexp": "^\\[FAIL\\]\\s+([^\\s:]+):(\\d+):(\\d+)\\s+(.+)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "message": 4
+        }
+      ]
+    },
+    {
+      "owner": "text-hygiene-fail-file",
+      "severity": "error",
+      "pattern": [
+        {
+          "regexp": "^\\[FAIL\\]\\s+([^\\s:]+)\\s+(.+)$",
+          "file": 1,
+          "message": 2
+        }
+      ]
+    },
+    {
+      "owner": "text-hygiene-warn",
+      "severity": "warning",
+      "pattern": [
+        {
+          "regexp": "^\\[WARN\\]\\s+([^\\s:]+):(\\d+):(\\d+)\\s+(.+)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "message": 4
+        }
+      ]
+    }
+  ]
+}

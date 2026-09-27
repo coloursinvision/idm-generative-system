@@ -1,4 +1,4 @@
-"""Unit tests for engine.ml.resonance_rules — Layer 2 Part 5.1 rule implementations.
+"""Unit tests for engine.ml.resonance_rules - Layer 2 Part 5.1 rule implementations.
 
 Covers the 5 rule signatures (4 physical + 1 aesthetic):
 
@@ -53,7 +53,7 @@ class TestBpmToHz:
         assert h.harmonically_locked is False
 
     def test_engineered_locked_case(self) -> None:
-        """103.125 BPM × 128 = exactly 220 Hz = A3 → locked at 0 cents."""
+        """103.125 BPM × 128 = exactly 220 Hz = A3 -> locked at 0 cents."""
         h = bpm_to_hz(103.125, octave_multiplier=128)
         assert h.frequency_hz == pytest.approx(220.0, abs=1e-9)
         assert h.nearest_note == "A3"
@@ -229,14 +229,14 @@ class TestMainsHum:
         assert all(isinstance(h, MainsHarmonic) for h in floor.harmonics)
 
     def test_50hz_tonal_centre_is_g1(self) -> None:
-        """50 Hz → G1 (~35 cents sharp), per the spoke's G-centred noise floor."""
+        """50 Hz -> G1 (~35 cents sharp), per the spoke's G-centred noise floor."""
         floor = mains_hum_profile("UK")
         assert floor.tonal_centre == "G1"
         assert floor.harmonics[0].nearest_note == "G1"
         assert floor.harmonics[0].cents_deviation == pytest.approx(35.0, abs=1.0)
 
     def test_60hz_tonal_centre_is_b1(self) -> None:
-        """60 Hz → B1 (~-49 cents).
+        """60 Hz -> B1 (~-49 cents).
 
         60 Hz sits near-equidistant between A♯1 (50.7 cents below) and B1
         (49.4 cents below). The implementation's ``round()`` resolves to
@@ -287,7 +287,7 @@ class TestMainsHum:
 
 
 class TestSolfeggio:
-    """Tests for :func:`solfeggio_cutoff_seed` — aesthetic project convention."""
+    """Tests for :func:`solfeggio_cutoff_seed` - aesthetic project convention."""
 
     def test_solfeggio_hz_table_has_all_9_labels(self) -> None:
         expected_labels = {

@@ -9,9 +9,9 @@ Usage:
     dvc repro train                               # via DVC pipeline
 
 Outputs:
-    models/tuning_estimator/    — MLflow model artifact (DVC-tracked)
-    models/metrics.json         — per-target RMSE + aggregate (DVC metric)
-    models/feature_importance.json — feature importance (DVC plot)
+    models/tuning_estimator/    - MLflow model artifact (DVC-tracked)
+    models/metrics.json         - per-target RMSE + aggregate (DVC metric)
+    models/feature_importance.json - feature importance (DVC plot)
 """
 
 from __future__ import annotations

@@ -1,12 +1,12 @@
 """
 engine/effects/glitch.py
 
-Block 8 — Glitch Engine (Braindance Stutter · ASR-10 Loop Modulation · XOR Bit Mangle).
+Block 8: Glitch Engine (Braindance Stutter, ASR-10 Loop Modulation, XOR Bit Mangle).
 
 Source:
-    MASTER_DATASET — Glitch & Micro-Edit Processing
-    Autechre — Tri Repetae (1995), Chiastic Slide (1997)
-    Aphex Twin — Richard D. James Album (1996), Windowlicker (1999)
+    MASTER_DATASET - Glitch & Micro-Edit Processing
+    Autechre - Tri Repetae (1995), Chiastic Slide (1997)
+    Aphex Twin - Richard D. James Album (1996), Windowlicker (1999)
 
 Hardware references:
     - Ensoniq ASR-10 (1992): 16-bit sampler with loop point modulation
@@ -18,10 +18,10 @@ Hardware references:
       Notable users: Autechre (Tri Repetae, Chiastic Slide), BoC.
 
     - Braindance aesthetic (Rephlex Records, ~1991–2004): Micro-edit
-      stutter technique — repeating tiny buffer slices at rhythmic
+      stutter technique - repeating tiny buffer slices at rhythmic
       subdivisions to create machine-gun fills and "skipping CD"
       artefacts. The technique exploits the perceptual boundary between
-      rhythm and timbre (~50 ms) — stutters shorter than this threshold
+      rhythm and timbre (~50 ms) - stutters shorter than this threshold
       fuse into pitched buzzes, longer ones remain rhythmic.
       Aphex Twin (Come to Daddy, Windowlicker), Squarepusher (Hard
       Normal Daddy), µ-Ziq (Lunatic Harness).
@@ -37,27 +37,27 @@ Historical context:
 
     Hardware accidents:
         Oval's scratched CDs, Yasunao Tone's wounded CDs, Nicolas Collins'
-        circuit bending — errors elevated to compositional material. The
+        circuit bending - errors elevated to compositional material. The
         philosophical premise: digital systems reveal their most interesting
         behaviour at failure boundaries.
 
     Sampler abuse:
         Autechre and Squarepusher pushing the ASR-10 and Akai S-series
-        beyond intended use — extreme loop point modulation, deliberate
+        beyond intended use - extreme loop point modulation, deliberate
         buffer underruns, bit-depth reduction during playback. The
         "Tri Repetae" album title itself references triple-repeat loop
         modulation on the ASR-10.
 
     Three algorithms modelled here represent the core glitch toolkit:
-        Stutter  — temporal fragmentation (buffer repeat)
-        Loop mod — positional displacement (read-pointer warping)
-        Bit mangle — data-level corruption (bitwise operations)
+        Stutter  - temporal fragmentation (buffer repeat)
+        Loop mod - positional displacement (read-pointer warping)
+        Bit mangle - data-level corruption (bitwise operations)
 
-    Processing order: stutter → loop modulation → XOR mangle.
+    Processing order: stutter -> loop modulation -> XOR mangle.
     Each stage operates independently and can be bypassed by setting
     its intensity/density parameter to 0.
 
-Signal position: SpatialProcessor → [Block 8] → Compressor → ...
+Signal position: SpatialProcessor -> [Block 8] -> Compressor -> ...
 """
 
 from __future__ import annotations
@@ -70,10 +70,10 @@ from engine.effects.base import BaseEffect
 # Values target int16 PCM range (−32768 to +32767)
 
 XOR_MASKS: dict[str, int] = {
-    "subtle": 0x000F,  # 4 LSBs — gentle noise-floor corruption
-    "moderate": 0x00FF,  # 8 LSBs — audible digital artefacts
-    "heavy": 0x0FFF,  # 12 LSBs — severe data corruption
-    "destroy": 0x7FFF,  # 15 bits — near-total signal destruction
+    "subtle": 0x000F,  # 4 LSBs - gentle noise-floor corruption
+    "moderate": 0x00FF,  # 8 LSBs - audible digital artefacts
+    "heavy": 0x0FFF,  # 12 LSBs - severe data corruption
+    "destroy": 0x7FFF,  # 15 bits - near-total signal destruction
 }
 
 
@@ -81,17 +81,17 @@ class GlitchEngine(BaseEffect):
     """
     Glitch processor combining three complementary corruption algorithms.
 
-    Stage 1 — Braindance Stutter:
+    Stage 1: Braindance Stutter:
         Scans the signal and probabilistically replaces segments with
         micro-repeated slices, producing the "skipping CD" / machine-gun
         fill effect central to the Rephlex/Warp IDM aesthetic.
 
-    Stage 2 — ASR-10 Loop Modulation:
+    Stage 2: ASR-10 Loop Modulation:
         Warps the read pointer with an LFO, emulating the Ensoniq ASR-10's
-        loop-start modulation. Creates granular scanning artefacts —
+        loop-start modulation. Creates granular scanning artefacts:
         pitch-shifted micro-windows that smear temporal detail.
 
-    Stage 3 — XOR Bit Mangle:
+    Stage 3: XOR Bit Mangle:
         Applies bitwise XOR to raw PCM values with configurable mask
         depth. Produces inharmonic digital corruption from subtle
         noise-floor texture to full signal destruction.
@@ -136,16 +136,16 @@ class GlitchEngine(BaseEffect):
         sr:                  Sample rate in Hz. Default: 44100.
 
     Example:
-        >>> # Subtle IDM micro-edits (Autechre — Tri Repetae style)
+        >>> # Subtle IDM micro-edits (Autechre - Tri Repetae style)
         >>> ge = GlitchEngine(stutter_density=0.1, loop_mod_depth=0.2)
         >>> output = ge(signal)
 
-        >>> # Aggressive braindance stutter (Squarepusher — Hard Normal Daddy)
+        >>> # Aggressive braindance stutter (Squarepusher - Hard Normal Daddy)
         >>> ge = GlitchEngine(
         ...     stutter_density=0.4, stutter_max_repeats=16, xor_mode="moderate", xor_density=0.05
         ... )
 
-        >>> # Pure data corruption (Oval — Systemisch)
+        >>> # Pure data corruption (Oval - Systemisch)
         >>> ge = GlitchEngine(
         ...     stutter_density=0.0, loop_mod_depth=0.0, xor_mode="heavy", xor_density=0.3, mix=0.7
         ... )
@@ -193,7 +193,7 @@ class GlitchEngine(BaseEffect):
         """
         Apply glitch processing to the input signal.
 
-        Processing order: stutter → loop modulation → XOR mangle.
+        Processing order: stutter -> loop modulation -> XOR mangle.
         Each stage is skipped when its intensity parameter is 0.
 
         Args:
@@ -225,7 +225,7 @@ class GlitchEngine(BaseEffect):
         return dry * (1.0 - self.mix) + wet * self.mix
 
     def reset(self) -> None:
-        """Stateless effect — nothing to reset."""
+        """Stateless effect - nothing to reset."""
 
     # Stage 1 - Braindance stutter
 
@@ -285,7 +285,7 @@ class GlitchEngine(BaseEffect):
         changes, the output "scans" through nearby signal content,
         producing granular pitch/time artefacts.
 
-        Uses vectorised linear interpolation — no per-sample loop.
+        Uses vectorised linear interpolation - no per-sample loop.
         """
         n = len(signal)
         max_offset_samp = int(self.loop_window_ms * self.sr / 1000)
@@ -318,13 +318,13 @@ class GlitchEngine(BaseEffect):
         mask at randomly selected sample positions (controlled by
         xor_density), then converts back to float.
 
-        The mask depth determines corruption severity — from subtle
+        The mask depth determines corruption severity - from subtle
         noise-floor texture (4 LSBs) to near-total destruction (15 bits).
         """
         n = len(signal)
         mask = XOR_MASKS.get(self.xor_mode, XOR_MASKS["subtle"])
 
-        # Float → int16 (clamp to prevent overflow at ±1.0 boundary)
+        # Float -> int16 (clamp to prevent overflow at ±1.0 boundary)
         clamped = np.clip(signal, -1.0, 1.0)
         int_signal = (clamped * 32767.0).astype(np.int16)
 
@@ -334,5 +334,5 @@ class GlitchEngine(BaseEffect):
         # Apply XOR at selected positions
         int_signal[apply_where] ^= np.int16(mask)
 
-        # int16 → float, normalised back to [-1.0, 1.0]
+        # int16 -> float, normalised back to [-1.0, 1.0]
         return int_signal.astype(np.float64) / 32767.0

@@ -7,9 +7,9 @@ Exports all 10 effect blocks, the EffectChain pipeline, and a factory
 function for building the canonical signal-chain order.
 
 Canonical signal chain:
-    INPUT → [1. NoiseFloor] → [2. Bitcrusher] → [3. ResonantFilter] →
-    [4. Saturation] → [5. Reverb] → [6. TapeDelay] → [7. SpatialProcessor] →
-    [8. GlitchEngine] → [9. Compressor] → [10. VinylMastering] → OUTPUT
+    INPUT -> [1. NoiseFloor] -> [2. Bitcrusher] -> [3. ResonantFilter] ->
+    [4. Saturation] -> [5. Reverb] -> [6. TapeDelay] -> [7. SpatialProcessor] ->
+    [8. GlitchEngine] -> [9. Compressor] -> [10. VinylMastering] -> OUTPUT
 
 Usage:
     # Import individual blocks

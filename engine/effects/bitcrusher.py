@@ -1,19 +1,19 @@
 """
 engine/effects/bitcrusher.py
 
-Block 2 — Bitcrusher (Lo-Fi / DAC Emulation).
+Block 2: Bitcrusher (Lo-Fi / DAC Emulation).
 
 Source:
-    MASTER_DATASET Part 1.1 — Rhythmic Foundations (Drum Machines & Samplers)
+    MASTER_DATASET Part 1.1 - Rhythmic Foundations (Drum Machines & Samplers)
 
 Hardware references:
-    - E-mu SP-1200     : 12-bit / 26.04 kHz — resonant SSM2044 filter artefacts
+    - E-mu SP-1200     : 12-bit / 26.04 kHz - resonant SSM2044 filter artefacts
                          during pitch-shifting; distinct lo-fi resonance.
-    - Akai S950        : 12-bit / variable SR — unique variable-bandwidth LPF;
+    - Akai S950        : 12-bit / variable SR - unique variable-bandwidth LPF;
                          key to "crunchy" drums.
-    - Casio RZ-1       : 8-bit / 20 kHz — no anti-aliasing; extreme gritty
+    - Casio RZ-1       : 8-bit / 20 kHz - no anti-aliasing; extreme gritty
                          textures on user samples.
-    - Roland TR-909    : 6-bit cymbals (custom Roland DAC) — heavy aliasing,
+    - Roland TR-909    : 6-bit cymbals (custom Roland DAC) - heavy aliasing,
                          crunchy hi-hats; the defining cymbal sound of techno.
 
 Historical context:
@@ -21,10 +21,10 @@ Historical context:
     The SP-1200 (26.04 kHz sample rate) produces resonant artefacts during
     pitch-shifting via its SSM2044 filter. The S950 applies its unique
     variable-bandwidth LPF, giving a different, warmer character at the same
-    bit depth. The RZ-1 has no anti-aliasing filter whatsoever — resulting in
+    bit depth. The RZ-1 has no anti-aliasing filter whatsoever - resulting in
     the most extreme lo-fi texture of the era.
 
-Signal position: NoiseFloor → [Block 2] → ResonantFilter → ...
+Signal position: NoiseFloor -> [Block 2] -> ResonantFilter -> ...
 """
 
 from __future__ import annotations
@@ -43,7 +43,7 @@ HARDWARE_PRESETS: dict[str, dict] = {
     },
     "s950": {
         "bit_depth": 12,
-        "target_sr": None,  # variable SR — no downsampling applied
+        "target_sr": None,  # variable SR - no downsampling applied
         "description": "Akai S950 — 12-bit, variable-bandwidth LPF character",
     },
     "rz1": {
@@ -75,9 +75,9 @@ class Bitcrusher(BaseEffect):
                               Reduces harsh quantisation distortion at low
                               bit depths. Default: True.
         mode:                 Quantisation algorithm.
-                                'round'    — nearest neighbour (default)
-                                'truncate' — floor toward zero
-                                'floor'    — always round down
+                                'round'    - nearest neighbour (default)
+                                'truncate' - floor toward zero
+                                'floor'    - always round down
         hardware_preset:      Apply a hardware preset. Options:
                                 'sp1200', 's950', 'rz1', '909_cymbal', None.
                               Overrides bit_depth and sample_rate_reduction.
@@ -167,4 +167,4 @@ class Bitcrusher(BaseEffect):
         return np.clip(crushed, -1.0, 1.0)
 
     def reset(self) -> None:
-        """Stateless effect — nothing to reset."""
+        """Stateless effect - nothing to reset."""

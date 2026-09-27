@@ -1,4 +1,4 @@
-"""IDM Generative System — Knowledge package.
+"""IDM Generative System - Knowledge package.
 
 RAG pipeline and vector database client for domain-specific
 sound design advice and composition configuration generation.

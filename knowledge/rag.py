@@ -8,9 +8,9 @@ Combines:
     - GPT-4o completion with retrieved context
 
 Two modes (from SPEC):
-    - Manual: Sound design advisor — answers questions about DSP, hardware,
+    - Manual: Sound design advisor - answers questions about DSP, hardware,
       synthesis techniques, regional aesthetics, effects chain configuration.
-    - Auto: Composer — generates parameter configurations for the effects chain
+    - Auto: Composer - generates parameter configurations for the effects chain
       and sample generators based on aesthetic intent.
 
 Usage:
@@ -208,7 +208,7 @@ class RAGPipeline:
 
         Returns:
             Tuple of (context_string, raw_search_results).
-            Single search call — callers use both outputs without
+            Single search call - callers use both outputs without
             repeating the embedding + Qdrant query.
         """
         results = self.kb.search(
@@ -249,7 +249,7 @@ class RAGPipeline:
         part_filter: str | None = None,
     ) -> dict[str, Any]:
         """
-        Sound design advisor — answer a question using RAG.
+        Sound design advisor - answer a question using RAG.
 
         Args:
             question:    Natural language question.
@@ -298,7 +298,7 @@ class RAGPipeline:
         limit: int = MAX_CONTEXT_CHUNKS,
     ) -> dict[str, Any]:
         """
-        Auto-composer — generate effects chain config from aesthetic description.
+        Auto-composer - generate effects chain config from aesthetic description.
 
         Args:
             description: Aesthetic intent (e.g., "dark Detroit techno with 909 swing").
@@ -344,7 +344,7 @@ class RAGPipeline:
             },
         }
 
-    # Tuning request extraction (V2.4 - frontend free-text → API contract)
+    # Tuning request extraction (V2.4 - frontend free-text -> API contract)
 
     def extract_tuning_request(self, text: str) -> dict[str, Any]:
         """
