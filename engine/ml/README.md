@@ -1,4 +1,4 @@
-# engine/ml — Knowledge-Informed ML Pipeline (Layers 3–5)
+# engine/ml - Knowledge-Informed ML Pipeline (Layers 3–5)
 
 ## Spoke-as-source-of-truth rule
 
@@ -45,7 +45,7 @@ dataset_generator.py        <- Layer 5: synthetic DataFrame
 
 Tests live in `tests/` at the repo root:
 
-- `tests/test_regional_profiles.py` — spoke parsing, validation, Osaka override
-- `tests/test_resonance_rules.py` — 12 doctests + unit tests
-- `tests/test_deterministic_mapper.py` — 45+ integration tests, all 6 regions
-- `tests/test_gaussian_noise.py` — 42 unit tests, reproducibility, clamping
+- `tests/test_regional_profiles.py`: spoke parsing, validation, Osaka override
+- `tests/test_resonance_rules.py`: 12 doctests + unit tests
+- `tests/test_deterministic_mapper.py`: 45+ integration tests, all 6 regions
+- `tests/test_gaussian_noise.py`: 42 unit tests, reproducibility, clamping
