@@ -416,8 +416,8 @@ def mains_hum_profile(
 # includes them; downstream consumers MUST treat them as stylistic anchors,
 # not as ground truth.
 #
-# See also: SOLFEGGIO_FILTER_SEEDING.md spoke, parked research TODO-6
-# (formal Solfeggio -> filter cutoff mapping methodology).
+# See also: SOLFEGGIO_FILTER_SEEDING.md spoke and the parked research item on a
+# formal Solfeggio -> filter cutoff mapping methodology.
 
 SOLFEGGIO_HZ: dict[str, float] = {
     "foundation": 174.0,
