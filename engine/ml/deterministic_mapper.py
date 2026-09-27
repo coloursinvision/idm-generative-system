@@ -110,9 +110,9 @@ _MIDI_MAX: float = 127.0
 def _select_tuning_hz(profile: RegionalProfile) -> float:
     """Select the A4 reference tuning for a given profile.
 
-    Currently returns ``440.0`` for all profiles. Reserved for TODO-3
-    (Aphex Twin 432 Hz alternative tuning practice) once that parked
-    research item is resolved.
+    Currently returns ``440.0`` for all profiles. Reserved for the parked
+    research item on the Aphex Twin 432 Hz alternative tuning practice,
+    once it is resolved.
 
     Args:
         profile: Loaded regional profile.
@@ -120,8 +120,8 @@ def _select_tuning_hz(profile: RegionalProfile) -> float:
     Returns:
         A4 reference frequency in Hz.
     """
-    # TODO-3: When resolved, inspect profile for alternative tuning flag.
-    _ = profile  # Consumed once TODO-3 activates.
+    # TODO: when the alternative-tuning item is resolved, inspect the profile for its flag.
+    _ = profile  # Consumed once the alternative-tuning item activates.
     return 440.0
 
 
@@ -312,7 +312,7 @@ class DeterministicMapping:
     Attributes:
         tuning_hz: A4 reference frequency selected by the mapper. Almost
             always ``440.0``; ``432.0`` reserved for profiles whose spoke
-            records alternative-tuning practice (TODO-3, parked).
+            records alternative-tuning practice (a parked research item).
         resonant_points: Ordered stack of resonant frequencies with
             per-point provenance. Ordering is deterministic for a given
             ``(bpm, pitch_midi, swing, region, sub_region, effects)``
