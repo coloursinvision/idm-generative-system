@@ -1,4 +1,4 @@
-# engine/ml — Knowledge-Informed ML Pipeline (Layers 3–5)
+# engine/ml - Knowledge-Informed ML Pipeline (Layers 3–5)
 
 ## Spoke-as-source-of-truth rule
 
@@ -30,22 +30,22 @@ The package exposes 36 symbols via `__init__.py`. See the module docstring in `_
 ## Module dependency graph
 
 ```
-resonance_rules.py          ← pure functions, no I/O
+resonance_rules.py          <- pure functions, no I/O
        ↓
-regional_profiles.py        ← spoke parser, @cache memoised
+regional_profiles.py        <- spoke parser, @cache memoised
        ↓
-deterministic_mapper.py     ← Layer 3: scene → DSP targets
+deterministic_mapper.py     <- Layer 3: scene -> DSP targets
        ↓
-gaussian_noise.py           ← Layer 4: calibrated perturbation
+gaussian_noise.py           <- Layer 4: calibrated perturbation
        ↓
-dataset_generator.py        ← Layer 5: synthetic DataFrame
+dataset_generator.py        <- Layer 5: synthetic DataFrame
 ```
 
 ## Testing
 
 Tests live in `tests/` at the repo root:
 
-- `tests/test_regional_profiles.py` — spoke parsing, validation, Osaka override
-- `tests/test_resonance_rules.py` — 12 doctests + unit tests
-- `tests/test_deterministic_mapper.py` — 45+ integration tests, all 6 regions
-- `tests/test_gaussian_noise.py` — 42 unit tests, reproducibility, clamping
+- `tests/test_regional_profiles.py`: spoke parsing, validation, Osaka override
+- `tests/test_resonance_rules.py`: 12 doctests + unit tests
+- `tests/test_deterministic_mapper.py`: 45+ integration tests, all 6 regions
+- `tests/test_gaussian_noise.py`: 42 unit tests, reproducibility, clamping

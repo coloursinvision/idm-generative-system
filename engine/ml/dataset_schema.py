@@ -1,10 +1,10 @@
-"""dataset_schema — pandera schemas for synthetic training and inference validation.
+"""dataset_schema - pandera schemas for synthetic training and inference validation.
 
 Pipeline layer: 5–6 boundary (DATASET_SCHEMA) + V2.3 endpoint (InferenceSchema)
 Consumes:       dataset_generator (SyntheticDatasetGenerator output)
-                regional_profiles (RegionCode, SubRegion — type-level enums)
+                regional_profiles (RegionCode, SubRegion - type-level enums)
 Consumed by:    Layer 6 (DVC pipeline validation stage, model_training.py)
-                V2.3 /tuning endpoint (api/main.py — InferenceSchema)
+                V2.3 /tuning endpoint (api/main.py - InferenceSchema)
 Status:         complete
 
 Two pandera DataFrameSchemas live here.
@@ -19,7 +19,7 @@ Two pandera DataFrameSchemas live here.
 :data:`InferenceSchema`
     Validates the **narrow inference DataFrame** built by the V2.3
     ``/tuning`` endpoint handler from a single :class:`TuningRequest`,
-    after the ``swing_pct → swing`` boundary conversion and the
+    after the ``swing_pct -> swing`` boundary conversion and the
     Pydantic-level cross-field validation. Five columns only; ``strict=True``
     to reject any accidental feature injection upstream.
 
@@ -30,14 +30,14 @@ Design principles:
     - **Regex-matched frequency columns (DATASET_SCHEMA only):** Columns
       matching ``^freq_`` are validated with a single pattern rule
       (nullable, positive when present). InferenceSchema has no ``freq_*``
-      columns — those are model *targets*, not inputs.
+      columns - those are model *targets*, not inputs.
     - **Declarative construction:** Both schemas built via direct
       :class:`pa.DataFrameSchema` constructor (no ``add_columns()`` /
-      mutation patterns — pandera 0.31 drops ``regex=True``
+      mutation patterns - pandera 0.31 drops ``regex=True``
       in ``add_columns``).
     - **DataFrame-level cross-column checks:** Sub-region scope rule
       enforced via ``pa.Check`` callables at the schema level on both
-      schemas (defence in depth — also enforced in TuningRequest
+      schemas (defence in depth - also enforced in TuningRequest
       ``@model_validator`` and in DATASET_SCHEMA generator output).
 """
 

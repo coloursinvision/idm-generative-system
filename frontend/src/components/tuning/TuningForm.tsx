@@ -157,7 +157,7 @@ export function TuningForm({
   );
 }
 
-// MIDI → note name helper (e.g. 69 → "A4", 60 → "C4").
+// MIDI -> note name helper (e.g. 69 -> "A4", 60 -> "C4").
 function midiToNoteName(midi: number): string {
   const names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
   const m = Math.round(midi);

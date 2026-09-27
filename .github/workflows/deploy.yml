@@ -1,5 +1,5 @@
 # =============================================================================
-# IDM Generative System — Continuous Deployment
+# IDM Generative System - Continuous Deployment
 # Triggers after CI passes on main. SSHes into the production droplet,
 # pulls the latest GHCR image, and restarts the stack.
 # =============================================================================
@@ -22,7 +22,7 @@ concurrency:
 jobs:
   deploy:
     name: "Deploy to production"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Deploy via SSH

@@ -1,4 +1,4 @@
-"""gaussian_noise — calibrated Gaussian noise injection for synthetic data generation.
+"""gaussian_noise - calibrated Gaussian noise injection for synthetic data generation.
 
 Pipeline layer: 4
 Consumes:       deterministic_mapper (DeterministicMapping, ResonantPoint)
@@ -30,8 +30,8 @@ Design principles:
 
 RNG draw order contract:
     :meth:`perturb_profile` draws in fixed field order:
-    ``swing_amount → reverb_decay → reverb_diffusion → noise_sub_bass_hz
-    → noise_floor_hz → noise_floor_db``. Fields that are absent (``None``)
+    ``swing_amount -> reverb_decay -> reverb_diffusion -> noise_sub_bass_hz
+    -> noise_floor_hz -> noise_floor_db``. Fields that are absent (``None``)
     or whose sigma is ``0.0`` consume zero draws, preserving downstream
     determinism for any ``(config, seed)`` pair.
 
@@ -101,10 +101,10 @@ class PerturbationConfig:
         swing_sigma: Sigma for swing amount perturbation.
         reverb_sigma: Sigma for reverb decay / diffusion perturbation.
         saturation_sigma: Sigma for saturation intensity perturbation.
-            Reserved — :class:`SaturationSpec` has no numeric fields in
+            Reserved - :class:`SaturationSpec` has no numeric fields in
             the current spoke schema.
         harmonic_sigma: Sigma for harmonic content frequency perturbation.
-            Reserved — :class:`HarmonicContentSpec` has no perturbable
+            Reserved - :class:`HarmonicContentSpec` has no perturbable
             numeric fields in the current spoke schema.
         noise_sigma: Sigma for noise floor level perturbation.
         mapper_sigma: Sigma for resonant-point frequency perturbation
@@ -230,7 +230,7 @@ def _perturb_noise(
     Hz fields are clamped to ``>= 1``. dB field is clamped to ``<= 0``
     (noise floor is always negative dBFS or zero).
 
-    Draws occur in fixed order: ``sub_bass_hz → noise_floor_hz →
+    Draws occur in fixed order: ``sub_bass_hz -> noise_floor_hz ->
     noise_floor_db``, regardless of whether individual fields are ``None``.
 
     Args:
@@ -273,11 +273,11 @@ class GaussianNoiseInjector:
     The injector wraps a seeded ``numpy.random.Generator`` for
     reproducibility. Two perturbation methods are provided:
 
-    - :meth:`perturb_profile` — perturbs profile-level DSP parameters
+    - :meth:`perturb_profile` - perturbs profile-level DSP parameters
       (swing, reverb, noise specs). Saturation and harmonic specs are
       passed through unchanged (no perturbable numeric fields in the
       current spoke schema).
-    - :meth:`perturb_mapping` — perturbs the resonant-point frequencies
+    - :meth:`perturb_mapping` - perturbs the resonant-point frequencies
       in a :class:`DeterministicMapping`, respecting source-tag filters.
 
     Both methods return new frozen instances; inputs are never mutated.
@@ -321,7 +321,7 @@ class GaussianNoiseInjector:
         the corresponding sigma values in :attr:`config`. Fields with
         sigma = 0.0 are returned unchanged and consume no RNG draws.
 
-        Saturation and harmonic specs are passed through unchanged — they
+        Saturation and harmonic specs are passed through unchanged - they
         contain no perturbable numeric fields in the current spoke schema.
 
         Returns a new frozen :class:`RegionalProfile`; the input is

@@ -3,14 +3,14 @@ tests/test_api.py
 
 End-to-end test suite for the IDM Generative System FastAPI backend.
 
-Uses FastAPI TestClient (ASGI in-process) — no subprocess, no live server.
+Uses FastAPI TestClient (ASGI in-process) - no subprocess, no live server.
 This is the production convention for FastAPI testing.
 
 Coverage:
-    GET  /health    — liveness, version string
-    GET  /effects   — schema completeness, canonical order
-    POST /generate  — all generators, overrides, skip, bypass, error cases
-    POST /process   — WAV upload, stereo→mono, bypass, error cases
+    GET  /health    - liveness, version string
+    GET  /effects   - schema completeness, canonical order
+    POST /generate  - all generators, overrides, skip, bypass, error cases
+    POST /process   - WAV upload, stereo->mono, bypass, error cases
 
 Run:
     pytest tests/test_api.py -v
@@ -34,7 +34,7 @@ from api.main import GENERATORS, app
 
 @pytest.fixture(scope="module")
 def client() -> TestClient:
-    """Shared test client — single instance for the module."""
+    """Shared test client - single instance for the module."""
     return TestClient(app)
 
 
@@ -63,7 +63,7 @@ def stereo_wav_bytes() -> bytes:
 
 
 class TestHealth:
-    """GET /health — liveness check."""
+    """GET /health - liveness check."""
 
     def test_health_status_200(self, client: TestClient) -> None:
         resp = client.get("/health")
@@ -92,7 +92,7 @@ EXPECTED_KEYS = [
 
 
 class TestEffects:
-    """GET /effects — self-documenting block schema."""
+    """GET /effects - self-documenting block schema."""
 
     def test_effects_status_200(self, client: TestClient) -> None:
         resp = client.get("/effects")
@@ -134,7 +134,7 @@ class TestEffects:
 
 
 class TestGenerate:
-    """POST /generate — sample generation + chain processing."""
+    """POST /generate - sample generation + chain processing."""
 
     @pytest.mark.parametrize("gen_name", list(GENERATORS.keys()))
     def test_generate_all_generators_default_params(
@@ -154,7 +154,7 @@ class TestGenerate:
     def test_generate_with_chain_overrides(self, client: TestClient) -> None:
         """Chain overrides are applied without error.
 
-        Uses bitcrusher.bit_depth — known valid from /effects schema.
+        Uses bitcrusher.bit_depth - known valid from /effects schema.
         Override params must match actual constructor signatures of effect
         classes; use GET /effects to discover valid param names.
         """
@@ -232,10 +232,10 @@ class TestGenerate:
 
 
 class TestProcess:
-    """POST /process — upload WAV, process through chain, return WAV."""
+    """POST /process - upload WAV, process through chain, return WAV."""
 
     def test_process_mono_wav(self, client: TestClient, mono_wav_bytes: bytes) -> None:
-        """Upload mono WAV → processed WAV returned."""
+        """Upload mono WAV -> processed WAV returned."""
         resp = client.post(
             "/process",
             files={"file": ("test.wav", mono_wav_bytes, "audio/wav")},

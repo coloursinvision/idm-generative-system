@@ -1,4 +1,4 @@
-"""deterministic_mapper — canonical mapping from scene + track params to DSP targets.
+"""deterministic_mapper - canonical mapping from scene + track params to DSP targets.
 
 Pipeline layer: 3
 Consumes:       regional_profiles (RegionalProfile, RegionCode,
@@ -10,17 +10,17 @@ Consumed by:    Layer 4 dataset generator (gaussian_noise.py)
 Status:         complete
 
 Contract (stated by Tom):
-    f(bpm, pitch, swing, genre, effects) → (tuning_hz, resonant_points)
+    f(bpm, pitch, swing, genre, effects) -> (tuning_hz, resonant_points)
 
 Signature expansions from the stated spec, each justified below:
 
-1. ``pitch`` → ``pitch_midi: float``
+1. ``pitch`` -> ``pitch_midi: float``
    Unambiguous numeric encoding. Integrates directly with
    ``hz_to_midi`` / ``midi_to_hz`` from :mod:`engine.ml.resonance_rules`
    without needing a note-name parser. Fractional values accepted for
    microtuning.
 
-2. ``genre`` → ``region: RegionCode``
+2. ``genre`` -> ``region: RegionCode``
    Precise Layer 2 type alias, prevents genre/region confusion at call
    sites. Literal-constrained so mypy strict catches typos.
 
@@ -36,7 +36,7 @@ Signature expansions from the stated spec, each justified below:
    many mapper calls without re-hitting the lru_cache. Tests can inject
    synthetic profiles without touching the filesystem.
 
-5. Return ``(float, Sequence[float])`` → :class:`DeterministicMapping`
+5. Return ``(float, Sequence[float])`` -> :class:`DeterministicMapping`
    Structured output with typed ``resonant_points: tuple[ResonantPoint,
    ...]``. Each :class:`ResonantPoint` carries a ``source`` provenance
    tag (e.g. ``"mains_harmonic_3"``, ``"solfeggio_seed"``) so downstream
@@ -110,9 +110,9 @@ _MIDI_MAX: float = 127.0
 def _select_tuning_hz(profile: RegionalProfile) -> float:
     """Select the A4 reference tuning for a given profile.
 
-    Currently returns ``440.0`` for all profiles. Reserved for TODO-3
-    (Aphex Twin 432 Hz alternative tuning practice) once that parked
-    research item is resolved.
+    Currently returns ``440.0`` for all profiles. Reserved for the parked
+    research item on the Aphex Twin 432 Hz alternative tuning practice,
+    once it is resolved.
 
     Args:
         profile: Loaded regional profile.
@@ -120,8 +120,8 @@ def _select_tuning_hz(profile: RegionalProfile) -> float:
     Returns:
         A4 reference frequency in Hz.
     """
-    # TODO-3: When resolved, inspect profile for alternative tuning flag.
-    _ = profile  # Consumed once TODO-3 activates.
+    # TODO: when the alternative-tuning item is resolved, inspect the profile for its flag.
+    _ = profile  # Consumed once the alternative-tuning item activates.
     return 440.0
 
 
@@ -244,7 +244,7 @@ def _apply_effects_filter(
 
     Currently recognised effects:
 
-    - ``"notch_mains"`` — removes all mains-derived points (both reference
+    - ``"notch_mains"`` - removes all mains-derived points (both reference
       and regional stacks). Physically models a notch filter at the grid
       fundamental that eliminates hum from the signal path.
 
@@ -282,15 +282,15 @@ class ResonantPoint:
         source: Machine-readable provenance tag identifying which rule
             emitted this point. Conventional values:
 
-            - ``"pitch_ref"`` — scene pitch reference at ``tuning_hz``
-            - ``"bpm_harmonic"`` — audible harmonic from :func:`bpm_to_hz`
-            - ``"mains_fundamental"`` — regional grid fundamental (50 / 60 Hz)
-            - ``"mains_harmonic_<k>"`` — ``k``-th regional mains harmonic
-            - ``"mains_ref_fundamental"`` — UK 50 Hz reference fundamental
-            - ``"mains_ref_harmonic_<k>"`` — ``k``-th UK reference harmonic
-            - ``"solfeggio_seed"`` — aesthetic Solfeggio seed
-            - ``"schumann_bpm_anchor"`` — BPM-anchor derived from Schumann mode 1
-            - ``"sub_bass"`` — profile sub-bass fundamental
+            - ``"pitch_ref"`` - scene pitch reference at ``tuning_hz``
+            - ``"bpm_harmonic"`` - audible harmonic from :func:`bpm_to_hz`
+            - ``"mains_fundamental"`` - regional grid fundamental (50 / 60 Hz)
+            - ``"mains_harmonic_<k>"`` - ``k``-th regional mains harmonic
+            - ``"mains_ref_fundamental"`` - UK 50 Hz reference fundamental
+            - ``"mains_ref_harmonic_<k>"`` - ``k``-th UK reference harmonic
+            - ``"solfeggio_seed"`` - aesthetic Solfeggio seed
+            - ``"schumann_bpm_anchor"`` - BPM-anchor derived from Schumann mode 1
+            - ``"sub_bass"`` - profile sub-bass fundamental
 
             The tag enables Layer 4 Gaussian-noise perturbation to be
             source-aware (e.g. leave ``mains_*`` fixed while perturbing
@@ -312,12 +312,12 @@ class DeterministicMapping:
     Attributes:
         tuning_hz: A4 reference frequency selected by the mapper. Almost
             always ``440.0``; ``432.0`` reserved for profiles whose spoke
-            records alternative-tuning practice (TODO-3, parked).
+            records alternative-tuning practice (a parked research item).
         resonant_points: Ordered stack of resonant frequencies with
             per-point provenance. Ordering is deterministic for a given
             ``(bpm, pitch_midi, swing, region, sub_region, effects)``
-            tuple: pitch_ref → bpm_harmonic → mains (ref then regional)
-            → solfeggio_seed → schumann_bpm_anchor → sub_bass.
+            tuple: pitch_ref -> bpm_harmonic -> mains (ref then regional)
+            -> solfeggio_seed -> schumann_bpm_anchor -> sub_bass.
     """
 
     tuning_hz: float

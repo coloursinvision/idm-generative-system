@@ -187,7 +187,7 @@ function tokeniseSclang(code: string): Token[][] {
           word[0] !== "_" &&
           /[a-z]/.test(word.slice(1))
         ) {
-          // PascalCase → class/type name
+          // PascalCase -> class/type name
           tokens.push({ text: word, color: SOL.type });
         } else {
           tokens.push({ text: word, color: SOL.base0 });
