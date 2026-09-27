@@ -6,6 +6,30 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.10.2] - 2026-09-27 - Committed-text hygiene and CI hardening (no behaviour change)
+
+### Added
+- **Text-hygiene checker** (`scripts/check_text_hygiene.py`): reports typography artifacts and internal reference identifiers in committed text, reading only prose (docstrings and comments in code; Markdown, TOML, YAML and shell files in full). Modes for staged lines, lines added since a commit, whole files, the whole tree and commit messages, covered by a black-box test suite.
+- **Enforcement:** pre-commit hooks for added lines and commit messages; a CI job that checks the lines a change adds, its commit messages, the pull-request title and the whole tree, and annotates the findings.
+- **Secret scan:** a version-pinned gitleaks job over the full history, blocking the Docker build.
+- **`.git-blame-ignore-revs`** listing the mechanical typography commits, so blame points at the authors of the content.
+- **ML methodology notes** (`docs/ML_METHODOLOGY_NOTES.md`): leakage-safe pipeline invariants.
+
+### Changed
+- **Typography in comments, docstrings and documentation** replaced by the role each character plays (arrows, em and en dashes, ellipses, middle dots, curly quotes, check marks); internal backlog identifiers in `engine/ml` reworded. Interface text is unchanged; the OpenAPI endpoint descriptions follow their docstrings.
+- **CI:** runner image pinned to `ubuntu-24.04`; the JavaScript actions moved to their Node 24 majors; ruff pinned to the workstation version; Playwright browsers cached in the e2e workflow.
+- **Dev toolchain:** ruff and mypy pinned exactly, ceilings on the rest of the `dev` extra; pre-commit activated, each hook run once per commit, mypy left to CI, the rewriting hooks kept away from pipeline outputs.
+- `dvc.lock` refreshed after dependency drift.
+
+### Removed
+- Pre-migration Dropbox relics.
+- Local tooling configuration is no longer tracked in this repository.
+
+### Notes
+- No functional change; production behaviour identical to `v0.10.1` apart from the typography of the OpenAPI descriptions. CI green (Lint & Format / Type Check / Test Suite / Docker / Secret Scan / Text Hygiene / e2e).
+
+---
+
 ## [0.10.1] - 2026-06-29 - Repo-wide comment & reference hygiene (no behaviour change)
 
 ### Changed
