@@ -2,9 +2,9 @@
 
 A generative audio application for experimental IDM production. Reconstructs the analog and digital signal chain of 1987–1999 underground electronic music through DSP modeling, algorithmic composition, RAG-augmented sound design, and a knowledge-informed ML tuning pipeline.
 
-Built around a 10-block effects chain that models specific hardware units — from the Mackie CR-1604 noise floor through SP-1200 bitcrushing, TB-303 resonant filtering, Alesis Quadraverb reverb, Roland Space Echo tape delay, to DAT brick-wall mastering. Every block is parameterised against documented specifications from the original equipment.
+Built around a 10-block effects chain that models specific hardware units - from the Mackie CR-1604 noise floor through SP-1200 bitcrushing, TB-303 resonant filtering, Alesis Quadraverb reverb, Roland Space Echo tape delay, to DAT brick-wall mastering. Every block is parameterised against documented specifications from the original equipment.
 
-Output targets: **Teenage Engineering PO-33 K.O!** and **EP-133 K.O.II** — the application generates samples, maps them to device-specific slot configurations, and produces step-by-step programming instructions for each hardware sequencer.
+Output targets: **Teenage Engineering PO-33 K.O!** and **EP-133 K.O.II** - the application generates samples, maps them to device-specific slot configurations, and produces step-by-step programming instructions for each hardware sequencer.
 
 **Live:** [idm.coloursinvision.ai](https://idm.coloursinvision.ai) | **Release:** `v0.9.0`
 
@@ -19,7 +19,7 @@ Output targets: **Teenage Engineering PO-33 K.O!** and **EP-133 K.O.II** — the
 │  Advisor │ Composer │ Effects │ Generator │ PO-33 │ EP-133    │
 │                     Codegen │ Tuning                         │
 └───────────────────────────┬──────────────────────────────────┘
-                            │ HTTP  (/api/* — nginx strips prefix)
+                            │ HTTP  (/api/* - nginx strips prefix)
 ┌───────────────────────────▼──────────────────────────────────┐
 │                    FastAPI Backend (v0.9.0)                   │
 │  /generate /process /ask /compose /effects /health           │
@@ -38,8 +38,8 @@ Two operating modes:
 
 | Mode | Generator | LLM role |
 |------|-----------|----------|
-| **Manual** | Full algorithmic control | Sound design advisor — translates timbral descriptions into synthesis parameters |
-| **Auto** | Algorithmic + LLM-guided | Composer — generates effect configs, pattern names, form evolution |
+| **Manual** | Full algorithmic control | Sound design advisor - translates timbral descriptions into synthesis parameters |
+| **Auto** | Algorithmic + LLM-guided | Composer - generates effect configs, pattern names, form evolution |
 
 ---
 
@@ -73,16 +73,16 @@ Tail padding: 2s zero-pad before chain processing. Reverb and delay tails decay 
 ## Features
 
 ### Advisor (`/advisor`)
-Sound design Q&A powered by RAG retrieval over the project's technical knowledge base (Qdrant Cloud, embedded with `text-embedding-3-large`). Ask about hardware characteristics, DSP techniques, or regional aesthetics — responses are grounded in documented specifications with source attribution.
+Sound design Q&A powered by RAG retrieval over the project's technical knowledge base (Qdrant Cloud, embedded with `text-embedding-3-large`). Ask about hardware characteristics, DSP techniques, or regional aesthetics - responses are grounded in documented specifications with source attribution.
 
 ### Composer (`/composer`)
 Describe an aesthetic direction in natural language. GPT-4o interprets the description against the knowledge base and returns a JSON effects chain configuration with reasoning. Send the config directly to the Generator.
 
 ### Generator (`/generator`)
 Three algorithmic sample generators:
-- **glitch_click** — percussive click with exponential decay and spectral shaping
-- **noise_burst** — filtered noise burst with tone control (LP/HP/BP)
-- **fm_blip** — FM synthesis modeled on Yamaha DX100/TX81Z operator ratios
+- **glitch_click:** percussive click with exponential decay and spectral shaping
+- **noise_burst:** filtered noise burst with tone control (LP/HP/BP)
+- **fm_blip:** FM synthesis modeled on Yamaha DX100/TX81Z operator ratios
 
 Each generator feeds through the 10-block effects chain with per-block skip toggles. Output: 24-bit WAV with canvas-based waveform display and Web Audio playback.
 
@@ -119,13 +119,13 @@ Interactive programming guide for the Teenage Engineering EP-133 K.O.II
 
 ---
 
-## V2 — Knowledge-to-DSP ML Tuning Pipeline
+## V2 - Knowledge-to-DSP ML Tuning Pipeline
 
 A supervised model (`TuningEstimator`) that maps a regional/aesthetic profile to a set of resonant tuning frequencies, trained end-to-end on a synthetic dataset derived from the project's documented knowledge. The pipeline is a six-layer chain (`engine/ml/`), reproducible via DVC and tracked in MLflow.
 
 | Layer | Module | Role |
 |-------|--------|------|
-| **L1** | knowledge spokes (vault) | Human knowledge — label rosters, hardware facts, regional history |
+| **L1** | knowledge spokes (vault) | Human knowledge - label rosters, hardware facts, regional history |
 | **L2** | regional profiles + resonance rules | Formalised DSP-target specs (`regional_profiles.py`, `resonance_rules.py`) |
 | **L3** | `deterministic_mapper.py` | Maps profile + resonance rules -> deterministic DSP targets |
 | **L4** | `gaussian_noise.py` | Calibrated per-parameter sigma -> synthetic perturbation |
@@ -135,7 +135,7 @@ A supervised model (`TuningEstimator`) that maps a regional/aesthetic profile to
 - **Reproducibility:** DVC pipeline (`dvc.yaml`: `generate -> validate -> train`); model artifacts and the synthetic dataset are content-hashed (`dvc_dataset_hash` MLflow tag).
 - **Registry:** `TuningEstimator/Production` (served by `/tuning`); newer baselines land at `Staging` first.
 - **Serving:** the FastAPI lifespan loads `models:/TuningEstimator/Production` from the MLflow registry (artifacts on DigitalOcean Spaces). `/tuning` returns resonant points; `/tuning/extract` turns free text into a structured `TuningRequest` via GPT-4o. Both endpoints emit Langfuse traces.
-- **Methodology:** leakage-safe split / HPO isolation / target-framing invariants — see [docs/ML_METHODOLOGY_NOTES.md](docs/ML_METHODOLOGY_NOTES.md).
+- **Methodology:** leakage-safe split / HPO isolation / target-framing invariants - see [docs/ML_METHODOLOGY_NOTES.md](docs/ML_METHODOLOGY_NOTES.md).
 
 > Pipeline execution (training / `dvc repro`) runs on a workstation, **never** on the production droplet. See `06-MLOps/` in the project vault for the full pipeline state, decisions, and runbook.
 
@@ -151,7 +151,7 @@ A supervised model (`TuningEstimator`) that maps a regional/aesthetic profile to
 | Vector DB | Qdrant Cloud (`text-embedding-3-large`, 3072 dims) |
 | ML | XGBoost, Optuna (HPO), scikit-learn, pandera |
 | ML tracking | MLflow (model registry + tracking server), DVC (pipeline + data versioning) |
-| Object storage | DigitalOcean Spaces (S3-compatible — DVC remote + MLflow artifacts) |
+| Object storage | DigitalOcean Spaces (S3-compatible - DVC remote + MLflow artifacts) |
 | Observability | Langfuse (LLM tracing) |
 | Auxiliary UI | Streamlit (parameter inspection, RAG testing) |
 | Audio export | 24-bit WAV via soundfile |
@@ -159,7 +159,7 @@ A supervised model (`TuningEstimator`) that maps a regional/aesthetic profile to
 | Container / CI-CD | Docker Compose, GitHub Actions, GHCR |
 | Environment | Miniconda (`idm` environment) |
 
-Visual direction: **The Designers Republic / Warp Records (1992–1999)** — brutalist typography, industrial grids, high-contrast monochrome with neon accents. No rounded corners, no icons, text labels only.
+Visual direction: **The Designers Republic / Warp Records (1992–1999)** - brutalist typography, industrial grids, high-contrast monochrome with neon accents. No rounded corners, no icons, text labels only.
 
 ---
 
@@ -182,7 +182,7 @@ conda env create -f environment.yml
 conda activate idm
 pip install -e ".[dev]"          # add ".[ml]" for the V2 tuning pipeline
 
-# Provide secrets (SOPS + age) — see the secrets architecture docs
+# Provide secrets (SOPS + age) - see the secrets architecture docs
 export OPENAI_API_KEY="your-key"
 export QDRANT_URL="your-qdrant-url"
 export QDRANT_API_KEY="your-qdrant-key"
@@ -343,18 +343,18 @@ Indexed in Qdrant with `text-embedding-3-large` (3072 dimensions); cosine-simila
 ## References
 
 ### Hardware Documentation
-- Teenage Engineering — [teenage.engineering](https://teenage.engineering/)
+- Teenage Engineering - [teenage.engineering](https://teenage.engineering/)
 - Roland TB-303 Service Notes, Akai S950 Technical Manual, E-mu SP-1200 Service Manual, Alesis Quadraverb Owner's Manual
 
 ### Cultural and Technical Sources
 - Warp Records: [warp.net](https://warp.net/), Rephlex Records archive
-- The Designers Republic — [thedesignersrepublic.com](https://thedesignersrepublic.com/)
-- Hans Cousto — *The Cosmic Octave* (Earth frequency calculations)
+- The Designers Republic - [thedesignersrepublic.com](https://thedesignersrepublic.com/)
+- Hans Cousto - *The Cosmic Octave* (Earth frequency calculations)
 
 ### Academic
-- Bjorklund, E. (2003) — "The Theory of Rep-Rate Pattern Generation in the SNS Timing System" (Euclidean rhythm algorithm)
-- Schroeder, M.R. (1962) — "Natural Sounding Artificial Reverberation" (diffusion network architecture)
-- Roads, C. (2001) — *Microsound* (granular synthesis theory)
+- Bjorklund, E. (2003) - "The Theory of Rep-Rate Pattern Generation in the SNS Timing System" (Euclidean rhythm algorithm)
+- Schroeder, M.R. (1962) - "Natural Sounding Artificial Reverberation" (diffusion network architecture)
+- Roads, C. (2001) - *Microsound* (granular synthesis theory)
 
 ---
 
@@ -366,4 +366,4 @@ AGPL-3.0-or-later
 
 ## Author
 
-**Tom Boro** — [github.com/coloursinvision](https://github.com/coloursinvision)
+**Tom Boro** - [github.com/coloursinvision](https://github.com/coloursinvision)
