@@ -9,7 +9,7 @@
 #   hotfix/* branches -> lint + type-check + test
 #
 # A gitleaks secret scan runs on every trigger, in parallel with lint.
-# A text-hygiene check judges only the lines each change adds, also in parallel.
+# A text-hygiene check judges the lines each change adds and the whole tree, also in parallel.
 # =============================================================================
 
 name: CI
@@ -228,10 +228,11 @@ jobs:
         # --redact keeps any match out of this public build log.
         run: ${RUNNER_TEMP}/bin/gitleaks detect --redact -v
 
-  # Job 6: text hygiene. Only the lines a change adds are judged, against the
-  # pull-request base or the pushed range, so text that predates the policy
-  # does not fail the build. Commit messages and the pull-request title land
-  # in history, so they are checked as well.
+  # Job 6: text hygiene. The lines a change adds are judged against the
+  # pull-request base or the pushed range, so a finding points at the change
+  # that introduced it; the whole tree is judged as well, which also catches
+  # text carried along by a rename. Commit messages and the pull-request title
+  # land in history, so they are checked too.
   text-hygiene:
     name: "Text Hygiene"
     runs-on: ubuntu-24.04
@@ -297,3 +298,11 @@ jobs:
             python scripts/check_text_hygiene.py --commit-msg "$RUNNER_TEMP/pr-title" || status=1
           fi
           exit "$status"
+
+      - name: Check the whole tree
+        if: ${{ !cancelled() && steps.base.outcome == 'success' }}
+        run: |
+          # The warnings over the whole tree are known and judged; a new one on an
+          # added line is annotated by the first step, so only failures annotate here.
+          echo "::remove-matcher owner=text-hygiene-warn::"
+          python scripts/check_text_hygiene.py --all
