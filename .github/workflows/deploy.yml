@@ -40,6 +40,8 @@ jobs:
             set -eu
             echo "=== IDM Deploy $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
             cd /opt/idm
+            # The droplet's compose file takes the image tag from IDM_API_TAG, latest by default.
+            export IDM_API_TAG="$EXPECTED_SHA"
             docker compose pull idm-api
             docker compose up -d --wait --wait-timeout 180 idm-api
             echo "=== Health check ==="
@@ -50,5 +52,6 @@ jobs:
             running=$(docker inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' "$cid")
             echo "expected $EXPECTED_SHA, running $running"
             test "$running" = "$EXPECTED_SHA"
-            docker image prune -f
+            # Unused images of this repository only; a rollback pulls its image again.
+            docker image prune -af --filter "label=org.opencontainers.image.source=https://github.com/coloursinvision/idm-generative-system"
             echo "=== Deploy complete ==="
