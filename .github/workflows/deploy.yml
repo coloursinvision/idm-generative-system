@@ -31,8 +31,8 @@ jobs:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          script_stop: true
           script: |
+            set -e
             echo "=== IDM Deploy $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
             cd /opt/idm
             docker compose pull idm-api
