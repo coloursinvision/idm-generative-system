@@ -36,10 +36,9 @@ jobs:
             echo "=== IDM Deploy $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
             cd /opt/idm
             docker compose pull idm-api
-            docker compose up -d idm-api
+            docker compose up -d --wait --wait-timeout 180 idm-api
             docker image prune -f
             echo "=== Health check ==="
-            sleep 10
             curl -sf http://localhost:8000/health || exit 1
             echo ""
             echo "=== Deploy complete ==="
