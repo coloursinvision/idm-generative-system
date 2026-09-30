@@ -25,6 +25,16 @@ jobs:
     runs-on: ubuntu-24.04
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
+      # Without a fingerprint the SSH action accepts any host key, so the deploy stops first.
+      - name: Require the host key fingerprint
+        env:
+          FINGERPRINT: ${{ vars.DEPLOY_HOST_FINGERPRINT }}
+        run: |
+          if [[ ! "$FINGERPRINT" =~ ^SHA256:[A-Za-z0-9+/]{43}$ ]]; then
+            echo "::error::DEPLOY_HOST_FINGERPRINT is missing or not a SHA256 host key fingerprint"
+            exit 1
+          fi
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
         env:
@@ -35,6 +45,7 @@ jobs:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
+          fingerprint: ${{ vars.DEPLOY_HOST_FINGERPRINT }}
           envs: EXPECTED_SHA
           script: |
             set -eu
