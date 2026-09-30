@@ -27,18 +27,28 @@ jobs:
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
+        env:
+          # The commit the CI run built; github.sha is the default branch tip here.
+          # Passed through the environment, never into the script text.
+          EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
+          envs: EXPECTED_SHA
           script: |
-            set -e
+            set -eu
             echo "=== IDM Deploy $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
             cd /opt/idm
             docker compose pull idm-api
             docker compose up -d --wait --wait-timeout 180 idm-api
-            docker image prune -f
             echo "=== Health check ==="
             curl -sf http://localhost:8000/health || exit 1
             echo ""
+            echo "=== Revision check ==="
+            cid=$(docker compose ps -q idm-api)
+            running=$(docker inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' "$cid")
+            echo "expected $EXPECTED_SHA, running $running"
+            test "$running" = "$EXPECTED_SHA"
+            docker image prune -f
             echo "=== Deploy complete ==="
