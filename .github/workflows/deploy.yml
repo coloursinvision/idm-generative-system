@@ -24,6 +24,10 @@ jobs:
     name: "Deploy to production"
     runs-on: ubuntu-24.04
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    # The deploy secrets live in this environment, which only main may deploy to.
+    environment:
+      name: production
+      url: https://idm.coloursinvision.ai
     steps:
       # Without a fingerprint the SSH action accepts any host key, so the deploy stops first.
       - name: Require the host key fingerprint
