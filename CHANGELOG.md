@@ -6,6 +6,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.10.3] - 2026-10-01 - Deploy hardening (no behaviour change)
+
+### Added
+- **Commit tag on every image:** CI also tags each image with its full commit SHA.
+- **Production environment:** the deploy job runs in the GitHub environment `production`, which only `main` may deploy to; the environment holds the deploy key as a secret and the host and user as variables.
+
+### Changed
+- **Deploy script:** stops at the first failing command; waits for the container's healthcheck through `docker compose up --wait` instead of a fixed sleep; pulls the image by the commit tag CI built instead of `latest`; compares the running container's revision label with that commit; prunes only this repository's unused images, after the checks.
+- **Deploy connection:** the droplet's SSH host key is pinned through a repository variable, and the job stops first if the variable is missing or malformed.
+
+### Removed
+- The `script_stop` input, which the SSH action ignores.
+
+### Notes
+- No functional change; the application is identical to `v0.10.2`. The deploy runs its workflow from `main`, so this release is the first to exercise these changes.
+
+---
+
 ## [0.10.2] - 2026-09-27 - Committed-text hygiene and CI hardening (no behaviour change)
 
 ### Added
