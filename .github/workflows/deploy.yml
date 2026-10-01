@@ -24,7 +24,7 @@ jobs:
     name: "Deploy to production"
     runs-on: ubuntu-24.04
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    # The deploy secrets live in this environment, which only main may deploy to.
+    # The deploy key and host settings live in this environment, which only main may deploy to.
     environment:
       name: production
       url: https://idm.coloursinvision.ai
@@ -46,8 +46,8 @@ jobs:
           # Passed through the environment, never into the script text.
           EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}
         with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
+          host: ${{ vars.DEPLOY_HOST }}
+          username: ${{ vars.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           fingerprint: ${{ vars.DEPLOY_HOST_FINGERPRINT }}
           envs: EXPECTED_SHA
