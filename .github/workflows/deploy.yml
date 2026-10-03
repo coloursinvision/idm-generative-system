@@ -19,7 +19,12 @@ jobs:
   deploy:
     name: "Deploy to production"
     runs-on: ubuntu-24.04
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    # A pull request from a fork can name its branch main, so the CI run must also come
+    # from a push to this repository.
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
     # The deploy key and host settings live in this environment, which only main may deploy to.
     environment:
       name: production
