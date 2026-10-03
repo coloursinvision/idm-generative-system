@@ -17,7 +17,7 @@ jobs:
     # match the Playwright version in frontend/package-lock.json; on a mismatch
     # the tests fail and Playwright names the image it requires.
     container:
-      image: mcr.microsoft.com/playwright:v1.59.1-noble
+      image: mcr.microsoft.com/playwright:v1.58.2-noble
       options: --user 1001
 
     steps:
