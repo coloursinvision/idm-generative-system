@@ -37,32 +37,13 @@ jobs:
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
-        env:
-          # The commit the CI run built; github.sha is the default branch tip here.
-          # Passed through the environment, never into the script text.
-          EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}
         with:
           host: ${{ vars.DEPLOY_HOST }}
           username: ${{ vars.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           fingerprint: ${{ vars.DEPLOY_HOST_FINGERPRINT }}
-          envs: EXPECTED_SHA
-          script: |
-            set -eu
-            echo "=== IDM Deploy $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
-            cd /opt/idm
-            # The droplet's compose file takes the image tag from IDM_API_TAG, latest by default.
-            export IDM_API_TAG="$EXPECTED_SHA"
-            docker compose pull idm-api
-            docker compose up -d --wait --wait-timeout 180 idm-api
-            echo "=== Health check ==="
-            curl -sf http://localhost:8000/health || exit 1
-            echo ""
-            echo "=== Revision check ==="
-            cid=$(docker compose ps -q idm-api)
-            running=$(docker inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' "$cid")
-            echo "expected $EXPECTED_SHA, running $running"
-            test "$running" = "$EXPECTED_SHA"
-            # Unused images of this repository only; a rollback pulls its image again.
-            docker image prune -af --filter "label=org.opencontainers.image.source=https://github.com/coloursinvision/idm-generative-system"
-            echo "=== Deploy complete ==="
+          # The key's forced command runs scripts/deploy_api.sh with the command it
+          # receives as the only argument, so the command is just the commit the CI
+          # run built (github.sha is the default branch tip here); the script refuses
+          # anything else.
+          script: ${{ github.event.workflow_run.head_sha }}
