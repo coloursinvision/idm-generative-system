@@ -13,6 +13,12 @@ jobs:
   e2e:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    # The image carries the browsers and their system packages. Its tag must
+    # match the Playwright version in frontend/package-lock.json; on a mismatch
+    # the tests fail and Playwright names the image it requires.
+    container:
+      image: mcr.microsoft.com/playwright:v1.59.1-noble
+      options: --user 1001
 
     steps:
       - uses: actions/checkout@v7
@@ -26,16 +32,6 @@ jobs:
       - name: Install dependencies
         working-directory: frontend
         run: npm ci
-
-      - name: Cache Playwright browsers
-        uses: actions/cache@v6
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
-
-      - name: Install Playwright browsers
-        working-directory: frontend
-        run: npm run e2e:install -- --with-deps chromium firefox
 
       - name: Run E2E tests
         working-directory: frontend
