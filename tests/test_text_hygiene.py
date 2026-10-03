@@ -1339,3 +1339,180 @@ class TestContractDiff:
         result = run_checker("--diff", "HEAD", cwd=tmp_path)
         assert result.returncode == 2, result.stdout
         assert "[ABORT]" in result.stderr, result.stderr
+
+
+# T0 in commit messages: a trailer or footer that credits a tool. The trailer
+# form found in this repository's own history and the one the harness
+# documents as its default are both covered, beside the other tools' forms.
+HARNESS_TRAILER = "Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
+DOCUMENTED_TRAILER = "Co-authored-by: Claude <claude@anthropic.com>"
+
+
+def check_message(tmp_path: Path, message: str) -> Result:
+    """Write a commit message fixture and run --commit-msg on it."""
+    write(tmp_path, "COMMIT_EDITMSG", message)
+    return run_checker("--commit-msg", "COMMIT_EDITMSG", cwd=tmp_path)
+
+
+class TestNegativeAttribution:
+    """T0: people's trailers, prose that mentions a key, and footers without a tool pass."""
+
+    @pytest.mark.parametrize(
+        "trailer",
+        [
+            "Co-authored-by: Jane Doe <jane@example.com>",
+            "Co-authored-by: Jane Doe <12345+janedoe@users.noreply.github.com>",
+            "Signed-off-by: Ai Tanaka <ai.tanaka@example.com>",
+            "Reviewed-by: Lena Model <lena@example.com>",
+        ],
+        ids=["co-author", "github-noreply", "given-name-ai", "surname-model"],
+    )
+    def test_human_trailers_pass(self, tmp_path: Path, trailer: str) -> None:
+        """A name is not an identifier: Ai and Model are people here."""
+        message = f"fix(engine): clamp the resonance seed\n\nKeeps the seed audible.\n\n{trailer}\n"
+        assert_clean(check_message(tmp_path, message), "COMMIT_EDITMSG")
+
+    def test_trailer_key_in_prose_passes(self, tmp_path: Path) -> None:
+        """The rule reads a key followed by a colon, not the words of a sentence."""
+        message = dedent(
+            """\
+            docs(contributing): explain the co-authored-by trailer
+
+            The co-authored-by trailer credits a second person; GitHub reads it
+            when the author is a pair. Nothing about Claude or Copilot belongs here.
+            """
+        )
+        assert_clean(check_message(tmp_path, message), "COMMIT_EDITMSG")
+
+    @pytest.mark.parametrize(
+        "footer",
+        [
+            "Generated with the regional profile model.",
+            "Created by the dataset generator from params.yaml.",
+            "Written by hand from the TR-808 service manual.",
+            "Made with a Mackie CR-1604 and a TB-303.",
+        ],
+        ids=["model", "generator", "by-hand", "hardware"],
+    )
+    def test_footers_without_a_tool_pass(self, tmp_path: Path, footer: str) -> None:
+        """model, generator and hardware names are domain words, not identifiers."""
+        message = f"feat(ml): add the profile loader\n\n{footer}\n"
+        assert_clean(check_message(tmp_path, message), "COMMIT_EDITMSG")
+
+    def test_tool_words_outside_an_attribution_pass(self, tmp_path: Path) -> None:
+        """A verb in mid-sentence and a word that happens to contain AI are not footers."""
+        message = dedent(
+            """\
+            fix(ui): keep the highlight created by the cursor
+
+            The selection is created by the cursor drag and cleared on blur.
+            AIFF export stays unchanged.
+            """
+        )
+        assert_clean(check_message(tmp_path, message), "COMMIT_EDITMSG")
+
+    def test_rule_applies_to_messages_only(self, tmp_path: Path) -> None:
+        """T0 judges commit messages; a document quoting a trailer is read under T1 alone."""
+        path = "docs/CONTRIBUTING.md"
+        write(tmp_path, path, f"Never add this trailer to a commit:\n\n{DOCUMENTED_TRAILER}\n")
+        assert_clean(run_checker("--files", path, cwd=tmp_path), path)
+
+
+class TestPositiveAttribution:
+    """T0: a trailer or footer that credits a tool fails at its line."""
+
+    @pytest.mark.parametrize(
+        "trailer",
+        [
+            HARNESS_TRAILER,
+            DOCUMENTED_TRAILER,
+            "co-authored-by: claude <noreply@anthropic.com>",
+            "Signed-off-by: GitHub Copilot <copilot@github.com>",
+            "Assisted-by: GPT-4o",
+            "Generated-by: Gemini",
+            "Co-authored-by: Cursor Agent <cursoragent@cursor.com>",
+            "Co-authored-by: Code Helper <noreply@anthropic.com>",
+            "Co-authored-by: AI <bot@example.com>",
+            "Co-authored-by: an LLM",
+            "Helped-by: a coding assistant",
+        ],
+        ids=[
+            "harness-history",
+            "harness-documented",
+            "lower-case",
+            "copilot-signed-off",
+            "gpt-assisted",
+            "gemini-generated",
+            "cursor",
+            "vendor-in-address",
+            "ai-alone",
+            "llm",
+            "assistant",
+        ],
+    )
+    def test_tool_trailer_fails(self, tmp_path: Path, trailer: str) -> None:
+        message = f"fix(engine): clamp the resonance seed\n\nKeeps the seed audible.\n\n{trailer}\n"
+        result = check_message(tmp_path, message)
+        assert result.returncode == 1, result.stdout
+        assert_reported(result, "FAIL", "COMMIT_EDITMSG", 5, "T0")
+
+    @pytest.mark.parametrize(
+        "footer",
+        [
+            "Generated with Claude Code",
+            "Created by ChatGPT",
+            "Written by GitHub Copilot.",
+            "Assisted by Gemini",
+            "Made with Cursor",
+            "Co-written with an AI assistant",
+            "_Generated with Claude Code_",
+            "> generated using OpenAI Codex",
+        ],
+        ids=[
+            "generated-with",
+            "created-by",
+            "written-by",
+            "assisted-by",
+            "made-with",
+            "co-written",
+            "underscored",
+            "quoted-lower-case",
+        ],
+    )
+    def test_tool_footer_fails(self, tmp_path: Path, footer: str) -> None:
+        message = f"feat(ml): add the profile loader\n\n{footer}\n"
+        result = check_message(tmp_path, message)
+        assert result.returncode == 1, result.stdout
+        assert_reported(result, "FAIL", "COMMIT_EDITMSG", 3, "T0")
+
+    def test_harness_footer_fails_under_both_tiers(self, tmp_path: Path) -> None:
+        """The robot emoji is T1 and the footer text is T0; both are reported on the line."""
+        footer = "%ROBOT% Generated with [Claude Code](https://claude.com/claude-code)"
+        result = check_message(tmp_path, f"chore: bump ruff\n\n{footer}\n")
+        assert result.returncode == 1, result.stdout
+        assert_reported(result, "FAIL", "COMMIT_EDITMSG", 3, label("ROBOT"))
+        assert_reported(result, "FAIL", "COMMIT_EDITMSG", 3, "T0")
+
+    def test_trailer_inside_the_body_fails(self, tmp_path: Path) -> None:
+        """A key-value line is judged wherever it sits, not only in the last paragraph."""
+        message = dedent(
+            f"""\
+            feat(ml): add the profile loader
+
+            {DOCUMENTED_TRAILER}
+
+            The loader reads the six spokes.
+            """
+        )
+        result = check_message(tmp_path, message)
+        assert result.returncode == 1, result.stdout
+        assert_reported(result, "FAIL", "COMMIT_EDITMSG", 3, "T0")
+
+    def test_summary_counts_t0_with_t1(self, tmp_path: Path) -> None:
+        message = (
+            f"docs(readme): clarify the pipeline %EMDASH% registry step\n\n{HARNESS_TRAILER}\n"
+        )
+        result = check_message(tmp_path, message)
+        summary = SUMMARY.search(result.stdout)
+        assert summary, result.stdout
+        assert summary.groups() == ("0", "0", "2"), result.stdout
