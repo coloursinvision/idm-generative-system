@@ -30,25 +30,40 @@ jobs:
       name: production
       url: https://idm.coloursinvision.ai
     steps:
-      # Without a fingerprint the SSH action accepts any host key, so the deploy stops first.
-      - name: Require the host key fingerprint
+      # ssh trusts only the pinned key; this step names the problem when that key is missing,
+      # malformed or disagrees with the recorded fingerprint.
+      - name: Require the pinned host key
         env:
-          FINGERPRINT: ${{ vars.DEPLOY_HOST_FINGERPRINT }}
+          DEPLOY_HOST_KEY: ${{ vars.DEPLOY_HOST_KEY }}
+          DEPLOY_HOST_FINGERPRINT: ${{ vars.DEPLOY_HOST_FINGERPRINT }}
         run: |
-          if [[ ! "$FINGERPRINT" =~ ^SHA256:[A-Za-z0-9+/]{43}$ ]]; then
-            echo "::error::DEPLOY_HOST_FINGERPRINT is missing or not a SHA256 host key fingerprint"
+          key_format='^ecdsa-sha2-nistp256 [A-Za-z0-9+/]+={0,2}$'
+          if [[ ! "$DEPLOY_HOST_KEY" =~ $key_format ]]; then
+            echo "::error::DEPLOY_HOST_KEY is missing or not an ECDSA public host key"
+            exit 1
+          fi
+          fingerprint=$(printf '%s\n' "$DEPLOY_HOST_KEY" | ssh-keygen -lf - | awk '{print $2}')
+          if [[ "$fingerprint" != "$DEPLOY_HOST_FINGERPRINT" ]]; then
+            echo "::error::DEPLOY_HOST_KEY does not match DEPLOY_HOST_FINGERPRINT"
             exit 1
           fi
 
       - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ vars.DEPLOY_HOST }}
-          username: ${{ vars.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          fingerprint: ${{ vars.DEPLOY_HOST_FINGERPRINT }}
-          # The key's forced command runs scripts/deploy_api.sh with the command it
-          # receives as the only argument, so the command is just the commit the CI
-          # run built (github.sha is the default branch tip here); the script refuses
+        timeout-minutes: 10
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          DEPLOY_HOST_KEY: ${{ vars.DEPLOY_HOST_KEY }}
+          # The commit the CI run built; github.sha is the default branch tip here.
+          COMMIT: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          umask 077
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$RUNNER_TEMP/deploy_key"
+          printf '%s %s\n' "$DEPLOY_HOST" "$DEPLOY_HOST_KEY" > "$RUNNER_TEMP/known_hosts"
+          # The key's forced command runs scripts/deploy_api.sh with the command it receives
+          # as the only argument, so the command is just the commit; the script refuses
           # anything else.
-          script: ${{ github.event.workflow_run.head_sha }}
+          ssh -n -T -i "$RUNNER_TEMP/deploy_key" -o IdentitiesOnly=yes -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$RUNNER_TEMP/known_hosts" \
+            -o ConnectTimeout=30 "$DEPLOY_USER@$DEPLOY_HOST" "$COMMIT"
