@@ -4,7 +4,7 @@
 #
 # Triggers:
 #   push to develop   -> lint + type-check + test + Docker build (no push)
-#   PR to main        -> lint + type-check + test + Docker build (no push)
+#   pull request      -> lint + type-check + test + Docker build (no push)
 #   push to main      -> lint + type-check + test + Docker build + push to GHCR
 #   hotfix/* branches -> lint + type-check + test
 #
@@ -149,7 +149,7 @@ jobs:
     name: "Docker"
     runs-on: ubuntu-24.04
     needs: [lint, typecheck, test, secret-scan]
-    # Only build Docker on develop pushes, main pushes, and PRs to main.
+    # Only build Docker on develop pushes, main pushes, and pull requests.
     if: >-
       github.event_name == 'push' &&
       (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main')

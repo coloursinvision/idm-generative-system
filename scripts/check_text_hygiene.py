@@ -7,8 +7,9 @@ tests/test_text_hygiene.py keeps this file in step with them.
 
 Text rendered to a user is never read. In .py files only docstrings and
 comments are checked, in .ts and .tsx only comment lines, and in .md, .toml,
-.yml, .yaml and .sh every line. Commit messages are held to T1 alone, since
-their Refs trailers cite the vault by design.
+.yml, .yaml and .sh every line. Commit messages are held to T1 and to T0, the
+trailers and footers that credit a tool; the namespace rule does not apply to
+them, since their Refs trailers cite the vault by design.
 
 Usage:
     python scripts/check_text_hygiene.py --staged           # lines the next commit adds
@@ -136,6 +137,28 @@ NAMESPACE = re.compile(
     r"|TODO-[A-Z0-9][A-Za-z0-9]*)"
     r"(?![A-Za-z0-9_])"
 )
+
+# T0: a commit trailer or footer that credits a tool. A trailer is any key
+# ending in -by, matched without regard to case as git matches keys; a footer
+# is a line that opens with an attribution verb. Both fail only when the rest
+# of the line names a tool, a vendor or a generic stand-in. The lexicon leaves
+# out words that carry domain meaning here (model, generator, bot) and AI is
+# matched in capitals only, so a given name such as Ai stays a name.
+TRAILER = re.compile(r"([A-Za-z][A-Za-z0-9-]*-by)[ \t]*:(.*)$", re.IGNORECASE)
+FOOTER = re.compile(
+    r"[^A-Za-z0-9]*(?:generated|created|written|assisted|co-written|authored|made)"
+    r"\s+(?:with|by|using)\b(.*)$",
+    re.IGNORECASE,
+)
+TOOL_WORDS = re.compile(
+    r"(?<![A-Za-z0-9])(?:"
+    r"anthropic|claude|openai|chatgpt|codex|copilot|gemini|cursor|windsurf|codeium"
+    r"|devin|aider|tabnine|codewhisperer|deepseek|mistral|gpt-?[0-9][A-Za-z0-9.-]*"
+    r"|llm|assistant|language model"
+    r")(?![A-Za-z0-9])",
+    re.IGNORECASE,
+)
+AI_WORD = re.compile(r"(?<![A-Za-z0-9])AI(?![A-Za-z0-9])")
 
 # Allowlist item 4, as the skill words it. Only CR-1604 collides with a
 # namespace shape today; the full list keeps the two easy to compare.
@@ -282,6 +305,19 @@ def references(content: str) -> list[tuple[int, str, str]]:
         for match in NAMESPACE.finditer(content)
         if match.group(0) not in HARDWARE_MODELS
     ]
+
+
+def attribution(content: str) -> list[tuple[int, str, str]]:
+    """Column, tag and detail of a T0 trailer or footer crediting a tool, if the line is one."""
+    match = TRAILER.match(content) or FOOTER.match(content)
+    if match is None:
+        return []
+    credited = match.group(match.lastindex or 1)
+    hit = TOOL_WORDS.search(credited) or AI_WORD.search(credited)
+    if hit is None:
+        return []
+    kind = "trailer" if match.re is TRAILER else "footer"
+    return [(match.start(match.lastindex or 1) + hit.start(), "FAIL", f"T0 {kind} credits a tool")]
 
 
 def whole_lines(lines: Lines) -> Spans:
@@ -461,13 +497,17 @@ def apply_fixes(lines: Lines, spans: Spans) -> tuple[str, int]:
     return "".join(parts), rewrites
 
 
-def findings_in(lines: Lines, spans: Spans, *, namespaces: bool) -> list[Finding]:
+def findings_in(
+    lines: Lines, spans: Spans, *, namespaces: bool, credits: bool = False
+) -> list[Finding]:
     found: list[Finding] = []
     for number in sorted(spans):
         content = lines[number - 1][0]
         hits = typography(content)
         if namespaces:
             hits += references(content)
+        if credits:
+            hits += attribution(content)
         for column, tag, detail in sorted(hits):
             if any(start <= column < end for start, end in spans[number]):
                 found.append(Finding(tag, number, column + 1, detail))
@@ -652,7 +692,7 @@ def check_commit_message(path: str, report: Report) -> None:
         report.file(path, undecodable(exc).findings)
         return
     lines = split_lines(text)
-    report.file(path, findings_in(lines, message_spans(lines), namespaces=False))
+    report.file(path, findings_in(lines, message_spans(lines), namespaces=False, credits=True))
 
 
 def parse_args(argv: list[str] | None) -> argparse.Namespace:

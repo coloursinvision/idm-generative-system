@@ -1,11 +1,7 @@
-# =============================================================================
-# IDM Generative System - Continuous Deployment
-# Triggers after CI passes on main. SSHes into the production droplet,
-# pulls the latest GHCR image, and restarts the stack.
-# =============================================================================
-
 name: Deploy
 
+# GitHub runs the version of this file on the default branch, so a change here
+# takes effect only once it is on main.
 on:
   workflow_run:
     workflows: ["CI"]
@@ -23,50 +19,51 @@ jobs:
   deploy:
     name: "Deploy to production"
     runs-on: ubuntu-24.04
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    # A pull request from a fork can name its branch main, so the CI run must also come
+    # from a push to this repository.
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
     # The deploy key and host settings live in this environment, which only main may deploy to.
     environment:
       name: production
       url: https://idm.coloursinvision.ai
     steps:
-      # Without a fingerprint the SSH action accepts any host key, so the deploy stops first.
-      - name: Require the host key fingerprint
+      # ssh trusts only the pinned key; this step names the problem when that key is missing,
+      # malformed or disagrees with the recorded fingerprint.
+      - name: Require the pinned host key
         env:
-          FINGERPRINT: ${{ vars.DEPLOY_HOST_FINGERPRINT }}
+          DEPLOY_HOST_KEY: ${{ vars.DEPLOY_HOST_KEY }}
+          DEPLOY_HOST_FINGERPRINT: ${{ vars.DEPLOY_HOST_FINGERPRINT }}
         run: |
-          if [[ ! "$FINGERPRINT" =~ ^SHA256:[A-Za-z0-9+/]{43}$ ]]; then
-            echo "::error::DEPLOY_HOST_FINGERPRINT is missing or not a SHA256 host key fingerprint"
+          key_format='^ecdsa-sha2-nistp256 [A-Za-z0-9+/]+={0,2}$'
+          if [[ ! "$DEPLOY_HOST_KEY" =~ $key_format ]]; then
+            echo "::error::DEPLOY_HOST_KEY is missing or not an ECDSA public host key"
+            exit 1
+          fi
+          fingerprint=$(printf '%s\n' "$DEPLOY_HOST_KEY" | ssh-keygen -lf - | awk '{print $2}')
+          if [[ "$fingerprint" != "$DEPLOY_HOST_FINGERPRINT" ]]; then
+            echo "::error::DEPLOY_HOST_KEY does not match DEPLOY_HOST_FINGERPRINT"
             exit 1
           fi
 
       - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1
+        timeout-minutes: 10
         env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          DEPLOY_HOST_KEY: ${{ vars.DEPLOY_HOST_KEY }}
           # The commit the CI run built; github.sha is the default branch tip here.
-          # Passed through the environment, never into the script text.
-          EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}
-        with:
-          host: ${{ vars.DEPLOY_HOST }}
-          username: ${{ vars.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          fingerprint: ${{ vars.DEPLOY_HOST_FINGERPRINT }}
-          envs: EXPECTED_SHA
-          script: |
-            set -eu
-            echo "=== IDM Deploy $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
-            cd /opt/idm
-            # The droplet's compose file takes the image tag from IDM_API_TAG, latest by default.
-            export IDM_API_TAG="$EXPECTED_SHA"
-            docker compose pull idm-api
-            docker compose up -d --wait --wait-timeout 180 idm-api
-            echo "=== Health check ==="
-            curl -sf http://localhost:8000/health || exit 1
-            echo ""
-            echo "=== Revision check ==="
-            cid=$(docker compose ps -q idm-api)
-            running=$(docker inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' "$cid")
-            echo "expected $EXPECTED_SHA, running $running"
-            test "$running" = "$EXPECTED_SHA"
-            # Unused images of this repository only; a rollback pulls its image again.
-            docker image prune -af --filter "label=org.opencontainers.image.source=https://github.com/coloursinvision/idm-generative-system"
-            echo "=== Deploy complete ==="
+          COMMIT: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          umask 077
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$RUNNER_TEMP/deploy_key"
+          printf '%s %s\n' "$DEPLOY_HOST" "$DEPLOY_HOST_KEY" > "$RUNNER_TEMP/known_hosts"
+          # The key's forced command runs scripts/deploy_api.sh with the command it receives
+          # as the only argument, so the command is just the commit; the script refuses
+          # anything else.
+          ssh -n -T -i "$RUNNER_TEMP/deploy_key" -o IdentitiesOnly=yes -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$RUNNER_TEMP/known_hosts" \
+            -o ConnectTimeout=30 "$DEPLOY_USER@$DEPLOY_HOST" "$COMMIT"

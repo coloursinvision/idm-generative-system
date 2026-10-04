@@ -6,6 +6,28 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.10.4] - 2026-10-04 - Deploy path hardening and commit-message checks (no behaviour change)
+
+### Added
+- **Deploy script** (`scripts/deploy_api.sh`): takes one lowercase 40-character commit SHA and refuses anything else before running a command; then pulls the image tagged with that commit, waits for the healthcheck, checks health and the running revision, and prunes this repository's unused images. Covered by contract tests.
+- **Attribution check for commit messages:** the text-hygiene checker fails on commit trailers and footers that credit a tool, in the commit-msg hook and in CI for commit messages and the pull-request title.
+
+### Changed
+- **Deploy step:** sends only the commit SHA, through the runner's OpenSSH client, with a `known_hosts` that holds only the droplet's host key from a repository variable; a first step checks that key against the pinned fingerprint.
+- **Deploy trigger:** the deploy job runs only for CI runs of pushes to this repository, not for pull requests, including those from forks.
+- **e2e:** runs in the Playwright container image whose version matches the lockfile, instead of installing the browsers and their system packages on every run.
+- **pre-commit:** the ruff hook uses its current id, `ruff-check`.
+- Workflow comments corrected: when Docker builds, and the e2e and deploy headers.
+
+### Removed
+- The third-party SSH action from the deploy workflow.
+- The Playwright browser cache and install steps from e2e.
+
+### Notes
+- No functional change; the application is identical to `v0.10.3`. The deploy runs its workflow from `main`, so this release is the first to exercise the new deploy path.
+
+---
+
 ## [0.10.3] - 2026-10-01 - Deploy hardening (no behaviour change)
 
 ### Added
