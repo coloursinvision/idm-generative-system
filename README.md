@@ -296,7 +296,7 @@ Sampler, drum machine, and sequencer with 12 velocity-sensitive pads, 4 groups, 
 ## Project Structure
 
 ```
-IDM_Generative_System_app/
+idm-generative-system/
 ├── engine/
 │   ├── generator.py              <- Euclidean rhythms, Markov chain, mutate_pattern
 │   ├── sample_maker.py           <- glitch_click, noise_burst, fm_blip
@@ -335,7 +335,7 @@ The RAG and ML pipelines draw on **THE_MASTER_DATASET_SPECIFICATION** and its La
 - **Regional aesthetics:** UK IDM (Warp, Rephlex, Skam), Detroit Techno (UR, Model 500), Japan (Sublime, Frogman, Far East Recording)
 - **DSP algorithms:** acid slide (30ms RC glide), accent coupling, Detroit chord memory, Autechre-style stochastic granular distribution
 - **Environmental constraints:** 16kHz DAT brick-wall, -75dB pink noise floor, asymmetric saturation curves, DR 8–10 dynamic range targets
-- **Resonant frequency architecture:** Solfeggio series, Schumann resonance, brainwave entrainment bands, atonal/alikwotic sources
+- **Resonant frequency architecture:** Solfeggio series, Schumann resonance, brainwave entrainment bands, atonal/overtone sources
 
 Indexed in Qdrant with `text-embedding-3-large` (3072 dimensions); cosine-similarity retrieval with configurable context depth.
 
