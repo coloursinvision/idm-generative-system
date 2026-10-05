@@ -1,5 +1,3 @@
-# =============================================================================
-# IDM Generative System - CI Pipeline
 # Gitflow: develop = active dev, main = release-ready only.
 #
 # Triggers:
@@ -10,7 +8,6 @@
 #
 # A gitleaks secret scan runs on every trigger, in parallel with lint.
 # A text-hygiene check judges the lines each change adds and the whole tree, also in parallel.
-# =============================================================================
 
 name: CI
 
@@ -34,9 +31,6 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  # ---------------------------------------------------------------------------
-  # Job 1: Lint & Format
-  # ---------------------------------------------------------------------------
   lint:
     name: "Lint & Format"
     runs-on: ubuntu-24.04
@@ -61,9 +55,6 @@ jobs:
       - name: Ruff format check
         run: ruff format --check .
 
-  # ---------------------------------------------------------------------------
-  # Job 2: Type Check
-  # ---------------------------------------------------------------------------
   typecheck:
     name: "Type Check (mypy)"
     runs-on: ubuntu-24.04
@@ -90,9 +81,6 @@ jobs:
       - name: Run mypy
         run: mypy engine/ api/ knowledge/ --config-file pyproject.toml
 
-  # ---------------------------------------------------------------------------
-  # Job 3: Test
-  # ---------------------------------------------------------------------------
   test:
     name: "Test Suite"
     runs-on: ubuntu-24.04
@@ -142,9 +130,6 @@ jobs:
           path: coverage.xml
           retention-days: 14
 
-  # ---------------------------------------------------------------------------
-  # Job 4: Docker Build (+ Push on main)
-  # ---------------------------------------------------------------------------
   docker:
     name: "Docker"
     runs-on: ubuntu-24.04
@@ -210,9 +195,6 @@ jobs:
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
-  # ---------------------------------------------------------------------------
-  # Job 5 - Secret Scan
-  # ---------------------------------------------------------------------------
   secret-scan:
     name: "Secret Scan"
     runs-on: ubuntu-24.04
@@ -235,7 +217,7 @@ jobs:
         # --redact keeps any match out of this public build log.
         run: ${RUNNER_TEMP}/bin/gitleaks detect --redact -v
 
-  # Job 6: text hygiene. The lines a change adds are judged against the
+  # The lines a change adds are judged against the
   # pull-request base or the pushed range, so a finding points at the change
   # that introduced it; the whole tree is judged as well, which also catches
   # text carried along by a rename. Commit messages and the pull-request title
