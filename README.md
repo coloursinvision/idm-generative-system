@@ -6,7 +6,7 @@ Built around a 10-block effects chain that models specific hardware units - from
 
 Output targets: **Teenage Engineering PO-33 K.O!** and **EP-133 K.O.II** - the application generates samples, maps them to device-specific slot configurations, and produces step-by-step programming instructions for each hardware sequencer.
 
-**Live:** [idm.coloursinvision.ai](https://idm.coloursinvision.ai) | **Release:** `v0.9.0`
+**Live:** [idm.coloursinvision.ai](https://idm.coloursinvision.ai) | **Releases:** [GitHub Releases](https://github.com/coloursinvision/idm-generative-system/releases)
 
 ---
 
@@ -21,7 +21,7 @@ Output targets: **Teenage Engineering PO-33 K.O!** and **EP-133 K.O.II** - the a
 └───────────────────────────┬──────────────────────────────────┘
                             │ HTTP  (/api/* - nginx strips prefix)
 ┌───────────────────────────▼──────────────────────────────────┐
-│                    FastAPI Backend (v0.9.0)                   │
+│                       FastAPI Backend                        │
 │  /generate /process /ask /compose /effects /health           │
 │  /codegen /tuning /tuning/extract                            │
 └──────┬───────────────────┬───────────────────────┬───────────┘
@@ -205,7 +205,7 @@ npm run dev
 ### Verify
 
 ```bash
-curl http://localhost:8000/health        # {"status":"ok","version":"0.9.0"}
+curl http://localhost:8000/health        # {"status":"ok","version":"<version>"}
 pytest                                    # backend test suite
 npm --prefix frontend run test            # frontend vitest
 ```
@@ -238,7 +238,7 @@ pytest -v                 # Verbose output
 npm --prefix frontend run test    # Frontend vitest
 ```
 
-CI (`ci.yml`) runs `ruff check` + `ruff format --check`, `mypy`, the pytest suite, and a Docker build on every PR to `main` and push to `develop`/`main`.
+CI (`ci.yml`) runs on pushes to `develop`, `main` and `hotfix/**` and on pull requests to `develop` and `main`: `ruff check` and `ruff format --check`, `mypy`, the pytest suite, a gitleaks secret scan over the full history, a text-hygiene check and, except on `hotfix/**`, a Docker build (pushed to GHCR from `main` only). `e2e.yml` runs the Playwright suite in Chromium and Firefox on pushes and pull requests to the same branches.
 
 ---
 
