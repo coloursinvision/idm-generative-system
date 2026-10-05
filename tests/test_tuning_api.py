@@ -1,4 +1,4 @@
-"""test_tuning_api - integration tests for V2.3 /tuning endpoint.
+"""Integration tests for V2.3 /tuning endpoint.
 
 Pipeline layer:  6 - V2.3 Model Serving boundary
 Targets:         api.main.tuning handler + lifespan + V2 Pydantic models
@@ -20,9 +20,6 @@ Test environment requirements:
     - MLFLOW_TRACKING_URI + AWS credentials for model registry access
     - OPENAI_API_KEY (any value - only used by V1 RAGPipeline at import)
     - Active Production version of TuningEstimator in MLflow Registry
-
-Run:
-    pytest tests/test_tuning_api.py -v
 """
 
 from __future__ import annotations

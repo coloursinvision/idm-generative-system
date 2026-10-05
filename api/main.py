@@ -1,7 +1,4 @@
-"""
-api/main.py
-
-FastAPI backend for the IDM Generative System.
+"""FastAPI backend for the IDM Generative System.
 
 Endpoints:
     GET  /health    - liveness check
