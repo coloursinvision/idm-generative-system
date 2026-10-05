@@ -77,9 +77,7 @@ frontend/tsconfig.tsbuildinfo
 *.bak-S*
 .dvc/config.local.bak-*
 
-# ---------------------------------------------------------------------------
 # SOPS + age - secrets encryption (see .sops.yaml)
-# ---------------------------------------------------------------------------
 # Plaintext working forms - never commit
 secrets/*.plain.*
 secrets/*.dec.*
