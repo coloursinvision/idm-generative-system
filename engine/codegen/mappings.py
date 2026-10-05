@@ -1,7 +1,4 @@
-"""
-engine/codegen/mappings.py
-
-Central parameter translation layer for the IDM Generative System codegen module.
+"""Central parameter translation layer for the codegen module.
 
 Maps every Python engine parameter (generators, effects, patterns) to its
 SuperCollider and TidalCycles equivalent. Provides value transforms for
