@@ -1,6 +1,3 @@
-# =============================================================================
-# IDM Generative System - Production Dockerfile
-# Target: Self-hosted Docker Compose (DO droplet) with Nginx reverse proxy
 # Entrypoint: FastAPI + uvicorn (serves API + static frontend bundle)
 #
 # Three-stage build:
@@ -8,16 +5,10 @@
 #   2. python-builder   - Python: pip install into isolated venv
 #   3. runtime          - Slim image with venv + dist/ + application code
 #
-# Frontend source location: frontend/ subdirectory
-# =============================================================================
 # Build: docker build -t idm-api:latest .
 # Run:   docker run -p 8000:8000 --env-file .env idm-api:latest
-# =============================================================================
 
-# ---------------------------------------------------------------------------
-# Stage 1 - Frontend Builder
 # Install Node deps and produce Vite production bundle.
-# ---------------------------------------------------------------------------
 FROM node:22-slim AS frontend-builder
 
 WORKDIR /build
@@ -34,10 +25,7 @@ COPY frontend/public/ ./public/
 
 RUN npm run build
 
-# ---------------------------------------------------------------------------
-# Stage 2 - Python Builder
 # Install Python deps into a virtual-env so we can COPY only the venv later.
-# ---------------------------------------------------------------------------
 FROM python:3.11-slim AS python-builder
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -63,10 +51,7 @@ COPY pyproject.toml README.md ./
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
     pip install --no-cache-dir ".[ml,monitoring]"
 
-# ---------------------------------------------------------------------------
-# Stage 3 - Runtime
 # Slim image with only the venv + frontend bundle + application code.
-# ---------------------------------------------------------------------------
 FROM python:3.11-slim AS runtime
 
 # Runtime-only system libraries (no compilers).

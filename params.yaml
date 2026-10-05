@@ -4,9 +4,7 @@
 # Consumed by: scripts/generate_dataset.py, scripts/train_model.py
 # Versioned by: DVC (parameter tracking + cache invalidation)
 
-# ---------------------------------------------------------------------------
 # Dataset generation (scripts/generate_dataset.py)
-# ---------------------------------------------------------------------------
 generate:
   # Number of perturbed variants per TrackSpec. Each spec produces
   # 1 + n_perturbations rows (1 deterministic baseline + n perturbed).
@@ -42,9 +40,7 @@ generate:
     noise_sigma: 5.0
     mapper_sigma: 3.0
 
-# ---------------------------------------------------------------------------
 # Model training (scripts/train_model.py)
-# ---------------------------------------------------------------------------
 train:
   # Group-aware train / val / test split ratios (by spec_id).
   # test_size is the held-out test fraction; val_size is taken from the
