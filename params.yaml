@@ -12,8 +12,8 @@ generate:
   master_seed: 42
 
   # Number of TrackSpec combinations to generate per region.
-  # Total rows ≈ specs_per_region × 6 regions × (1 + n_perturbations).
-  # Default: 150 × 6 × 11 = 9,900 rows (~10k target).
+  # Total rows ≈ specs_per_region * 6 regions * (1 + n_perturbations).
+  # Default: 150 * 6 * 11 = 9,900 rows (~10k target).
   specs_per_region: 150
 
   # Output path (must match dvc.yaml outs).
