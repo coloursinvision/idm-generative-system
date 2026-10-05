@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 #
-# preflight_dvc_repro.sh - pre-flight checks for RUNBOOK_DVC_REPRO_BASELINE.md
-#
 # Verifies nine pre-conditions required before running `dvc repro` on the
 # IDM Generative System V2 ML pipeline (Layer 6). Designed to be invoked
 # from the repository root on a Tailscale-connected workstation host.

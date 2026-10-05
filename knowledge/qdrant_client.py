@@ -1,7 +1,4 @@
-"""
-knowledge/qdrant_client.py
-
-Knowledge base client for the IDM Generative System.
+"""Knowledge base client for the IDM Generative System.
 
 Handles:
     - Markdown document chunking (section-aware, preserves context)

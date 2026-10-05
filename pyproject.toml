@@ -1,5 +1,3 @@
-# IDM Generative System - Project Configuration
-# Single source of truth for metadata, dependencies, and tool configs.
 # Replaces requirements.txt (kept for Streamlit Cloud) and environment.yml (kept for conda).
 
 [build-system]
