@@ -1,9 +1,6 @@
-"""
-tests/test_rag.py
+"""Unit tests for the RAG pipeline and knowledge base endpoints.
 
-Unit tests for the RAG pipeline and knowledge base endpoints.
-
-All external dependencies (OpenAI, Qdrant) are mocked - no API keys or
+All external dependencies (OpenAI, Qdrant) are mocked - no
 network access required. Tests verify:
     - /ask endpoint returns structured response
     - /compose endpoint returns parsed JSON config
@@ -11,9 +8,6 @@ network access required. Tests verify:
     - RAG pipeline single-search optimisation (no double calls)
     - Knowledge base chunking logic
     - Error propagation from RAG pipeline to API
-
-Run:
-    pytest tests/test_rag.py -v
 """
 
 from __future__ import annotations

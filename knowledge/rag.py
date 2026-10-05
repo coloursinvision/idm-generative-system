@@ -1,7 +1,4 @@
-"""
-knowledge/rag.py
-
-RAG (Retrieval-Augmented Generation) pipeline for the IDM Generative System.
+"""RAG (Retrieval-Augmented Generation) pipeline for the IDM Generative System.
 
 Combines:
     - Qdrant semantic search (knowledge/qdrant_client.py)
