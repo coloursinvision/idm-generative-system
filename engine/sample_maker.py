@@ -1,5 +1,4 @@
 """Algorithmic sample generator for the IDM Generative System.
-Extracted and refactored from: notebooks/sample_maker.ipynb
 
 Generators:
     - glitch_click  : percussive click with exponential decay
