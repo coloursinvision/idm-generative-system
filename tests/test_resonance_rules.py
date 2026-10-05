@@ -9,8 +9,8 @@ Covers the 5 rule signatures (4 physical + 1 aesthetic):
     * solfeggio_cutoff_seed + SOLFEGGIO_HZ + REGIONAL_SOLFEGGIO_SEED  (aesthetic)
 
 All concrete numerical assertions are derived from the rule definitions
-and verified against the implementation's ground-truth output (see S3
-session log). Where a computed value sits near a rounding boundary (e.g.
+and verified against the implementation's ground-truth output. Where a
+computed value sits near a rounding boundary (e.g.
 60 Hz between A♯1 and B1), the test documents the boundary inline.
 """
 

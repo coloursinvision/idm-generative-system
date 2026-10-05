@@ -11,7 +11,6 @@ Requires:
     - Knowledge base ingested (43 chunks)
 
 Run:
-    cd IDM_Generative_System_app
     streamlit run streamlit_app/app.py
 """
 

@@ -2,7 +2,7 @@
 
 Purpose:
     Pin the CURRENT default-argument output of fm_blip() before the
-    FM-expansion work (branch feat/fm_blip-fm-expansion). The parameters added
+    FM-expansion work. The parameters added
     in that work are optional and additive: a default fm_blip() call must keep
     producing the exact same signal. These tests fail loudly if it does not.
 
@@ -11,8 +11,6 @@ Coverage:
     - fm_blip() determinism (no RNG): repeated calls are identical
     - fm_blip() value pins: global min/max and sampled points (np.allclose,
       portable across platforms - no architecture-brittle full-array hash)
-
-Refs: feat/fm_blip-fm-expansion (Stage 1, Commit 1 - pre-expansion contract)
 """
 
 from __future__ import annotations
@@ -22,7 +20,7 @@ import numpy as np
 from engine.sample_maker import SAMPLE_RATE, fm_analog, fm_blip
 
 # Golden values - captured from the current fm_blip() default output on engine
-# `idm` at the start of feat/fm_blip-fm-expansion. If a change here is
+# `idm` before the FM-expansion work. If a change here is
 # intentional, re-capture and update these constants deliberately.
 
 _DEFAULT_LENGTH = int(SAMPLE_RATE * 500.0 / 1000)  # 500 ms default -> 22050
@@ -66,7 +64,7 @@ class TestFmBlipCharacterization:
         assert np.allclose(sampled, _GOLDEN_SAMPLE_VAL, atol=_ATOL)
 
 
-# FM-expansion parameters (feat/fm_blip-fm-expansion): each is off by default
+# FM-expansion parameters: each is off by default
 # and has a real effect when engaged.
 
 

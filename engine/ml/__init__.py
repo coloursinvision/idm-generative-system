@@ -5,7 +5,7 @@ Consumes:       02-Knowledge/supporting/profiles/*.md (6 regional profile spokes
                 02-Knowledge/supporting/resonance/*.md (5 resonance rule spokes)
 Consumed by:    scripts/ (DVC pipeline entry points)
                 V2.3 model serving (/tuning endpoint)
-Status:         working (Layers 3–5 complete, Layer 6 complete S7)
+Status:         working (Layers 3–5 complete, Layer 6 complete)
 
 Exposes Layer 2 specifications (regional profile spokes and resonance rule
 spokes) from ``02-Knowledge/supporting/`` as typed, loadable objects and pure
@@ -49,23 +49,23 @@ Public API - resonance rules (aesthetic - 1):
     SOLFEGGIO_HZ             - full Solfeggio frequency table by label
     REGIONAL_SOLFEGGIO_SEED  - per-region seed assignment
 
-Public API - deterministic mapper (Layer 3 - complete S5):
+Public API - deterministic mapper (Layer 3 - complete):
     deterministic_map        - scene + track -> tuning + resonant stack
     DeterministicMapping     - structured mapper output
     ResonantPoint            - one resonant frequency + provenance tag
 
-Public API - Gaussian noise injection (Layer 4 - complete S6):
+Public API - Gaussian noise injection (Layer 4 - complete):
     GaussianNoiseInjector    - calibrated perturbation around mapper output
     PerturbationConfig       - per-parameter sigma configuration
 
-Public API - synthetic dataset generation (Layer 5 - complete S6):
+Public API - synthetic dataset generation (Layer 5 - complete):
     SyntheticDatasetGenerator - composes Layers 3+4 -> pd.DataFrame
     TrackSpec                - frozen input spec for one track/scene
 
-Public API - dataset schema validation (Layer 5–6 boundary - complete S7):
+Public API - dataset schema validation (Layer 5–6 boundary - complete):
     DATASET_SCHEMA           - pandera DataFrameSchema for synthetic DataFrame
 
-Public API - model training (Layer 6 - complete S7):
+Public API - model training (Layer 6 - complete):
     TrainingConfig           - single training run configuration
     OptunaConfig             - Optuna HPO configuration
     build_pipeline           - scikit-learn Pipeline construction
