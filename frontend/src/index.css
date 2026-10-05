@@ -17,7 +17,7 @@
     @apply bg-accent-green text-surface-0;
   }
 
-  /* Scrollbar — minimal, industrial */
+  /* Scrollbar - minimal, industrial */
   ::-webkit-scrollbar {
     width: 4px;
     height: 4px;

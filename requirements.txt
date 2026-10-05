@@ -1,4 +1,4 @@
-# IDM Generative System — Streamlit Cloud dependencies
+# IDM Generative System - Streamlit Cloud dependencies
 # This file exists ONLY for Streamlit Cloud deployment.
 # Canonical dependency spec: pyproject.toml [project.dependencies]
 #

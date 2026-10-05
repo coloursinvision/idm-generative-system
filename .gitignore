@@ -27,7 +27,7 @@ venv/
 secrets.toml
 .secrets
 
-# Audio files (large binaries — store in DO Spaces)
+# Audio files (large binaries - store in DO Spaces)
 *.wav
 *.mp3
 *.flac
@@ -78,21 +78,21 @@ frontend/tsconfig.tsbuildinfo
 .dvc/config.local.bak-*
 
 # ---------------------------------------------------------------------------
-# SOPS + age — secrets encryption (see .sops.yaml)
+# SOPS + age - secrets encryption (see .sops.yaml)
 # ---------------------------------------------------------------------------
-# Plaintext working forms — never commit
+# Plaintext working forms - never commit
 secrets/*.plain.*
 secrets/*.dec.*
 secrets/*.plain.yaml
 secrets/*.plain.yml
 *.decrypted
 
-# age private key — must NEVER reach the repo (lives in ~/.config/sops/age/)
+# age private key - must NEVER reach the repo (lives in ~/.config/sops/age/)
 keys.txt
 *.agekey
 age-key.txt
 
-# Built SPA served by backend (build artifact — never commit)
+# Built SPA served by backend (build artifact - never commit)
 static/
 # MLflow local SQLite tracking DB (created at backend startup)
 mlflow.db
