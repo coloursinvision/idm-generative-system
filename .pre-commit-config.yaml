@@ -1,8 +1,5 @@
-# =============================================================================
-# IDM Generative System - Pre-commit hooks
 # Install: pre-commit install
 # Run all: pre-commit run --all-files
-# =============================================================================
 
 default_language_version:
   python: python3.11
