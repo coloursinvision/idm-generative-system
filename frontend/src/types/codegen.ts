@@ -1,6 +1,4 @@
 /**
- * types/codegen.ts
- *
  * TypeScript interfaces for the code generation endpoints.
  * Mirrors CodegenRequest / CodegenResponse Pydantic models in api/main.py.
  *

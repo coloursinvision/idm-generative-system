@@ -1,6 +1,4 @@
 /**
- * components/codegen/index.ts
- *
  * Public exports for the codegen module.
  *
  * Usage in app router:

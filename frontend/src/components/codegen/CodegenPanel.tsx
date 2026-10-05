@@ -1,6 +1,4 @@
 /**
- * components/codegen/CodegenPanel.tsx
- *
  * Code generation panel - main app tab (docked mode).
  *
  * Layout (v4 - live-ready):
