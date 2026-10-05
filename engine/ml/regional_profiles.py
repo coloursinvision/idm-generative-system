@@ -1,4 +1,4 @@
-"""regional_profiles - Layer 2 profile spoke loader.
+"""Layer 2 profile spoke loader.
 
 Pipeline layer: 3
 Consumes:       02-Knowledge/supporting/profiles/*.md (6 spokes)
