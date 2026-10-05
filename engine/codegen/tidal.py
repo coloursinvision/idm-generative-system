@@ -1,7 +1,4 @@
-"""
-engine/codegen/tidal.py
-
-TidalCycles code generator for the IDM Generative System.
+"""TidalCycles code generator for the IDM Generative System.
 
 Generates structurally valid Haskell DSL code for TidalCycles, including:
 
