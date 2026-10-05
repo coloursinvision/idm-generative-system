@@ -1,6 +1,4 @@
 /**
- * e2e/fixtures.ts
- *
  * Shared test fixtures: API mock setup, deterministic responses,
  * and reusable page helpers for all E2E specs.
  *
