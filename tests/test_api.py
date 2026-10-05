@@ -1,7 +1,4 @@
-"""
-tests/test_api.py
-
-End-to-end test suite for the IDM Generative System FastAPI backend.
+"""End-to-end test suite for the IDM Generative System FastAPI backend.
 
 Uses FastAPI TestClient (ASGI in-process) - no subprocess, no live server.
 This is the production convention for FastAPI testing.
@@ -11,9 +8,6 @@ Coverage:
     GET  /effects   - schema completeness, canonical order
     POST /generate  - all generators, overrides, skip, bypass, error cases
     POST /process   - WAV upload, stereo->mono, bypass, error cases
-
-Run:
-    pytest tests/test_api.py -v
 """
 
 from __future__ import annotations

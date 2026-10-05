@@ -1,4 +1,4 @@
-"""test_tuning_extract - integration tests for V2.4 /tuning/extract endpoint.
+"""Integration tests for V2.4 /tuning/extract endpoint.
 
 Pipeline layer:  6 - V2.4 Frontend LLM extraction boundary
 Targets:         api.main.tuning_extract handler + V2.4 Pydantic models
@@ -14,9 +14,6 @@ Test environment requirements:
     - api.main must import - same [ml] + OPENAI_API_KEY env-var requirements
       as test_tuning_api.py (RAGPipeline check at construction time).
     - No live OpenAI / Qdrant traffic.
-
-Run:
-    pytest tests/test_tuning_extract.py -v
 """
 
 from __future__ import annotations
