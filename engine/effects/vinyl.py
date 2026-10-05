@@ -1,7 +1,4 @@
-"""
-engine/effects/vinyl.py
-
-Block 10: Vinyl Mastering (Pre-Emphasis EQ, DAT Brick-Wall, RIAA Curve).
+"""Block 10: Vinyl Mastering (Pre-Emphasis EQ, DAT Brick-Wall, RIAA Curve).
 
 Source:
     MASTER_DATASET - Mastering & Final Output Processing

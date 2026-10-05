@@ -1,7 +1,4 @@
-"""
-engine/generator.py
-
-Rhythmic pattern generator for the IDM Generative System.
+"""Rhythmic pattern generator for the IDM Generative System.
 Extracted and refactored from: notebooks/idm_project_01.ipynb
 
 Algorithms:

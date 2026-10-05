@@ -1,7 +1,4 @@
-"""
-engine/effects/noise_floor.py
-
-Block 1: Noise Floor & Environmental Constraints.
+"""Block 1: Noise Floor & Environmental Constraints.
 
 Source:
     MASTER_DATASET Part 5 (Anti-GIGO environmental constraints)
