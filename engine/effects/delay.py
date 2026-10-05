@@ -1,7 +1,4 @@
-"""
-engine/effects/delay.py
-
-Block 6: Tape Delay (Roland Space Echo RE-201 Emulation).
+"""Block 6: Tape Delay (Roland Space Echo RE-201 Emulation).
 
 Source:
     MASTER_DATASET Part 8 - Spatial Processing & Time-Based Effects

@@ -1,7 +1,4 @@
-"""
-engine/effects/compressor.py
-
-Block 9: Bus Compressor (SSL-Style Glue, Soft Knee, DR8-DR10 Target).
+"""Block 9: Bus Compressor (SSL-Style Glue, Soft Knee, DR8-DR10 Target).
 
 Source:
     MASTER_DATASET - Bus Summing, Dynamics Processing

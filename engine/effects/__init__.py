@@ -1,7 +1,4 @@
-"""
-engine/effects/__init__.py
-
-Public API for the IDM Generative System effects chain.
+"""Public API for the IDM Generative System effects chain.
 
 Exports all 10 effect blocks, the EffectChain pipeline, and a factory
 function for building the canonical signal-chain order.

@@ -1,7 +1,4 @@
-"""
-engine/effects/saturation.py
-
-Block 4: Saturation & Console Warmth.
+"""Block 4: Saturation & Console Warmth.
 
 Source:
     MASTER_DATASET Part 5 - Environmental Constraints (Anti-GIGO)
