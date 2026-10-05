@@ -1,7 +1,4 @@
-"""
-engine/sample_maker.py
-
-Algorithmic sample generator for the IDM Generative System.
+"""Algorithmic sample generator for the IDM Generative System.
 Extracted and refactored from: notebooks/sample_maker.ipynb
 
 Generators:

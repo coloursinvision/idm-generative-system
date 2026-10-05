@@ -1,7 +1,4 @@
-"""
-engine/effects/reverb.py
-
-Block 5: Reverb (Quadraverb IDM Diffusion).
+"""Block 5: Reverb (Quadraverb IDM Diffusion).
 
 Source:
     MASTER_DATASET Part 8 - Spatial Processing & Time-Based Effects
