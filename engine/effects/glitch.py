@@ -37,7 +37,7 @@ Historical context:
 
     Hardware accidents:
         Oval's scratched CDs, Yasunao Tone's wounded CDs, Nicolas Collins'
-        circuit bending - errors elevated to compositional material. The
+        circuit bending - errors used as compositional material. The
         philosophical premise: digital systems reveal their most interesting
         behaviour at failure boundaries.
 
