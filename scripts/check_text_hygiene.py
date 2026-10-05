@@ -6,8 +6,11 @@ idm-project-protocol. The skills are the human-readable source, and
 tests/test_text_hygiene.py keeps this file in step with them.
 
 Text rendered to a user is never read. In .py files only docstrings and
-comments are checked, in .ts and .tsx only comment lines, and in .md, .toml,
-.yml, .yaml and .sh every line. Commit messages are held to T1 and to T0, the
+comments are checked, in .ts, .tsx and .js only comment lines, and in .css
+only block comments. Every line is read in .md, .toml, .yml, .yaml and .sh
+files and in the configuration formats: Dockerfiles, ignore files,
+requirements files, .env.example, .git-blame-ignore-revs and .dvc/config.
+Commit messages are held to T1 and to T0, the
 trailers and footers that credit a tool; the namespace rule does not apply to
 them, since their Refs trailers cite the vault by design.
 
@@ -184,8 +187,20 @@ EXEMPT_NAMES = frozenset({"LICENCE.md", "CLAUDE.md"})
 EXEMPT_PATTERNS = ("*.ipynb", "frontend/node_modules/*", "frontend/dist/*", "secrets/*.enc.yaml")
 FROZEN = frozenset({".sops.yaml", "scripts/run-with-env.sh", ".env.shared"})
 
-COMMENT_LINES = frozenset({".ts", ".tsx"})
+COMMENT_LINES = frozenset({".ts", ".tsx", ".js"})
+# CSS Syntax Level 3 has block comments only; // opens no comment there.
+BLOCK_COMMENTS = frozenset({".css"})
 WHOLE_FILE = frozenset({".md", ".toml", ".yml", ".yaml", ".sh"})
+
+# Configuration formats read whole, matched by name in any directory. Docker's
+# convention adds <name>.Dockerfile with its own <name>.Dockerfile.dockerignore.
+CONFIG_NAMES = frozenset({"Dockerfile", ".env.example", ".git-blame-ignore-revs"})
+CONFIG_PATTERNS = ("*.Dockerfile", "requirements*.txt")
+CONFIG_PATHS = frozenset({".dvc/config"})
+# gitignore(5), Docker and DVC take a comment only from a # in column 1; an
+# indented # line is a pattern, so --fix leaves it alone.
+IGNORE_NAMES = frozenset({".gitignore", ".dockerignore", ".dvcignore"})
+IGNORE_PATTERNS = ("*.dockerignore",)
 DOCSTRING_OWNERS = (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)
 
 LINE = re.compile(r"([^\r\n]*)(\r\n|\r|\n)")
@@ -382,11 +397,12 @@ def python_spans(text: str, lines: Lines) -> Spans:
     return spans
 
 
-def comment_line_spans(lines: Lines) -> Spans:
+def comment_line_spans(lines: Lines, *, line_comments: bool = True) -> Spans:
     """Comment lines: // lines, and /* */ blocks that open a line.
 
     A line that opens with code is never read, so JSX text, props and string
-    literals stay untouched even when they contain // or /*.
+    literals stay untouched even when they contain // or /*. CSS passes
+    line_comments=False, since // opens no comment there.
     """
     spans: Spans = {}
     in_block = False
@@ -396,7 +412,7 @@ def comment_line_spans(lines: Lines) -> Spans:
             close = content.find("*/")
             in_block = close == -1
             spans[number] = [(0, len(content) if in_block else close + 2)]
-        elif content.startswith("//", indent):
+        elif line_comments and content.startswith("//", indent):
             spans[number] = [(indent, len(content))]
         elif content.startswith("/*", indent):
             close = content.find("*/", indent + 2)
@@ -405,10 +421,10 @@ def comment_line_spans(lines: Lines) -> Spans:
     return spans
 
 
-def hash_comment_spans(lines: Lines) -> Spans:
+def hash_comment_spans(lines: Lines, *, indented: bool = True) -> Spans:
     spans: Spans = {}
     for number, (content, _) in enumerate(lines, 1):
-        indent = len(content) - len(content.lstrip())
+        indent = len(content) - len(content.lstrip()) if indented else 0
         if content.startswith("#", indent):
             spans[number] = [(indent, len(content))]
     return spans
@@ -443,17 +459,26 @@ def message_spans(lines: Lines) -> Spans:
 
 
 def kind_of(relpath: str) -> str:
-    """python, comments or whole for the rules that apply; empty to skip the file."""
+    """python, comments, blocks, whole or ignore for the rules that apply; empty to skip."""
     path = PurePosixPath(relpath)
     if path.name in EXEMPT_NAMES or relpath in FROZEN:
         return ""
     if any(fnmatch.fnmatchcase(relpath, pattern) for pattern in EXEMPT_PATTERNS):
         return ""
+    name = path.name
+    if name in IGNORE_NAMES or any(fnmatch.fnmatchcase(name, p) for p in IGNORE_PATTERNS):
+        return "ignore"
+    if name in CONFIG_NAMES or relpath in CONFIG_PATHS:
+        return "whole"
+    if any(fnmatch.fnmatchcase(name, pattern) for pattern in CONFIG_PATTERNS):
+        return "whole"
     suffix = path.suffix.lower()
     if suffix == ".py":
         return "python"
     if suffix in COMMENT_LINES:
         return "comments"
+    if suffix in BLOCK_COMMENTS:
+        return "blocks"
     if suffix in WHOLE_FILE:
         return "whole"
     return ""
@@ -464,6 +489,8 @@ def check_spans(kind: str, text: str, lines: Lines) -> Spans:
         return python_spans(text, lines)
     if kind == "comments":
         return comment_line_spans(lines)
+    if kind == "blocks":
+        return comment_line_spans(lines, line_comments=False)
     return whole_lines(lines)
 
 
@@ -471,6 +498,8 @@ def fix_spans(kind: str, suffix: str, text: str, lines: Lines) -> Spans:
     """Prose only. A line holding box drawing is a diagram and keeps its width."""
     if kind == "whole":
         spans = markdown_prose_spans(lines) if suffix == ".md" else hash_comment_spans(lines)
+    elif kind == "ignore":
+        spans = hash_comment_spans(lines, indented=False)
     else:
         spans = check_spans(kind, text, lines)
     return {

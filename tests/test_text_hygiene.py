@@ -1516,3 +1516,181 @@ class TestPositiveAttribution:
         summary = SUMMARY.search(result.stdout)
         assert summary, result.stdout
         assert summary.groups() == ("0", "0", "2"), result.stdout
+
+
+# Configuration formats. Docker, ignore and environment files, requirements files,
+# the blame-ignore list and the DVC config are read whole, as none of them holds text
+# a user reads; CSS and JavaScript are read in comments only.
+WHOLE_FILE_TYPES = [
+    "Dockerfile",
+    "build/lint.Dockerfile",
+    ".gitignore",
+    "models/.gitignore",
+    ".dockerignore",
+    "build/lint.Dockerfile.dockerignore",
+    ".dvcignore",
+    ".env.example",
+    ".git-blame-ignore-revs",
+    ".dvc/config",
+    "requirements.txt",
+    "requirements-dev.txt",
+]
+IGNORE_FILES = [".gitignore", ".dockerignore", ".dvcignore", "build/lint.Dockerfile.dockerignore"]
+ALLOWED_TEXT = "Kick from a TR-808 into a Mackie CR-1604 at 80%ENDASH%180 BPM, README.md %SECTION%4"
+ALLOWED_CASES = [
+    *((path, f"# {ALLOWED_TEXT}\n") for path in WHOLE_FILE_TYPES),
+    ("frontend/src/theme.css", f"/* {ALLOWED_TEXT} */\n.a {{ color: red; }}\n"),
+    ("frontend/vite.helpers.js", f"// {ALLOWED_TEXT}\nexport default {{}};\n"),
+]
+
+
+class TestNegativeConfigFormats:
+    """Frozen files, rendered text and other formats stay out; allowed text passes."""
+
+    def test_frozen_env_shared_stays_skipped_while_env_example_fails(self, tmp_path: Path) -> None:
+        """Same text in both, so the skip cannot come from a dead rule."""
+        text = "# Rationale %EMDASH% see D-CRF13-99\nKEY=value\n"
+        write(tmp_path, ".env.shared", text)
+        write(tmp_path, ".env.example", text)
+        result = run_checker("--files", ".env.shared", ".env.example", cwd=tmp_path)
+        assert result.returncode == 1, result.stdout
+        assert flagged(result, ".env.shared") == [], result.stdout
+        assert_reported(result, "FAIL", ".env.example", 1, label("EMDASH"))
+        assert_reported(result, "FAIL", ".env.example", 1, "D-CRF13-99")
+
+    def test_css_declarations_and_js_literals_are_not_read(self, tmp_path: Path) -> None:
+        """A CSS content value is rendered, and a JavaScript literal may be."""
+        css = "frontend/src/notes.css"
+        js = "frontend/postcss.config.js"
+        write(
+            tmp_path,
+            css,
+            '/* Panel styles */\n.note::after {\n  content: "Tempo %RARR% Swing%ELLIPSIS%";\n}\n',
+        )
+        write(
+            tmp_path,
+            js,
+            '// Build configuration\nexport const LABEL = "Tempo %EMDASH% Swing";\n'
+            "export default { plugins: {} };\n",
+        )
+        result = run_checker("--files", css, js, cwd=tmp_path)
+        assert_clean(result, css)
+        assert_clean(result, js)
+
+    @pytest.mark.parametrize(
+        ("relpath", "text"), ALLOWED_CASES, ids=[*WHOLE_FILE_TYPES, "css", "js"]
+    )
+    def test_allowlisted_text_passes_in_new_types(
+        self, tmp_path: Path, relpath: str, text: str
+    ) -> None:
+        """Hardware names, a numeric range and the section sign are not artifacts."""
+        write(tmp_path, relpath, text)
+        assert_clean(run_checker("--files", relpath, cwd=tmp_path), relpath)
+
+    def test_other_txt_files_stay_out_of_scope(self, tmp_path: Path) -> None:
+        """Only requirements files are read; other text files may be data."""
+        text = "Legacy %EMDASH% label\n"
+        write(tmp_path, "data/labels.txt", text)
+        write(tmp_path, "requirements.txt", text)
+        result = run_checker("--files", "data/labels.txt", "requirements.txt", cwd=tmp_path)
+        assert result.returncode == 1, result.stdout
+        assert flagged(result, "data/labels.txt") == [], result.stdout
+        assert_reported(result, "FAIL", "requirements.txt", 1, label("EMDASH"))
+
+    def test_fix_rewrites_only_hash_comments_in_new_types(self, tmp_path: Path) -> None:
+        """Instructions, values and inline comments are reported but never rewritten."""
+        cases = {
+            "Dockerfile": ("# Build %RARR% wheel\n", 'RUN echo "a %RARR% b"\n'),
+            ".env.example": ("# Keys %RARR% values\n", 'LABEL="Tempo %RARR% Swing"\n'),
+            "requirements.txt": ("# Pins %RARR% CI\n", "numpy>=1.26  # floor %RARR% wheels\n"),
+        }
+        for path, (comment, code) in cases.items():
+            write(tmp_path, path, comment + code)
+        result = run_checker("--fix", "--files", *cases, cwd=tmp_path)
+        assert result.returncode == 1, result.stdout
+        for path, (comment, code) in cases.items():
+            assert read(tmp_path, path) == expand(comment.replace("%RARR%", "->") + code), path
+
+    @pytest.mark.parametrize("relpath", IGNORE_FILES)
+    def test_fix_leaves_indented_hash_lines_in_ignore_files(
+        self, tmp_path: Path, relpath: str
+    ) -> None:
+        """gitignore(5) and Docker read a comment only from a # in column 1."""
+        text = "# Build %RARR% output\n  #pattern%RARR%name\n"
+        write(tmp_path, relpath, text)
+        result = run_checker("--fix", "--files", relpath, cwd=tmp_path)
+        assert result.returncode == 1, result.stdout
+        assert read(tmp_path, relpath) == expand(text.replace("# Build %RARR%", "# Build ->"))
+
+    def test_css_double_slash_lines_are_not_comments(self, tmp_path: Path) -> None:
+        """CSS has block comments only, so a line opening with // is part of a value."""
+        path = "frontend/src/fonts.css"
+        write(
+            tmp_path,
+            path,
+            "/* Fonts */\n@font-face {\n  src: url(\n"
+            "    //cdn.example.org/tempo%EMDASH%swing.woff2\n  );\n}\n",
+        )
+        assert_clean(run_checker("--files", path, cwd=tmp_path), path)
+
+
+class TestPositiveConfigFormats:
+    """The configuration formats are read where their text lives, at exact lines."""
+
+    @pytest.mark.parametrize("relpath", WHOLE_FILE_TYPES)
+    def test_new_whole_file_type_fails_at_its_line(self, tmp_path: Path, relpath: str) -> None:
+        """Line 3 is neither the first line nor a comment, so the whole file is read."""
+        write(tmp_path, relpath, "# Header\nplain line\nPipeline %EMDASH% registry\n")
+        result = run_checker("--files", relpath, cwd=tmp_path)
+        assert result.returncode == 1, result.stdout
+        assert_reported(result, "FAIL", relpath, 3, label("EMDASH"))
+
+    def test_css_and_js_comment_lines_fail_at_their_lines(self, tmp_path: Path) -> None:
+        css = "frontend/src/index.css"
+        js = "frontend/postcss.config.js"
+        write(
+            tmp_path,
+            css,
+            "/* Scrollbar %EMDASH% minimal */\n.a { color: red; }\n/*\n  Block %RARR% note\n*/\n",
+        )
+        write(
+            tmp_path, js, "// Config %EMDASH% note\nexport default {};\n/* Block %RARR% note */\n"
+        )
+        result = run_checker("--files", css, js, cwd=tmp_path)
+        assert result.returncode == 1, result.stdout
+        expected = [(css, 1, "EMDASH"), (css, 4, "RARR"), (js, 1, "EMDASH"), (js, 3, "RARR")]
+        for path, lineno, name in expected:
+            assert_reported(result, "FAIL", path, lineno, label(name))
+
+    def test_vault_reference_fails_in_a_dockerfile_comment(self, tmp_path: Path) -> None:
+        write(tmp_path, "Dockerfile", "FROM python:3.11-slim\n# Pinned for INF-ZZ\n")
+        result = run_checker("--files", "Dockerfile", cwd=tmp_path)
+        assert result.returncode == 1, result.stdout
+        assert_reported(result, "FAIL", "Dockerfile", 2, "INF-ZZ")
+
+    def test_staged_judges_added_dockerfile_lines(self, repo: Path) -> None:
+        legacy = "# Legacy %EMDASH% header\nFROM python:3.11-slim\n"
+        write(repo, "Dockerfile", legacy)
+        git(repo, "add", "Dockerfile")
+        git(repo, "commit", "-q", "-m", "chore: baseline")
+        write(repo, "Dockerfile", legacy + "# New %RARR% stage\n")
+        git(repo, "add", "Dockerfile")
+        result = run_checker("--staged", cwd=repo)
+        assert result.returncode == 1, result.stdout
+        assert_reported(result, "FAIL", "Dockerfile", 3, label("RARR"))
+        assert located(result, "FAIL", "Dockerfile", 1) == [], result.stdout
+
+    def test_all_reads_tracked_new_types(self, repo: Path) -> None:
+        files = {
+            "Dockerfile": "# Stage %EMDASH% one\n",
+            ".gitignore": "# Build %EMDASH% output\nbuild/\n",
+            "frontend/src/index.css": "/* Theme %EMDASH% dark */\n",
+            "requirements.txt": "# Pins %EMDASH% CI\n",
+        }
+        for path, text in files.items():
+            write(repo, path, text)
+        commit(repo, "chore: baseline")
+        result = run_checker("--all", cwd=repo)
+        assert result.returncode == 1, result.stdout
+        for path in files:
+            assert_reported(result, "FAIL", path, 1, label("EMDASH"))
