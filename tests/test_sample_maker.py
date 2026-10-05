@@ -1,7 +1,4 @@
-"""
-tests/test_sample_maker.py
-
-Characterization tests for engine/sample_maker.py.
+"""Characterization tests for engine/sample_maker.py.
 
 Purpose:
     Pin the CURRENT default-argument output of fm_blip() before the

@@ -1,7 +1,4 @@
-"""
-engine/effects/filter.py
-
-Block 3: Resonant Filter (VCF Emulation).
+"""Block 3: Resonant Filter (VCF Emulation).
 
 Source:
     MASTER_DATASET Part 1.2 - Synthesis & Tone Generation

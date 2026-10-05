@@ -1,7 +1,4 @@
-"""
-engine/__init__.py
-
-IDM Generative System - core engine package.
+"""IDM Generative System - core engine package.
 
 Modules:
     generator       - Euclidean rhythms, Markov evolution, pattern mutation

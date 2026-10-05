@@ -1,7 +1,4 @@
-"""
-engine/effects/spatial.py
-
-Block 7: Spatial Processing (Stereo Width & Phase).
+"""Block 7: Spatial Processing (Stereo Width & Phase).
 
 Source:
     MASTER_DATASET Part 15 - Stereo Width Logic (Sonic Fingerprint)

@@ -1,7 +1,4 @@
-"""
-tests/test_effects.py
-
-Unit tests for all 10 DSP effect blocks in the IDM Generative System.
+"""Unit tests for all 10 DSP effect blocks in the IDM Generative System.
 
 Coverage:
     - Output shape preservation (length in == length out)
@@ -13,9 +10,6 @@ Coverage:
     - Bypass behaviour: effects at neutral settings
     - Numba kernel regression: output parity vs pure-Python reference
     - Vectorised RMS envelope: output parity vs sequential reference
-
-Run:
-    pytest tests/test_effects.py -v
 """
 
 from __future__ import annotations
