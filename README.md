@@ -137,7 +137,7 @@ A supervised model (`TuningEstimator`) that maps a regional/aesthetic profile to
 - **Serving:** the FastAPI lifespan loads `models:/TuningEstimator/Production` from the MLflow registry (artifacts on DigitalOcean Spaces). `/tuning` returns resonant points; `/tuning/extract` turns free text into a structured `TuningRequest` via GPT-4o. Both endpoints emit Langfuse traces.
 - **Methodology:** leakage-safe split / HPO isolation / target-framing invariants - see [docs/ML_METHODOLOGY_NOTES.md](docs/ML_METHODOLOGY_NOTES.md).
 
-> Pipeline execution (training / `dvc repro`) runs on a workstation, **never** on the production droplet. See `06-MLOps/` in the project vault for the full pipeline state, decisions, and runbook.
+> Pipeline execution (training / `dvc repro`) runs on a workstation, **never** on the production host.
 
 ---
 
@@ -244,11 +244,12 @@ CI (`ci.yml`) runs `ruff check` + `ruff format --check`, `mypy`, the pytest suit
 
 ## Deployment
 
-Production runs on a DigitalOcean droplet (AMS3) behind nginx, via Docker Compose (`idm-api` + `mlflow` containers).
+Production runs as a Docker Compose stack (`idm-api` + `mlflow` containers) on a single host behind an nginx reverse proxy.
 
 - **Git Flow:** feature branches -> `develop` (integration) -> `main` (release). Production deploys **only** from `main`.
-- **CI/CD:** a push to `main` triggers `ci.yml`, which builds and pushes the image to GHCR (`ghcr.io/coloursinvision/idm-generative-system:latest`). On CI success, `deploy.yml` SSHes the droplet and runs `docker compose pull idm-api && docker compose up -d idm-api`.
-- **MLflow:** the tracking/registry server runs on the droplet, behind a Tailscale-restricted vhost (`mlflow.idm.coloursinvision.ai`); artifacts are stored in DigitalOcean Spaces.
+- **CI/CD:** a push to `main` runs `ci.yml`, which builds the image and pushes it to GHCR tagged with the full commit SHA. When that run succeeds, `deploy.yml` deploys that exact commit: it pulls the image by its SHA tag, waits for the container healthcheck, checks `/health` and confirms that the running image carries the expected revision.
+- **Rollback:** every release image stays in GHCR under its commit SHA, so an earlier release can be redeployed by that SHA.
+- **MLflow:** the tracking and registry server runs on the same host and is not publicly accessible; artifacts are stored in DigitalOcean Spaces.
 
 ---
 
