@@ -1,4 +1,4 @@
-"""engine.ml - Layers 3–6 of the IDM Generative System pipeline.
+"""Layers 3–6 of the IDM Generative System pipeline.
 
 Pipeline layer: 3–6
 Consumes:       02-Knowledge/supporting/profiles/*.md (6 regional profile spokes)

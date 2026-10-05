@@ -1,4 +1,4 @@
-"""deterministic_mapper - canonical mapping from scene + track params to DSP targets.
+"""Canonical mapping from scene + track params to DSP targets.
 
 Pipeline layer: 3
 Consumes:       regional_profiles (RegionalProfile, RegionCode,
@@ -126,15 +126,7 @@ def _select_tuning_hz(profile: RegionalProfile) -> float:
 
 
 def _resolve_grid(region: RegionCode, sub_region: SubRegion | None) -> GridRegion:
-    """Map a profile region + sub-region to its physical electrical grid.
-
-    Args:
-        region: Canonical region code.
-        sub_region: Optional sub-region discriminator.
-
-    Returns:
-        Grid region identifier for :func:`mains_hum_profile`.
-    """
+    """Map a profile region + sub-region to its physical electrical grid."""
     if region == "JAPAN_IDM" and sub_region == "OSAKA":
         return "JP_OSAKA"
     return _REGION_TO_GRID[region]
