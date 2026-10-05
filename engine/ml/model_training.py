@@ -460,12 +460,12 @@ def train(
         # Per-region RMSE diagnostic. Stratified RMSE breakdown by region is a
         # recommended diagnostic. Earlier runs produced aggregate metrics only;
         # from this run forward we log both aggregate-per-region (flat metrics,
-        # visible in the MLflow UI metrics tab) and per-target × region (JSON
+        # visible in the MLflow UI metrics tab) and per-target x region (JSON
         # artefact, full breakdown).
         #
         # Aggregate-per-region is mean RMSE across all targets restricted to
-        # rows where X_test["region"] == <region>. Per-region × per-target is
-        # the full 6 × n_targets matrix.
+        # rows where X_test["region"] == <region>. Per-region x per-target is
+        # the full 6 x n_targets matrix.
         per_region_rmse_flat: dict[str, float] = {}
         per_region_per_target_rmse: dict[str, dict[str, float]] = {}
 
@@ -506,7 +506,7 @@ def train(
             }
         )
         mlflow.log_metrics(metrics)
-        # Per-region × per-target breakdown as a JSON artefact (too granular
+        # Per-region x per-target breakdown as a JSON artefact (too granular
         # for flat metrics view but useful for offline diagnosis).
         mlflow.log_dict(per_region_per_target_rmse, "per_region_rmse.json")
 

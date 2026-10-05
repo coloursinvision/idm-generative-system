@@ -422,7 +422,7 @@ Adds a calibrated noise floor to the signal, modeling the analog mixer bus sum t
 - **Level:** Noise floor amplitude in dB (default: -75 dB)
 - **Hum frequency:** 50 Hz (UK/EU) or 60 Hz (US/Detroit) mains hum
 - **Hum level:** Mains hum amplitude
-- **Crosstalk:** Inter-channel leakage coefficient (L->R and R->L bleed, modeling Mackie bus routing: `L_out = L + R × 0.005`)
+- **Crosstalk:** Inter-channel leakage coefficient (L->R and R->L bleed, modeling Mackie bus routing: `L_out = L + R * 0.005`)
 
 **Design note:** This is the Anti-GIGO block. It sets the environmental floor before any processing occurs. Without it, subsequent blocks operate on an unrealistically clean signal that has no analog equivalent from the target era.
 
@@ -465,7 +465,7 @@ Asymmetric soft-clipping that models the harmonic distortion of analog mixer bus
 - **Mode:** Soft-clip (tanh) or wavefold
 - **Mix:** Dry/wet blend
 
-**Formula:** `output = (x > 0) ? tanh(x × drive) : (x / (1 - x × drive × 0.5))`
+**Formula:** `output = (x > 0) ? tanh(x * drive) : (x / (1 - x * drive * 0.5))`
 
 **Design note:** Division by zero is handled with a safe denominator clamp at the signal boundary where `x = 2/drive`. This was a bug fix from the March 23, 2026 session.
 
@@ -498,7 +498,7 @@ Models the physical tape transport of the RE-201, including wow and flutter (tap
 - **Wow and flutter:** Tape speed modulation depth (LFO at ~0.5 Hz with noise component)
 - **Tape age:** High-frequency loss per repetition, modeling tape oxide degradation
 - **Head configuration:** Number of playback heads and spacing ratios (1:2, 1:3, 1:4 for rhythmic multi-tap delays)
-- **Tape saturation:** Per-repetition saturation via `tanh(input × gain)` - each echo is progressively warmer and grittier
+- **Tape saturation:** Per-repetition saturation via `tanh(input * gain)` - each echo is progressively warmer and grittier
 - **Mix:** Dry/wet blend
 
 ### Block 7: Spatial (`spatial.py`)
@@ -593,11 +593,11 @@ Three generator functions produce the raw source material before effects chain p
 
 The `acid_dsp_model.py` module implements three TB-303 and Detroit Techno-specific DSP algorithms:
 
-**Acid slide** - nonlinear frequency glide modeling the TB-303 capacitor discharge: `Current_Pitch += Alpha × (Target_Pitch - Current_Pitch)` where `Alpha = 1 - exp(-1 / (Fs × 0.03))`. The 30ms time constant is fixed - it is a physical property of the 303 circuit, not a user parameter.
+**Acid slide** - nonlinear frequency glide modeling the TB-303 capacitor discharge: `Current_Pitch += Alpha * (Target_Pitch - Current_Pitch)` where `Alpha = 1 - exp(-1 / (Fs * 0.03))`. The 30ms time constant is fixed - it is a physical property of the 303 circuit, not a user parameter.
 
 **Detroit chord memory** - parallel oscillator stacking for the Minor 9th voicing (Root, +3, +7, +10, +14 semitones). All oscillators are summed before a single mono 24 dB/oct LPF. The filter processes the composite harmonic spectrum, not individual voices.
 
-**Accent saturation** - nonlinear VCA modeling via `tanh(input × accent_gain)` where accent_gain is 2.4 for accented steps and 1.0 for normal steps. This is applied after the filter stage, matching the 303's internal signal flow.
+**Accent saturation** - nonlinear VCA modeling via `tanh(input * accent_gain)` where accent_gain is 2.4 for accented steps and 1.0 for normal steps. This is applied after the filter stage, matching the 303's internal signal flow.
 
 ---
 

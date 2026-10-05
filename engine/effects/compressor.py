@@ -481,7 +481,7 @@ class Compressor(BaseEffect):
         for the given ratio, compensating so perceived loudness stays
         roughly constant when compression is applied.
 
-        Formula: makeup_dB ≈ -threshold_dB × (1 - 1/ratio) × 0.5
+        Formula: makeup_dB ≈ -threshold_dB * (1 - 1/ratio) * 0.5
         The 0.5 factor accounts for programme material spending roughly
         half its time above threshold (empirical, SSL-calibrated).
         """
