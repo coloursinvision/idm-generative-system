@@ -9,7 +9,7 @@ Consumes:       regional_profiles (RegionalProfile, RegionCode,
 Consumed by:    Layer 4 dataset generator (gaussian_noise.py)
 Status:         complete
 
-Contract (stated by Tom):
+Contract:
     f(bpm, pitch, swing, genre, effects) -> (tuning_hz, resonant_points)
 
 Signature expansions from the stated spec, each justified below:
@@ -330,8 +330,6 @@ def deterministic_map(
     profile: RegionalProfile | None = None,
 ) -> DeterministicMapping:
     """Map a scene + track specification to DSP targets (tuning + resonant stack).
-
-    Implements the 7-step pipeline defined in the S3 stub docstring.
 
     Step 1: Resolve profile via :func:`load_profile` if not supplied.
     Step 2: Emit ``pitch_ref`` resonant point from ``pitch_midi`` + tuning.
