@@ -1,7 +1,4 @@
-"""
-engine/codegen/synthdef.py
-
-SuperCollider code generator for the IDM Generative System.
+"""SuperCollider code generator for the IDM Generative System.
 
 Generates complete, runnable .scd files from engine configurations.
 Output follows idiomatic SC patterns:
