@@ -1,5 +1,5 @@
 """Rhythmic pattern generator for the IDM Generative System.
-Extracted and refactored from: notebooks/idm_project_01.ipynb
+Extracted and refactored from: notebooks/archive/exploration_2026-02-03_pattern_genesis.ipynb
 
 Algorithms:
     - Euclidean rhythms (Bjorklund algorithm)
