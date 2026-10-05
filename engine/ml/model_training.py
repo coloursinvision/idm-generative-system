@@ -1,4 +1,4 @@
-"""model_training - XGBoost training pipeline with Optuna HPO and MLflow tracking.
+"""XGBoost training pipeline with Optuna HPO and MLflow tracking.
 
 Pipeline layer: 6
 Consumes:       dataset_generator (pd.DataFrame - validated by dataset_schema)

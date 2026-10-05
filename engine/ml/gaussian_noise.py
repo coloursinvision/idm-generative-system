@@ -1,4 +1,4 @@
-"""gaussian_noise - calibrated Gaussian noise injection for synthetic data generation.
+"""Calibrated Gaussian noise injection for synthetic data generation.
 
 Pipeline layer: 4
 Consumes:       deterministic_mapper (DeterministicMapping, ResonantPoint)
@@ -139,16 +139,7 @@ def _draw(rng: np.random.Generator, sigma: float) -> float:
 
 
 def _clamp(value: float, lo: float, hi: float) -> float:
-    """Clamp a value to ``[lo, hi]``.
-
-    Args:
-        value: Value to clamp.
-        lo: Lower bound (inclusive).
-        hi: Upper bound (inclusive).
-
-    Returns:
-        Clamped value.
-    """
+    """Clamp a value to ``[lo, hi]``."""
     return max(lo, min(hi, value))
 
 

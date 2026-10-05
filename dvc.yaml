@@ -1,5 +1,3 @@
-# DVC Pipeline - IDM Generative System V2
-#
 # Reproducible pipeline: dataset generation -> schema validation -> model training.
 # All stage parameters are externalised in params.yaml (single source of truth).
 #
