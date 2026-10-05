@@ -1,7 +1,7 @@
 """
 tests/test_codegen.py
 
-Comprehensive test suite for engine/codegen/ module.
+Test suite for the engine/codegen module.
 
 Coverage:
     - Mapping completeness (zero silent parameter drops)
