@@ -6,7 +6,7 @@ Built around a 10-block effects chain that models specific hardware units - from
 
 Output targets: **Teenage Engineering PO-33 K.O!** and **EP-133 K.O.II** - the application generates samples, maps them to device-specific slot configurations, and produces step-by-step programming instructions for each hardware sequencer.
 
-**Live:** [idm.coloursinvision.ai](https://idm.coloursinvision.ai) | **Release:** `v0.9.0`
+**Live:** [idm.coloursinvision.ai](https://idm.coloursinvision.ai) | **Releases:** [GitHub Releases](https://github.com/coloursinvision/idm-generative-system/releases)
 
 ---
 
@@ -21,7 +21,7 @@ Output targets: **Teenage Engineering PO-33 K.O!** and **EP-133 K.O.II** - the a
 └───────────────────────────┬──────────────────────────────────┘
                             │ HTTP  (/api/* - nginx strips prefix)
 ┌───────────────────────────▼──────────────────────────────────┐
-│                    FastAPI Backend (v0.9.0)                   │
+│                       FastAPI Backend                        │
 │  /generate /process /ask /compose /effects /health           │
 │  /codegen /tuning /tuning/extract                            │
 └──────┬───────────────────┬───────────────────────┬───────────┘
@@ -137,7 +137,7 @@ A supervised model (`TuningEstimator`) that maps a regional/aesthetic profile to
 - **Serving:** the FastAPI lifespan loads `models:/TuningEstimator/Production` from the MLflow registry (artifacts on DigitalOcean Spaces). `/tuning` returns resonant points; `/tuning/extract` turns free text into a structured `TuningRequest` via GPT-4o. Both endpoints emit Langfuse traces.
 - **Methodology:** leakage-safe split / HPO isolation / target-framing invariants - see [docs/ML_METHODOLOGY_NOTES.md](docs/ML_METHODOLOGY_NOTES.md).
 
-> Pipeline execution (training / `dvc repro`) runs on a workstation, **never** on the production droplet. See `06-MLOps/` in the project vault for the full pipeline state, decisions, and runbook.
+> Pipeline execution (training / `dvc repro`) runs on a workstation, **never** on the production host.
 
 ---
 
@@ -205,7 +205,7 @@ npm run dev
 ### Verify
 
 ```bash
-curl http://localhost:8000/health        # {"status":"ok","version":"0.9.0"}
+curl http://localhost:8000/health        # {"status":"ok","version":"<version>"}
 pytest                                    # backend test suite
 npm --prefix frontend run test            # frontend vitest
 ```
@@ -238,17 +238,18 @@ pytest -v                 # Verbose output
 npm --prefix frontend run test    # Frontend vitest
 ```
 
-CI (`ci.yml`) runs `ruff check` + `ruff format --check`, `mypy`, the pytest suite, and a Docker build on every PR to `main` and push to `develop`/`main`.
+CI (`ci.yml`) runs on pushes to `develop`, `main` and `hotfix/**` and on pull requests to `develop` and `main`: `ruff check` and `ruff format --check`, `mypy`, the pytest suite, a gitleaks secret scan over the full history, a text-hygiene check and, except on `hotfix/**`, a Docker build (pushed to GHCR from `main` only). `e2e.yml` runs the Playwright suite in Chromium and Firefox on pushes and pull requests to the same branches.
 
 ---
 
 ## Deployment
 
-Production runs on a DigitalOcean droplet (AMS3) behind nginx, via Docker Compose (`idm-api` + `mlflow` containers).
+Production runs as a Docker Compose stack (`idm-api` + `mlflow` containers) on a single host behind an nginx reverse proxy.
 
 - **Git Flow:** feature branches -> `develop` (integration) -> `main` (release). Production deploys **only** from `main`.
-- **CI/CD:** a push to `main` triggers `ci.yml`, which builds and pushes the image to GHCR (`ghcr.io/coloursinvision/idm-generative-system:latest`). On CI success, `deploy.yml` SSHes the droplet and runs `docker compose pull idm-api && docker compose up -d idm-api`.
-- **MLflow:** the tracking/registry server runs on the droplet, behind a Tailscale-restricted vhost (`mlflow.idm.coloursinvision.ai`); artifacts are stored in DigitalOcean Spaces.
+- **CI/CD:** a push to `main` runs `ci.yml`, which builds the image and pushes it to GHCR tagged with the full commit SHA. When that run succeeds, `deploy.yml` deploys that exact commit: it pulls the image by its SHA tag, waits for the container healthcheck, checks `/health` and confirms that the running image carries the expected revision.
+- **Rollback:** every release image stays in GHCR under its commit SHA, so an earlier release can be redeployed by that SHA.
+- **MLflow:** the tracking and registry server runs on the same host and is not publicly accessible; artifacts are stored in DigitalOcean Spaces.
 
 ---
 
@@ -295,7 +296,7 @@ Sampler, drum machine, and sequencer with 12 velocity-sensitive pads, 4 groups, 
 ## Project Structure
 
 ```
-IDM_Generative_System_app/
+idm-generative-system/
 ├── engine/
 │   ├── generator.py              <- Euclidean rhythms, Markov chain, mutate_pattern
 │   ├── sample_maker.py           <- glitch_click, noise_burst, fm_blip
@@ -334,7 +335,7 @@ The RAG and ML pipelines draw on **THE_MASTER_DATASET_SPECIFICATION** and its La
 - **Regional aesthetics:** UK IDM (Warp, Rephlex, Skam), Detroit Techno (UR, Model 500), Japan (Sublime, Frogman, Far East Recording)
 - **DSP algorithms:** acid slide (30ms RC glide), accent coupling, Detroit chord memory, Autechre-style stochastic granular distribution
 - **Environmental constraints:** 16kHz DAT brick-wall, -75dB pink noise floor, asymmetric saturation curves, DR 8–10 dynamic range targets
-- **Resonant frequency architecture:** Solfeggio series, Schumann resonance, brainwave entrainment bands, atonal/alikwotic sources
+- **Resonant frequency architecture:** Solfeggio series, Schumann resonance, brainwave entrainment bands, atonal/overtone sources
 
 Indexed in Qdrant with `text-embedding-3-large` (3072 dimensions); cosine-similarity retrieval with configurable context depth.
 

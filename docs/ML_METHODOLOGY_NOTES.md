@@ -16,8 +16,8 @@ boundary and inflate reported accuracy. **Guard:** every split goes through
 (`engine/ml/model_training.py` - `split_by_group`,
 `split_train_val_test_by_group`; wired with `groups=df["spec_id"]` in
 `scripts/train_model.py`), so a spec lies wholly on one side of every
-partition. When this guard was introduced, reported RMSE **rose** - that rise
-was honesty, not regression.
+partition. When this guard was introduced, reported RMSE **rose** because the
+leakage was gone, not because the model got worse.
 
 ## 2. HPO never sees the test set
 
