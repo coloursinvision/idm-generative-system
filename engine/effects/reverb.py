@@ -78,7 +78,7 @@ def _comb_filter_kernel(
     Schroeder reverberator primitive.
 
     Extracted from _comb_filter_bank to eliminate per-sample Python
-    overhead (~88k iterations per comb × 6 combs = ~530k total).
+    overhead (~88k iterations per comb * 6 combs = ~530k total).
     """
     buf = np.zeros(delay_samp + n)
     for i in range(n):
@@ -103,7 +103,7 @@ def _allpass_kernel(
     coefficient g_ap controls diffusion density.
 
     Extracted from _allpass_chain to eliminate per-sample Python
-    overhead (~88k iterations per allpass × 3 stages).
+    overhead (~88k iterations per allpass * 3 stages).
     """
     out = np.zeros(n)
     buf = np.zeros(delay_samp)

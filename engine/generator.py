@@ -177,7 +177,7 @@ def mutate_pattern(
     Core operator for evolutionary pattern selection in the generator.
 
     Args:
-        pattern: pd.DataFrame (tracks × steps, int 0/1).
+        pattern: pd.DataFrame (tracks x steps, int 0/1).
         mutation_rate: Probability of flipping each step [0, 1].
 
     Returns:
@@ -203,7 +203,7 @@ def markov_evolve(
     of IDM sequencing where rhythms develop organic momentum over time.
 
     Args:
-        pattern: pd.DataFrame (tracks × steps, int 0/1).
+        pattern: pd.DataFrame (tracks x steps, int 0/1).
         influence: Markov carry-over probability [0, 1].
 
     Returns:
@@ -229,7 +229,7 @@ def plot_pattern(
     """
     Render a rhythm matrix as a heatmap.
     Args:
-        df: pd.DataFrame (tracks × steps, int 0/1).
+        df: pd.DataFrame (tracks x steps, int 0/1).
         title: Plot title.
     """
     import matplotlib.pyplot as plt

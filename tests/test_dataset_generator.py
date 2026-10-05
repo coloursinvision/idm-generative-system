@@ -331,7 +331,7 @@ class TestGenerateDataset:
         specs = [uk_spec, uk_spec, uk_spec]
         gen = SyntheticDatasetGenerator(active_config, n_perturbations=2, master_seed=42)
         df = gen.generate_dataset(specs, profile=uk_profile)
-        assert len(df) == 9  # 3 specs × (1 + 2)
+        assert len(df) == 9  # 3 specs * (1 + 2)
 
     def test_empty_specs(self, zero_config: PerturbationConfig) -> None:
         gen = SyntheticDatasetGenerator(zero_config, n_perturbations=5, master_seed=42)
