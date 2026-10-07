@@ -1,7 +1,4 @@
-"""
-engine/codegen/base.py
-
-Abstract base class for code generators and shared result types.
+"""Abstract base class for code generators and shared result types.
 
 All codegen targets (SuperCollider, TidalCycles, future targets) must
 inherit from BaseCodegen and implement the generate() method.

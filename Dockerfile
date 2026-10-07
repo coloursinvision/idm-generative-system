@@ -1,28 +1,19 @@
-# =============================================================================
-# IDM Generative System — Production Dockerfile
-# Target: Self-hosted Docker Compose (DO droplet) with Nginx reverse proxy
 # Entrypoint: FastAPI + uvicorn (serves API + static frontend bundle)
 #
 # Three-stage build:
-#   1. frontend-builder — Node.js: npm ci && npm run build → dist/
-#   2. python-builder   — Python: pip install into isolated venv
-#   3. runtime          — Slim image with venv + dist/ + application code
+#   1. frontend-builder - Node.js: npm ci && npm run build -> dist/
+#   2. python-builder   - Python: pip install into isolated venv
+#   3. runtime          - Slim image with venv + dist/ + application code
 #
-# Frontend source location: frontend/ subdirectory
-# =============================================================================
 # Build: docker build -t idm-api:latest .
 # Run:   docker run -p 8000:8000 --env-file .env idm-api:latest
-# =============================================================================
 
-# ---------------------------------------------------------------------------
-# Stage 1 — Frontend Builder
 # Install Node deps and produce Vite production bundle.
-# ---------------------------------------------------------------------------
 FROM node:22-slim AS frontend-builder
 
 WORKDIR /build
 
-# Install deps first (cache layer — only rebuilds when lockfile changes).
+# Install deps first (cache layer - only rebuilds when lockfile changes).
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci --ignore-scripts
 
@@ -34,10 +25,7 @@ COPY frontend/public/ ./public/
 
 RUN npm run build
 
-# ---------------------------------------------------------------------------
-# Stage 2 — Python Builder
 # Install Python deps into a virtual-env so we can COPY only the venv later.
-# ---------------------------------------------------------------------------
 FROM python:3.11-slim AS python-builder
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -54,19 +42,16 @@ RUN apt-get update && \
         libsndfile1-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Create venv — isolates deps from system Python.
+# Create venv - isolates deps from system Python.
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Install deps first (cache layer — only rebuilds when deps change).
+# Install deps first (cache layer - only rebuilds when deps change).
 COPY pyproject.toml README.md ./
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
     pip install --no-cache-dir ".[ml,monitoring]"
 
-# ---------------------------------------------------------------------------
-# Stage 3 — Runtime
 # Slim image with only the venv + frontend bundle + application code.
-# ---------------------------------------------------------------------------
 FROM python:3.11-slim AS runtime
 
 # Runtime-only system libraries (no compilers).
@@ -76,7 +61,7 @@ RUN apt-get update && \
         curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Unprivileged user — DO NOT run as root in production.
+# Unprivileged user - DO NOT run as root in production.
 RUN groupadd --gid 1000 appuser && \
     useradd --uid 1000 --gid appuser --shell /bin/bash --create-home appuser
 
@@ -97,7 +82,7 @@ WORKDIR /app
 # Copy frontend production bundle from frontend-builder.
 COPY --from=frontend-builder /build/dist ./static
 
-# Copy application code — order matters for cache efficiency.
+# Copy application code - order matters for cache efficiency.
 COPY engine/ ./engine/
 COPY api/ ./api/
 COPY knowledge/ ./knowledge/
@@ -115,7 +100,7 @@ USER appuser
 
 EXPOSE 8000
 
-# Health check — matches /health endpoint in api/main.py.
+# Health check - matches /health endpoint in api/main.py.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 

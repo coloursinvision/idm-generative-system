@@ -1,7 +1,4 @@
-"""
-engine/effects/glitch.py
-
-Block 8: Glitch Engine (Braindance Stutter, ASR-10 Loop Modulation, XOR Bit Mangle).
+"""Block 8: Glitch Engine (Stutter, ASR-10 Loop Modulation, XOR Bit Mangle).
 
 Source:
     MASTER_DATASET - Glitch & Micro-Edit Processing
@@ -37,7 +34,7 @@ Historical context:
 
     Hardware accidents:
         Oval's scratched CDs, Yasunao Tone's wounded CDs, Nicolas Collins'
-        circuit bending - errors elevated to compositional material. The
+        circuit bending - errors used as compositional material. The
         philosophical premise: digital systems reveal their most interesting
         behaviour at failure boundaries.
 

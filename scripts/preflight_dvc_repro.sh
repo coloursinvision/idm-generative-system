@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 #
-# preflight_dvc_repro.sh - pre-flight checks for RUNBOOK_DVC_REPRO_BASELINE.md
-#
 # Verifies nine pre-conditions required before running `dvc repro` on the
 # IDM Generative System V2 ML pipeline (Layer 6). Designed to be invoked
 # from the repository root on a Tailscale-connected workstation host.
@@ -29,10 +27,6 @@
 
 set -uo pipefail
 
-# ---------------------------------------------------------------------------
-# Constants
-# ---------------------------------------------------------------------------
-
 readonly SCRIPT_NAME="preflight_dvc_repro.sh"
 readonly EXPECTED_BRANCH="develop"
 readonly MIN_FREE_GB=10
@@ -54,10 +48,7 @@ else
     readonly COL_RESET=""
 fi
 
-# ---------------------------------------------------------------------------
 # Outcome counters and reporting
-# ---------------------------------------------------------------------------
-
 PASS_COUNT=0
 WARN_COUNT=0
 FAIL_COUNT=0
@@ -76,10 +67,6 @@ fail() {
     printf "%s[FAIL]%s  %-32s %s\n" "${COL_RED}" "${COL_RESET}" "$1" "${2:-}"
     FAIL_COUNT=$((FAIL_COUNT + 1))
 }
-
-# ---------------------------------------------------------------------------
-# Help
-# ---------------------------------------------------------------------------
 
 usage() {
     cat <<EOF
@@ -107,10 +94,7 @@ Exit codes:
 EOF
 }
 
-# ---------------------------------------------------------------------------
 # Environment validation (exits with 2 on failure)
-# ---------------------------------------------------------------------------
-
 require_command() {
     if ! command -v "$1" >/dev/null 2>&1; then
         printf "%s[ABORT]%s missing required command: %s\n" \
@@ -128,10 +112,7 @@ ensure_repo_root() {
     fi
 }
 
-# ---------------------------------------------------------------------------
 # Individual checks (each is independent and non-fatal)
-# ---------------------------------------------------------------------------
-
 check_01_branch_and_clean() {
     local branch
     branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "<detached>")
@@ -291,10 +272,6 @@ except Exception:
             ;;
     esac
 }
-
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
 
 main() {
     case "${1:-}" in

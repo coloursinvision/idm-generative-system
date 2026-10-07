@@ -1,4 +1,4 @@
-"""resonance_rules - Layer 2 Part 5.1 rule implementations.
+"""Layer 2 Part 5.1 rule implementations.
 
 Pipeline layer: 3
 Consumes:       02-Knowledge/supporting/resonance/*.md (5 rule spokes)

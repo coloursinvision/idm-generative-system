@@ -1,4 +1,4 @@
-"""dataset_generator - synthetic labeled dataset generation for XGBoost training.
+"""Synthetic labeled dataset generation for XGBoost training.
 
 Pipeline layer: 5
 Consumes:       deterministic_mapper (deterministic_map, DeterministicMapping)

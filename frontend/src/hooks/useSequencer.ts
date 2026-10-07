@@ -1,4 +1,3 @@
-/* hooks/useSequencer.ts                                               */
 /* Web Audio step sequencer - shared between PO-33 and EP-133 guides  */
 
 import { useState, useRef, useCallback, useEffect } from "react";

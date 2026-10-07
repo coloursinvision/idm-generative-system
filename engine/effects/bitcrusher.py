@@ -1,7 +1,4 @@
-"""
-engine/effects/bitcrusher.py
-
-Block 2: Bitcrusher (Lo-Fi / DAC Emulation).
+"""Block 2: Bitcrusher (Lo-Fi / DAC Emulation).
 
 Source:
     MASTER_DATASET Part 1.1 - Rhythmic Foundations (Drum Machines & Samplers)

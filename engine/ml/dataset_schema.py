@@ -1,4 +1,4 @@
-"""dataset_schema - pandera schemas for synthetic training and inference validation.
+"""Pandera schemas for synthetic training and inference validation.
 
 Pipeline layer: 5–6 boundary (DATASET_SCHEMA) + V2.3 endpoint (InferenceSchema)
 Consumes:       dataset_generator (SyntheticDatasetGenerator output)

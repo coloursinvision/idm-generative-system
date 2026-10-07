@@ -1,6 +1,4 @@
 /**
- * components/codegen/CodegenPopout.tsx
- *
  * Standalone codegen panel for the detached popout window.
  * Opened via window.open() from CodegenPanel.
  *

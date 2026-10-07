@@ -9,8 +9,8 @@ Covers the 5 rule signatures (4 physical + 1 aesthetic):
     * solfeggio_cutoff_seed + SOLFEGGIO_HZ + REGIONAL_SOLFEGGIO_SEED  (aesthetic)
 
 All concrete numerical assertions are derived from the rule definitions
-and verified against the implementation's ground-truth output (see S3
-session log). Where a computed value sits near a rounding boundary (e.g.
+and verified against the implementation's ground-truth output. Where a
+computed value sits near a rounding boundary (e.g.
 60 Hz between A♯1 and B1), the test documents the boundary inline.
 """
 
@@ -45,7 +45,7 @@ class TestBpmToHz:
     """Tests for :func:`bpm_to_hz` and its :class:`AudibleHarmonic` return."""
 
     def test_canonical_idm_tempo_unlocked(self) -> None:
-        """128 BPM × 64 = 136.533 Hz, nearest C♯3 (unlocked, ~-26 cents)."""
+        """128 BPM * 64 = 136.533 Hz, nearest C♯3 (unlocked, ~-26 cents)."""
         h = bpm_to_hz(128.0, octave_multiplier=64)
         assert h.frequency_hz == pytest.approx(128.0 * 64 / 60, abs=1e-9)
         assert h.nearest_note == "C#3"
@@ -53,7 +53,7 @@ class TestBpmToHz:
         assert h.harmonically_locked is False
 
     def test_engineered_locked_case(self) -> None:
-        """103.125 BPM × 128 = exactly 220 Hz = A3 -> locked at 0 cents."""
+        """103.125 BPM * 128 = exactly 220 Hz = A3 -> locked at 0 cents."""
         h = bpm_to_hz(103.125, octave_multiplier=128)
         assert h.frequency_hz == pytest.approx(220.0, abs=1e-9)
         assert h.nearest_note == "A3"
@@ -72,9 +72,9 @@ class TestBpmToHz:
 
     def test_locked_threshold_at_5_cents(self) -> None:
         """``harmonically_locked`` is True iff ``|cents_deviation| <= 5``."""
-        # 103.125 BPM × 128 = exactly 220 Hz (A3, 0 cents) - locked
+        # 103.125 BPM * 128 = exactly 220 Hz (A3, 0 cents) - locked
         assert bpm_to_hz(103.125, octave_multiplier=128).harmonically_locked is True
-        # 128 BPM × 64 = 136.53 Hz (C#3, -26 cents) - not locked
+        # 128 BPM * 64 = 136.53 Hz (C#3, -26 cents) - not locked
         assert bpm_to_hz(128.0, octave_multiplier=64).harmonically_locked is False
 
     def test_zero_bpm_raises(self) -> None:
@@ -122,7 +122,7 @@ class TestSchumann:
             schumann_mode(invalid_n)
 
     def test_bpm_anchor_canonical(self) -> None:
-        """Mode 1 × 60 ÷ 4 = 117.45 BPM (canonical IDM tempo anchor)."""
+        """Mode 1 * 60 / 4 = 117.45 BPM (canonical IDM tempo anchor)."""
         assert schumann_bpm_anchor(1, 4) == pytest.approx(117.45, abs=0.01)
 
     def test_bpm_anchor_defaults(self) -> None:
@@ -131,7 +131,7 @@ class TestSchumann:
 
     @pytest.mark.parametrize("divisor", [1, 2, 4, 8, 16])
     def test_bpm_anchor_divisor_scaling(self, divisor: int) -> None:
-        """BPM scales as ``mode_hz × 60 ÷ divisor``; halving doubles effect."""
+        """BPM scales as ``mode_hz * 60 / divisor``; halving doubles effect."""
         bpm = schumann_bpm_anchor(1, divisor)  # type: ignore[arg-type]
         assert bpm == pytest.approx(7.83 * 60 / divisor, abs=1e-6)
 
