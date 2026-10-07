@@ -6,6 +6,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.10.5] - 2026-10-07 - Comment, docstring and documentation hygiene (no behaviour change)
+
+### Changed
+- **Text-hygiene checker:** also reads Dockerfiles, ignore files, requirements files, `.env.example`, `.git-blame-ignore-revs` and `.dvc/config` in full, comment lines in `.js` files and block comments in `.css` files.
+- **Comments and docstrings:** typographic characters in configuration comments, and multiplication signs in comments, docstrings and code spans, replaced by ASCII; references to a deleted notebook, a deleted branch, internal working sessions and a local directory removed, and a renamed notebook named by its archived path.
+- **Documentation:** words used for tone rather than meaning replaced; the README describes the deployment by what the pipeline guarantees, without host details, links the GitHub Releases, and has its CI description, health example and project tree corrected; the 0.10.1 changelog entry reworded.
+- **`.gitignore`:** the patterns for local tooling moved to each clone's `.git/info/exclude`.
+- **`dvc.lock`:** records the new hashes of nine stage dependencies whose comments or docstrings changed; the recorded outputs are unchanged.
+
+### Removed
+- The outdated architecture diagram.
+- Banner divider lines, file headers that repeat the file's path or name, and run commands in test docstrings.
+
+### Notes
+- No functional change: apart from the checker, the code changed only in comments and docstrings, and no endpoint, model or effect class docstring changed, so the OpenAPI descriptions and the `/effects` response are as in `v0.10.4`. Four lines of the dataset specification were reworded; the knowledge base is not re-ingested by this release.
+
+---
+
 ## [0.10.4] - 2026-10-04 - Deploy path hardening and commit-message checks (no behaviour change)
 
 ### Added
