@@ -1,4 +1,4 @@
-"""deterministic_mapper - canonical mapping from scene + track params to DSP targets.
+"""Canonical mapping from scene + track params to DSP targets.
 
 Pipeline layer: 3
 Consumes:       regional_profiles (RegionalProfile, RegionCode,
@@ -9,7 +9,7 @@ Consumes:       regional_profiles (RegionalProfile, RegionCode,
 Consumed by:    Layer 4 dataset generator (gaussian_noise.py)
 Status:         complete
 
-Contract (stated by Tom):
+Contract:
     f(bpm, pitch, swing, genre, effects) -> (tuning_hz, resonant_points)
 
 Signature expansions from the stated spec, each justified below:
@@ -126,15 +126,7 @@ def _select_tuning_hz(profile: RegionalProfile) -> float:
 
 
 def _resolve_grid(region: RegionCode, sub_region: SubRegion | None) -> GridRegion:
-    """Map a profile region + sub-region to its physical electrical grid.
-
-    Args:
-        region: Canonical region code.
-        sub_region: Optional sub-region discriminator.
-
-    Returns:
-        Grid region identifier for :func:`mains_hum_profile`.
-    """
+    """Map a profile region + sub-region to its physical electrical grid."""
     if region == "JAPAN_IDM" and sub_region == "OSAKA":
         return "JP_OSAKA"
     return _REGION_TO_GRID[region]
@@ -338,8 +330,6 @@ def deterministic_map(
     profile: RegionalProfile | None = None,
 ) -> DeterministicMapping:
     """Map a scene + track specification to DSP targets (tuning + resonant stack).
-
-    Implements the 7-step pipeline defined in the S3 stub docstring.
 
     Step 1: Resolve profile via :func:`load_profile` if not supplied.
     Step 2: Emit ``pitch_ref`` resonant point from ``pitch_midi`` + tuning.

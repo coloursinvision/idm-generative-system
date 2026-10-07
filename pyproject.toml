@@ -1,17 +1,12 @@
-# IDM Generative System - Project Configuration
-# Single source of truth for metadata, dependencies, and tool configs.
 # Replaces requirements.txt (kept for Streamlit Cloud) and environment.yml (kept for conda).
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-# ---------------------------------------------------------------------------
-# Project metadata
-# ---------------------------------------------------------------------------
 [project]
 name = "idm-generative-system"
-version = "0.10.4"
+version = "0.10.5"
 description = "Generative audio engine for experimental IDM production - DSP modeling, algorithmic composition, and RAG-augmented sound design."
 readme = "README.md"
 license = "AGPL-3.0-or-later"
@@ -102,15 +97,10 @@ streamlit = [
 [project.urls]
 Repository = "https://github.com/coloursinvision/idm-generative-system"
 
-# ---------------------------------------------------------------------------
-# Hatch build configuration
-# ---------------------------------------------------------------------------
 [tool.hatch.build.targets.wheel]
 packages = ["engine", "api", "knowledge"]
 
-# ---------------------------------------------------------------------------
 # Ruff - linter + formatter (replaces flake8 + black + isort)
-# ---------------------------------------------------------------------------
 [tool.ruff]
 target-version = "py311"
 line-length = 100
@@ -181,9 +171,6 @@ quote-style = "double"
 indent-style = "space"
 docstring-code-format = true
 
-# ---------------------------------------------------------------------------
-# mypy - strict static type checking
-# ---------------------------------------------------------------------------
 [tool.mypy]
 python_version = "3.11"
 strict = true
@@ -239,9 +226,6 @@ disallow_untyped_decorators = false
 warn_return_any = false
 disable_error_code = ["type-arg", "misc"]
 
-# ---------------------------------------------------------------------------
-# pytest
-# ---------------------------------------------------------------------------
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = [
@@ -258,9 +242,6 @@ filterwarnings = [
     "ignore::DeprecationWarning:qdrant_client.*",
 ]
 
-# ---------------------------------------------------------------------------
-# Coverage
-# ---------------------------------------------------------------------------
 [tool.coverage.run]
 source = ["engine", "api", "knowledge"]
 omit = ["tests/*", "streamlit_app/*"]

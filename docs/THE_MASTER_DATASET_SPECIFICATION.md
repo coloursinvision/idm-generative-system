@@ -55,7 +55,7 @@ Directory Organization for Data Integrity and Auditing
 
 
 # THE MASTER DATASET SPECIFICATION: UNDERGROUND ELECTRONIC ARCHITECTURE (1987–1999)
-## Comprehensive Technical Documentation for DSP Modeling, Audio Synthesis & Dataset Auditing
+## Technical Documentation for DSP Modeling, Audio Synthesis & Dataset Auditing
 
 ---
 
@@ -82,7 +82,7 @@ Definitions of physical constraints and analog/digital non-linearities.
 | **Yamaha DX100** | 4-Op FM | Digital (YM2164) | 10-bit floating point DAC noise; "Lately Bass" feedback. |
 | **Casio CZ-101** | Phase Dist. | Digital (PD) | Simulated analog sweeps via phase-angle manipulation. |
 | **Yamaha SY77/99**| RCM (AFM+PCM) | Advanced Digital | Used by Japanese masters to blend realistic samples with FM. |
-| **Korg Prophecy** | Physical Mod. | DSP Modeling | Crucial for modeling non-static, "physical" lead sounds in IDM. |
+| **Korg Prophecy** | Physical Mod. | DSP Modeling | Used for modeling non-static, "physical" lead sounds in IDM. |
 
 ---
 
@@ -305,7 +305,7 @@ Modeling the "floating" feeling of Progressive Dance and IDM pads.
 ### 8.4 Spatial Logic for Algorithm Implementation
 To prevent "Phasing Issues" in the mix:
 1.  **Mono-Compatibility:** Always model the reverb/delay return in Stereo, but ensure the "Wet" signal is Phase-Aligned for Mono downmixing.
-2.  **Pre-Delay:** Use a 15ms - 35ms Pre-Delay to separate the "Transient" (The Attack) from the "Spatial Cloud." This is crucial for keeping 909 kicks punchy while the acid lead is washed in reverb.
+2.  **Pre-Delay:** Use a 15ms - 35ms Pre-Delay to separate the "Transient" (The Attack) from the "Spatial Cloud." This keeps 909 kicks punchy while the acid lead is washed in reverb.
 
 ## PART 9: THE EXTENDED UK UNDERGROUND TAXONOMY
 *Focus: IDM, Braindance, Bleep, and Intelligent Jungle (1989–1996)*
@@ -548,7 +548,7 @@ Current Structure:
 *Status: Final Documentation Seal*
 
 ### 16.1 Executive Summary
-The "Underground Electronic Architecture" dataset is a high-fidelity reconstruction of the 1987–1999 electronic music landscape. By integrating physical hardware constraints (8/12-bit DACs), regional aesthetic archetypes (UK/Detroit/Japan), and nonlinear DSP modeling (Acid Slide/Accent), the project provides a "Zero-Rubbish" environment for generative audio research and historical preservation.
+The "Underground Electronic Architecture" dataset is a high-fidelity reconstruction of 1987–1999 electronic music. By integrating physical hardware constraints (8/12-bit DACs), regional aesthetic archetypes (UK/Detroit/Japan), and nonlinear DSP modeling (Acid Slide/Accent), the project provides a "Zero-Rubbish" environment for generative audio research and historical preservation.
 
 The core of the project rejects modern "clean" digital synthesis in favor of modeled artifacts, including:
 *   **Time-domain non-linearities:** 30ms RC glide constants and 96 PPQN jitter.

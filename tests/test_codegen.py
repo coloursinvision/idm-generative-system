@@ -1,7 +1,4 @@
-"""
-tests/test_codegen.py
-
-Comprehensive test suite for engine/codegen/ module.
+"""Test suite for the engine/codegen module.
 
 Coverage:
     - Mapping completeness (zero silent parameter drops)
@@ -12,8 +9,6 @@ Coverage:
     - TidalCycles output (structural assertions, parametric, mode switching)
     - CodegenResult contract (all fields populated)
     - Edge cases (empty effects, minimal input, all effects enabled)
-
-Test count: 35 cases
 """
 
 from __future__ import annotations

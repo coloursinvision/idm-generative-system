@@ -1,7 +1,4 @@
-"""
-streamlit_app/app.py
-
-IDM Generative System - Streamlit Auxiliary UI.
+"""IDM Generative System - Streamlit Auxiliary UI.
 
 Three tabs:
     1. Sound Design Advisor (Manual mode) - ask questions, get RAG answers
@@ -14,7 +11,6 @@ Requires:
     - Knowledge base ingested (43 chunks)
 
 Run:
-    cd IDM_Generative_System_app
     streamlit run streamlit_app/app.py
 """
 

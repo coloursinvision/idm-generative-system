@@ -1,7 +1,4 @@
-"""
-tests/test_codegen_api.py
-
-Integration test suite for the codegen API endpoints.
+"""Integration test suite for the codegen API endpoints.
 
 Uses FastAPI TestClient (ASGI in-process) - same convention as test_api.py.
 
@@ -9,9 +6,6 @@ Coverage:
     POST /synthdef  - valid requests, all generators, effects, modes, errors
     POST /tidal     - valid requests, all generators, effects, modes, errors
     Shared          - response schema validation, default behaviour
-
-Run:
-    pytest tests/test_codegen_api.py -v
 """
 
 from __future__ import annotations

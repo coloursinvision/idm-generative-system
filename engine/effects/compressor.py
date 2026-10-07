@@ -1,7 +1,4 @@
-"""
-engine/effects/compressor.py
-
-Block 9: Bus Compressor (SSL-Style Glue, Soft Knee, DR8-DR10 Target).
+"""Block 9: Bus Compressor (SSL-Style Glue, Soft Knee, DR8-DR10 Target).
 
 Source:
     MASTER_DATASET - Bus Summing, Dynamics Processing
@@ -484,7 +481,7 @@ class Compressor(BaseEffect):
         for the given ratio, compensating so perceived loudness stays
         roughly constant when compression is applied.
 
-        Formula: makeup_dB ≈ -threshold_dB × (1 - 1/ratio) × 0.5
+        Formula: makeup_dB ≈ -threshold_dB * (1 - 1/ratio) * 0.5
         The 0.5 factor accounts for programme material spending roughly
         half its time above threshold (empirical, SSL-calibrated).
         """

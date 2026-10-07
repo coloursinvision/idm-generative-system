@@ -1,6 +1,4 @@
 /**
- * components/codegen/CodeBlock.tsx
- *
  * Production code display for SuperCollider (sclang) and
  * TidalCycles (Haskell DSL) output.
  *

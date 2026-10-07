@@ -1,6 +1,4 @@
 /**
- * components/codegen/useBroadcastChannel.ts
- *
  * Generic typed React hook for BroadcastChannel communication.
  * Used to synchronise state between the main app and the codegen
  * popout window without WebSocket or server involvement.

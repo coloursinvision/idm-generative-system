@@ -27,7 +27,7 @@ venv/
 secrets.toml
 .secrets
 
-# Audio files (large binaries — store in DO Spaces)
+# Audio files (large binaries - store in DO Spaces)
 *.wav
 *.mp3
 *.flac
@@ -77,28 +77,20 @@ frontend/tsconfig.tsbuildinfo
 *.bak-S*
 .dvc/config.local.bak-*
 
-# ---------------------------------------------------------------------------
-# SOPS + age — secrets encryption (see .sops.yaml)
-# ---------------------------------------------------------------------------
-# Plaintext working forms — never commit
+# SOPS + age - secrets encryption (see .sops.yaml)
+# Plaintext working forms - never commit
 secrets/*.plain.*
 secrets/*.dec.*
 secrets/*.plain.yaml
 secrets/*.plain.yml
 *.decrypted
 
-# age private key — must NEVER reach the repo (lives in ~/.config/sops/age/)
+# age private key - must NEVER reach the repo (lives in ~/.config/sops/age/)
 keys.txt
 *.agekey
 age-key.txt
 
-# Claude Code configuration (rules, permissions, skills) lives in a separate
-# private repository, cloned into place as .claude/. CLAUDE.md at the root is a
-# symlink into that clone. Machine-specific overrides stay untracked there too.
-.claude/
-/CLAUDE.md
-
-# Built SPA served by backend (build artifact — never commit)
+# Built SPA served by backend (build artifact - never commit)
 static/
 # MLflow local SQLite tracking DB (created at backend startup)
 mlflow.db

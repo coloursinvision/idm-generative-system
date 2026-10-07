@@ -1,7 +1,4 @@
-"""
-engine/effects/delay.py
-
-Block 6: Tape Delay (Roland Space Echo RE-201 Emulation).
+"""Block 6: Tape Delay (Roland Space Echo RE-201 Emulation).
 
 Source:
     MASTER_DATASET Part 8 - Spatial Processing & Time-Based Effects
@@ -88,7 +85,7 @@ def _delay_line_kernel(
     Per-sample processing:
       1. Read from buffer at (i + delay + modulation_offset) - wow/flutter
       2. Apply tanh saturation to read sample - tape head distortion
-      3. Write saturated sample × feedback back into buffer - recirculation
+      3. Write saturated sample * feedback back into buffer - recirculation
       4. Store wet output sample
 
     The modulation offset (from wow/flutter LFO) is converted to integer
@@ -244,7 +241,7 @@ class TapeDelay(BaseEffect):
         Generate combined wow & flutter modulation signal.
 
         Wow: sine LFO at wow_flutter_hz - slow motor speed variation.
-        Flutter: sine LFO at 7.3× wow rate - faster capstan/roller variation.
+        Flutter: sine LFO at 7.3x wow rate - faster capstan/roller variation.
         The 7.3 ratio is inharmonic, preventing periodic beating artefacts.
         """
         t = np.arange(n) / self.sr

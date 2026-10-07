@@ -1,8 +1,4 @@
-"""
-engine/sample_maker.py
-
-Algorithmic sample generator for the IDM Generative System.
-Extracted and refactored from: notebooks/sample_maker.ipynb
+"""Algorithmic sample generator for the IDM Generative System.
 
 Generators:
     - glitch_click  : percussive click with exponential decay
