@@ -1694,3 +1694,123 @@ class TestPositiveConfigFormats:
         assert result.returncode == 1, result.stdout
         for path in files:
             assert_reported(result, "FAIL", path, 1, label("EMDASH"))
+
+
+# --no-references: a file judged by T1 alone. The vault's own identifiers and wikilinks
+# are legitimate there, so the authoring hook and the vault cleanup run the checker on
+# its documents with the reference rule off; typography keeps its force.
+VAULT_IDS = [
+    "D-PIPE-99",
+    "D-CRF13-99",
+    "D-S99-01",
+    "D-SKILL-99",
+    "INF-ZZ",
+    "INF-Q",
+    "CR-F99",
+    "CR-99",
+    "TODO-99",
+    "TODO-S99",
+]
+VAULT_DOCUMENT = dedent(
+    """\
+    ---
+    document_type: decision-log
+    status: active
+    related_docs: [[INFRA_DEBT_REGISTRY]]
+    ---
+    ### 2026-10-10 - D-SKILL-99: Example entry
+
+    See [[DECISIONS#D-SKILL-98]] and [[INFRA_DEBT_REGISTRY#INF-ZZ]] for CR-F99.
+
+    | **INF-ZZ** | Example item | open | P3 |
+
+    _Refs: PR #99. Related: TODO-S99._
+    """
+)
+
+
+class TestNegativeNoReferences:
+    """--no-references: the vault's own identifiers pass, in every file mode."""
+
+    @pytest.mark.parametrize("ref", VAULT_IDS)
+    def test_vault_identifier_passes(self, tmp_path: Path, ref: str) -> None:
+        path = "00-Project/DECISIONS.md"
+        write(tmp_path, path, f"Intro line.\nSee {ref} for the rationale.\n")
+        assert_clean(run_checker("--no-references", "--files", path, cwd=tmp_path), path)
+
+    def test_vault_document_passes(self, tmp_path: Path) -> None:
+        """Frontmatter, wikilinks, a registry row and a Refs line, as the vault writes them."""
+        path = "00-Project/DECISIONS.md"
+        write(tmp_path, path, VAULT_DOCUMENT)
+        assert_clean(run_checker("--no-references", "--files", path, cwd=tmp_path), path)
+
+    @pytest.mark.parametrize(
+        "args", [["--staged"], ["--diff", "HEAD"], ["--all"]], ids=["staged", "diff", "all"]
+    )
+    def test_identifier_on_an_added_line_passes_in_every_git_mode(
+        self, repo: Path, args: list[str]
+    ) -> None:
+        path = "00-Project/DECISIONS.md"
+        write(repo, path, "Clean line.\n")
+        commit(repo, "vault: baseline")
+        write(repo, path, "Clean line.\nSee D-SKILL-99 and INF-ZZ.\n")
+        git(repo, "add", path)
+        assert_clean(run_checker("--no-references", *args, cwd=repo), path)
+
+    def test_fix_with_the_flag_rewrites_and_exits_zero(self, tmp_path: Path) -> None:
+        """An arrow is rewritten and the identifier beside it is no failure."""
+        path = "00-Project/DECISIONS.md"
+        write(tmp_path, path, "Signal %RARR% bus, see INF-ZZ.\n")
+        result = run_checker("--no-references", "--fix", "--files", path, cwd=tmp_path)
+        assert result.returncode == 0, result.stdout
+        assert read(tmp_path, path) == "Signal -> bus, see INF-ZZ.\n"
+
+
+class TestPositiveNoReferences:
+    """--no-references leaves T1 in force."""
+
+    def test_banned_character_still_fails(self, tmp_path: Path) -> None:
+        path = "00-Project/DECISIONS.md"
+        write(tmp_path, path, "Intro line.\nSee D-SKILL-99 %EMDASH% rationale.\n")
+        result = run_checker("--no-references", "--files", path, cwd=tmp_path)
+        assert result.returncode == 1, result.stdout
+        assert_reported(result, "FAIL", path, 2, label("EMDASH"))
+        assert not any("vault reference" in line for line in flagged(result, path)), result.stdout
+
+    def test_added_banned_character_fails_in_diff_mode(self, repo: Path) -> None:
+        """The authoring-hook shape in the vault: REF is HEAD and the edit is not staged."""
+        path = "00-Project/DECISIONS.md"
+        write(repo, path, "Clean line.\n")
+        commit(repo, "vault: baseline")
+        write(repo, path, "Clean line.\nAdded %EMDASH% line, see INF-ZZ.\n")
+        result = run_checker("--no-references", "--diff", "HEAD", cwd=repo)
+        assert result.returncode == 1, result.stdout
+        assert_reported(result, "FAIL", path, 2, label("EMDASH"))
+        summary = SUMMARY.search(result.stdout)
+        assert summary, result.stdout
+        assert summary.groups() == ("0", "0", "1"), result.stdout
+
+    def test_warn_class_is_still_surfaced(self, tmp_path: Path) -> None:
+        path = "00-Project/DECISIONS.md"
+        write(tmp_path, path, "Intro line.\n128 BPM %TIMES% 64, see INF-ZZ.\n")
+        result = run_checker("--no-references", "--files", path, cwd=tmp_path)
+        assert result.returncode == 0, result.stdout
+        assert lines_tagged(result, "FAIL") == [], result.stdout
+        assert_reported(result, "WARN", path, 2, label("TIMES"))
+
+
+class TestContractNoReferences:
+    """The flag is named in --help and refused where the reference rule never applied."""
+
+    def test_help_names_the_flag(self, tmp_path: Path) -> None:
+        result = run_checker("--help", cwd=tmp_path)
+        assert result.returncode == 0, result.stderr
+        assert "--no-references" in result.stdout, result.stdout
+
+    def test_flag_with_commit_msg_is_rejected(self, tmp_path: Path) -> None:
+        """A flag without effect would pass having changed nothing, so the mode refuses it."""
+        write(tmp_path, "COMMIT_EDITMSG", "chore: placeholder\n")
+        result = run_checker("--no-references", "--commit-msg", "COMMIT_EDITMSG", cwd=tmp_path)
+        assert result.returncode == 2, result.stdout
+        assert "usage" in result.stderr.lower(), result.stderr
+        assert "--no-references works only with" in result.stderr, result.stderr
