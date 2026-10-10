@@ -69,6 +69,25 @@ repos:
     hooks:
       - id: gitleaks
 
+  # ---- Workflow and shell lint ---------------------------------------------
+  # One image for actionlint, the ShellCheck it runs on run: blocks and pyflakes,
+  # so the hooks and CI judge with the same versions. Needs a running Docker
+  # daemon when a workflow file or a shell script is staged.
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.12
+    hooks:
+      - id: actionlint-docker
+  - repo: local
+    hooks:
+      - id: shellcheck
+        name: shellcheck
+        language: docker_image
+        entry: --entrypoint shellcheck docker.io/rhysd/actionlint:1.7.12
+        types: [shell]
+        # Frozen by operator decision, so its one finding (SC2016, a command
+        # printed literally by an echo) cannot be fixed in place.
+        exclude: ^scripts/run-with-env\.sh$
+
   # ---- Commit message convention -------------------------------------------
   - repo: https://github.com/commitizen-tools/commitizen
     rev: v3.27.0

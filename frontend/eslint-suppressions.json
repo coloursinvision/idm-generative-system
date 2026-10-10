@@ -1,0 +1,37 @@
+{
+  "e2e/error-states.spec.ts": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "src/api/codegen.ts": {
+    "preserve-caught-error": {
+      "count": 1
+    }
+  },
+  "src/components/codegen/CodegenPanel.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "src/components/codegen/CodegenPopout.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "src/components/generator/GeneratorPanel.tsx": {
+    "react-hooks/refs": {
+      "count": 2
+    }
+  },
+  "src/hooks/useEP133Sequencer.ts": {
+    "react-hooks/immutability": {
+      "count": 1
+    }
+  },
+  "src/hooks/useSequencer.ts": {
+    "react-hooks/immutability": {
+      "count": 1
+    }
+  }
+}
