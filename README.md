@@ -238,7 +238,7 @@ pytest -v                 # Verbose output
 npm --prefix frontend run test    # Frontend vitest
 ```
 
-CI (`ci.yml`) runs on pushes to `develop`, `main` and `hotfix/**` and on pull requests to `develop` and `main`: `ruff check` and `ruff format --check`, `mypy`, the pytest suite, a gitleaks secret scan over the full history, a text-hygiene check and, except on `hotfix/**`, a Docker build (pushed to GHCR from `main` only). `e2e.yml` runs the Playwright suite in Chromium and Firefox on pushes and pull requests to the same branches.
+CI (`ci.yml`) runs on pushes to `develop`, `main` and `hotfix/**` and on pull requests to `develop` and `main`: `ruff check` and `ruff format --check`, `mypy`, the pytest suite, the vitest suite, a gitleaks secret scan over the full history, a text-hygiene check and, except on `hotfix/**`, a Docker build (pushed to GHCR from `main` only). `e2e.yml` runs the Playwright suite in Chromium and Firefox on pushes and pull requests to the same branches.
 
 ---
 
