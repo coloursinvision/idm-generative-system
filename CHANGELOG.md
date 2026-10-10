@@ -6,6 +6,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.10.6] - 2026-10-10 - Frontend and workflow gates; a typography-only checker mode (no behaviour change)
+
+### Added
+- **CI:** `Frontend Tests (vitest)`, `Frontend Lint (eslint)` and `Workflow Lint (actionlint)` as jobs the Docker build waits for; with the seven earlier checks they are the ten required status checks on `develop` and `main`.
+- **ESLint** for the frontend, create-vite's React TypeScript configuration in the versions create-vite pins, with a `lint` script; the 8 errors in existing code are recorded in `frontend/eslint-suppressions.json` for their own pull requests.
+- **pre-commit:** the hooks `actionlint-docker` and `shellcheck` from the image `rhysd/actionlint:1.7.12`, the same image the CI job uses; `scripts/run-with-env.sh` is excluded from ShellCheck.
+- **Text-hygiene checker:** `--no-references` judges files by typography alone, for documents whose own identifiers the reference rule would reject; refused with `--commit-msg`.
+
+### Changed
+- **Secret scan step:** the gitleaks path quoted (ShellCheck SC2086).
+- **README:** the CI description lists the new jobs.
+
+### Notes
+- No functional change; the application is identical to `v0.10.5`. The frontend lockfile gains the ESLint packages as development dependencies; the frontend sources are unchanged.
+
+---
+
 ## [0.10.5] - 2026-10-07 - Comment, docstring and documentation hygiene (no behaviour change)
 
 ### Changed
