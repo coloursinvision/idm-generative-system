@@ -266,7 +266,8 @@ jobs:
 
       - name: Scan git history
         # --redact keeps any match out of this public build log.
-        run: ${RUNNER_TEMP}/bin/gitleaks detect --redact -v
+        run: |
+          "${RUNNER_TEMP}/bin/gitleaks" detect --redact -v
 
   # The lines a change adds are judged against the
   # pull-request base or the pushed range, so a finding points at the change
