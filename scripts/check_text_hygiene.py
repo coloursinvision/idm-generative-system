@@ -12,7 +12,9 @@ files and in the configuration formats: Dockerfiles, ignore files,
 requirements files, .env.example, .git-blame-ignore-revs and .dvc/config.
 Commit messages are held to T1 and to T0, the
 trailers and footers that credit a tool; the namespace rule does not apply to
-them, since their Refs trailers cite the vault by design.
+them, since their Refs trailers cite the vault by design. With --no-references
+a file is held to T1 alone: the vault's own documents carry the identifiers
+the namespace rule rejects.
 
 Usage:
     python scripts/check_text_hygiene.py --staged           # lines the next commit adds
@@ -21,6 +23,7 @@ Usage:
     python scripts/check_text_hygiene.py --all              # every tracked file
     python scripts/check_text_hygiene.py --commit-msg PATH  # a commit message file
     python scripts/check_text_hygiene.py --fix --files PATH [...]
+    python scripts/check_text_hygiene.py --no-references --all   # T1 alone, for the vault
 
 Output follows scripts/preflight_dvc_repro.sh: one [PASS], [WARN] or [FAIL]
 line per outcome, then a summary line.
@@ -548,7 +551,9 @@ def undecodable(exc: UnicodeDecodeError) -> Result:
     return Result([Finding("FAIL", None, None, detail, whole_file=True)])
 
 
-def inspect(relpath: str, kind: str, data: bytes, *, fix: bool = False) -> Result:
+def inspect(
+    relpath: str, kind: str, data: bytes, *, fix: bool = False, references: bool = True
+) -> Result:
     try:
         text = data.decode("utf-8")
     except UnicodeDecodeError as exc:
@@ -568,14 +573,16 @@ def inspect(relpath: str, kind: str, data: bytes, *, fix: bool = False) -> Resul
     except ParseError as exc:
         detail = f"cannot parse Python: {exc.message}"
         return Result([Finding("FAIL", exc.line, None, detail, whole_file=True)])
-    return Result(findings_in(lines, spans, namespaces=True), fixed_text, rewrites)
+    return Result(findings_in(lines, spans, namespaces=references), fixed_text, rewrites)
 
 
-def check_path(display: str, relpath: str, target: Path, *, fix: bool, report: Report) -> None:
+def check_path(
+    display: str, relpath: str, target: Path, *, fix: bool, references: bool, report: Report
+) -> None:
     kind = kind_of(relpath)
     if not kind:
         return
-    result = inspect(relpath, kind, target.read_bytes(), fix=fix)
+    result = inspect(relpath, kind, target.read_bytes(), fix=fix, references=references)
     if result.fixed_text is not None:
         target.write_bytes(result.fixed_text.encode("utf-8"))
         print(f"fixed   {display}  rewrites={result.rewrites}")
@@ -620,7 +627,7 @@ def require_repo_root() -> Path:
     return root
 
 
-def check_files(paths: list[str], *, fix: bool, report: Report) -> None:
+def check_files(paths: list[str], *, fix: bool, references: bool, report: Report) -> None:
     missing = [path for path in paths if not os.path.isfile(path)]
     if missing:
         raise AbortError(f"no such file: {', '.join(missing)}")
@@ -631,15 +638,22 @@ def check_files(paths: list[str], *, fix: bool, report: Report) -> None:
         relpath = os.path.relpath(os.path.realpath(path), base)
         if relpath == os.pardir or relpath.startswith(os.pardir + os.sep):
             relpath = display
-        check_path(display, PurePosixPath(relpath).as_posix(), Path(path), fix=fix, report=report)
+        check_path(
+            display,
+            PurePosixPath(relpath).as_posix(),
+            Path(path),
+            fix=fix,
+            references=references,
+            report=report,
+        )
 
 
-def check_all(*, fix: bool, report: Report) -> None:
+def check_all(*, fix: bool, references: bool, report: Report) -> None:
     root = require_repo_root()
     for relpath in git(root, "ls-files", "-z").decode("utf-8", "surrogateescape").split("\x00"):
         target = root / relpath
         if relpath and not target.is_symlink() and target.is_file():
-            check_path(relpath, relpath, target, fix=fix, report=report)
+            check_path(relpath, relpath, target, fix=fix, references=references, report=report)
 
 
 def changed_paths(root: Path, against: str) -> list[tuple[str, str]]:
@@ -676,14 +690,15 @@ def added_lines(root: Path, old: str, new: str, against: str) -> set[int]:
     return added
 
 
-def check_staged(report: Report) -> None:
+def check_staged(report: Report, *, references: bool) -> None:
     root = require_repo_root()
     for old, new in changed_paths(root, "--cached"):
         kind = kind_of(new)
         if not kind:
             continue
         added = added_lines(root, old, new, "--cached")
-        result = inspect(new, kind, git(root, "cat-file", "blob", f":{new}"))
+        blob = git(root, "cat-file", "blob", f":{new}")
+        result = inspect(new, kind, blob, references=references)
         report.file(new, [f for f in result.findings if f.whole_file or f.line in added])
 
 
@@ -698,7 +713,7 @@ def resolve_commit(root: Path, ref: str) -> str:
     return output.decode("ascii").strip()
 
 
-def check_diff(ref: str, report: Report) -> None:
+def check_diff(ref: str, report: Report, *, references: bool) -> None:
     root = require_repo_root()
     commit = resolve_commit(root, ref)
     for old, new in changed_paths(root, commit):
@@ -708,7 +723,7 @@ def check_diff(ref: str, report: Report) -> None:
         if not kind or target.is_symlink():
             continue
         added = added_lines(root, old, new, commit)
-        result = inspect(new, kind, target.read_bytes())
+        result = inspect(new, kind, target.read_bytes(), references=references)
         report.file(new, [f for f in result.findings if f.whole_file or f.line in added])
 
 
@@ -744,9 +759,16 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
         action="store_true",
         help="rewrite the mechanically safe characters in prose; with --files or --all",
     )
+    parser.add_argument(
+        "--no-references",
+        action="store_true",
+        help="typography alone, for the vault's own identifiers; not with --commit-msg",
+    )
     args = parser.parse_args(argv)
     if args.fix and (args.staged or args.diff is not None or args.commit_msg is not None):
         parser.error("--fix works only with --files or --all")
+    if args.no_references and args.commit_msg is not None:
+        parser.error("--no-references works only with --staged, --diff, --files or --all")
     return args
 
 
@@ -756,17 +778,18 @@ def main(argv: list[str] | None = None) -> int:
             stream.reconfigure(errors="backslashreplace")
     args = parse_args(argv)
     report = Report()
+    references = not args.no_references
     try:
         if args.staged:
-            check_staged(report)
+            check_staged(report, references=references)
         elif args.diff is not None:
-            check_diff(args.diff, report)
+            check_diff(args.diff, report, references=references)
         elif args.all_files:
-            check_all(fix=args.fix, report=report)
+            check_all(fix=args.fix, references=references, report=report)
         elif args.commit_msg is not None:
             check_commit_message(args.commit_msg, report)
         else:
-            check_files(args.files, fix=args.fix, report=report)
+            check_files(args.files, fix=args.fix, references=references, report=report)
     except (AbortError, OSError) as exc:
         print(f"[ABORT] {exc}", file=sys.stderr)
         return 2
