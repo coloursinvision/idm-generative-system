@@ -8,6 +8,7 @@
 #
 # A gitleaks secret scan runs on every trigger, in parallel with lint.
 # A text-hygiene check judges the lines each change adds and the whole tree, also in parallel.
+# The frontend unit tests (vitest) run on every trigger, also in parallel.
 
 name: CI
 
@@ -130,10 +131,35 @@ jobs:
           path: coverage.xml
           retention-days: 14
 
+  frontend-test:
+    name: "Frontend Tests (vitest)"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          # The major the Dockerfile builds the production bundle with.
+          node-version: 22
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        # As in the Dockerfile: exactly the lockfile, without install scripts.
+        run: npm ci --ignore-scripts
+
+      - name: Run vitest
+        working-directory: frontend
+        run: npm test
+
   docker:
     name: "Docker"
     runs-on: ubuntu-24.04
-    needs: [lint, typecheck, test, secret-scan]
+    needs: [lint, typecheck, test, frontend-test, secret-scan]
     # Only build Docker on develop pushes, main pushes, and pull requests.
     if: >-
       github.event_name == 'push' &&
