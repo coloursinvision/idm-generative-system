@@ -9,6 +9,7 @@
 # A gitleaks secret scan runs on every trigger, in parallel with lint.
 # A text-hygiene check judges the lines each change adds and the whole tree, also in parallel.
 # The frontend lint (ESLint) and unit tests (vitest) run on every trigger, also in parallel.
+# actionlint and ShellCheck judge the workflows and the shell scripts, also in parallel.
 
 name: CI
 
@@ -181,10 +182,33 @@ jobs:
         working-directory: frontend
         run: npm test
 
+  workflow-lint:
+    name: "Workflow Lint (actionlint)"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+
+      # The same image as the pre-commit hooks, so CI and the hooks judge with
+      # one actionlint, one ShellCheck and one pyflakes.
+      - name: actionlint
+        uses: docker://rhysd/actionlint:1.7.12
+        with:
+          args: -color
+
+      - name: ShellCheck
+        uses: docker://rhysd/actionlint:1.7.12
+        with:
+          entrypoint: shellcheck
+          # scripts/run-with-env.sh is frozen and excluded, as in pre-commit.
+          args: scripts/deploy_api.sh scripts/preflight_dvc_repro.sh scripts/train_with_hash.sh
+
   docker:
     name: "Docker"
     runs-on: ubuntu-24.04
-    needs: [lint, typecheck, test, frontend-lint, frontend-test, secret-scan]
+    needs: [lint, typecheck, test, frontend-lint, frontend-test, workflow-lint, secret-scan]
     # Only build Docker on develop pushes, main pushes, and pull requests.
     if: >-
       github.event_name == 'push' &&
@@ -266,7 +290,8 @@ jobs:
 
       - name: Scan git history
         # --redact keeps any match out of this public build log.
-        run: ${RUNNER_TEMP}/bin/gitleaks detect --redact -v
+        run: |
+          "${RUNNER_TEMP}/bin/gitleaks" detect --redact -v
 
   # The lines a change adds are judged against the
   # pull-request base or the pushed range, so a finding points at the change
