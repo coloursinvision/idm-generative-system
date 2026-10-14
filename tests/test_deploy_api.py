@@ -5,7 +5,8 @@ client's command, through sudo, to the script as its only argument. The script
 must therefore refuse anything but one lowercase 40-character commit SHA before it
 runs a single command, and then deploy as the Deploy workflow did: pull the image
 tagged with that commit, bring up the API service and wait for it, check health
-and the running revision, and only then prune.
+and the running revision, record the commit in the compose directory's .env for
+the next boot, and only then prune.
 
 Refusals come first. Every run puts stand-ins for docker, curl and id first on the
 PATH, and each stand-in logs its calls, so a refusal must leave the log empty. The
@@ -45,6 +46,7 @@ STAND_INS = {
   "compose pull idm-api") exit "${STUB_PULL_EXIT:-0}" ;;
   "compose ps -q idm-api") echo c0ffee ;;
   "inspect --format "*) echo "$STUB_REVISION" ;;
+  "image prune "*) exit "${STUB_PRUNE_EXIT:-0}" ;;
 esac
 """,
     "curl": r"""[ "${STUB_HEALTH_EXIT:-0}" -eq 0 ] || exit "$STUB_HEALTH_EXIT"
@@ -162,3 +164,72 @@ def test_revision_mismatch_stops_before_pruning(root: Path) -> None:
     assert result.returncode != 0
     assert f"expected {SHA}, running {OTHER_SHA}" in result.stdout.splitlines()
     assert not any("image prune" in line for line in calls(root))
+
+
+def compose_entries(root: Path) -> list[str]:
+    """The names in the compose directory, which the stand-ins never write to."""
+    return sorted(path.name for path in (root / "compose").iterdir())
+
+
+def record(root: Path) -> str:
+    """The .env the script leaves in the compose directory for the next boot."""
+    return (root / "compose" / ".env").read_text(encoding="utf-8")
+
+
+def test_records_the_deployed_commit_for_the_next_boot(root: Path) -> None:
+    """Compose reads IDM_API_TAG from .env at boot; no temporary file stays behind."""
+    result = run_deploy(SHA, root=root)
+    assert result.returncode == 0, result.stderr
+    assert record(root) == f"IDM_API_TAG={SHA}\n"
+    assert compose_entries(root) == [".env"]
+
+
+def test_replaces_an_earlier_record(root: Path) -> None:
+    (root / "compose" / ".env").write_text(f"IDM_API_TAG={OTHER_SHA}\n", encoding="utf-8")
+    result = run_deploy(SHA, root=root)
+    assert result.returncode == 0, result.stderr
+    assert record(root) == f"IDM_API_TAG={SHA}\n"
+    assert compose_entries(root) == [".env"]
+
+
+def test_record_is_renamed_into_place_not_rewritten(root: Path) -> None:
+    """A rename replaces the name; a write in place would also change the linked file."""
+    previous = root / "compose" / "previous"
+    previous.write_text(f"IDM_API_TAG={OTHER_SHA}\n", encoding="utf-8")
+    os.link(previous, root / "compose" / ".env")
+    result = run_deploy(SHA, root=root)
+    assert result.returncode == 0, result.stderr
+    assert record(root) == f"IDM_API_TAG={SHA}\n"
+    assert previous.read_text(encoding="utf-8") == f"IDM_API_TAG={OTHER_SHA}\n"
+    assert compose_entries(root) == [".env", "previous"]
+
+
+def test_failed_prune_keeps_the_record(root: Path) -> None:
+    """The record depends on the checks alone, so it is written before pruning."""
+    result = run_deploy(SHA, root=root, STUB_PRUNE_EXIT="1")
+    assert result.returncode != 0
+    assert any("image prune" in line for line in calls(root))
+    assert record(root) == f"IDM_API_TAG={SHA}\n"
+
+
+FAILED_STEPS = {
+    "pull": {"STUB_PULL_EXIT": "1"},
+    "health check": {"STUB_HEALTH_EXIT": "22"},
+    "revision check": {"STUB_REVISION": OTHER_SHA},
+}
+
+
+@pytest.mark.parametrize("stub", list(FAILED_STEPS.values()), ids=list(FAILED_STEPS))
+def test_failed_step_keeps_the_earlier_record(root: Path, stub: dict[str, str]) -> None:
+    (root / "compose" / ".env").write_text(f"IDM_API_TAG={OTHER_SHA}\n", encoding="utf-8")
+    result = run_deploy(SHA, root=root, **stub)
+    assert result.returncode != 0
+    assert record(root) == f"IDM_API_TAG={OTHER_SHA}\n"
+    assert compose_entries(root) == [".env"]
+
+
+@pytest.mark.parametrize("args", list(REFUSED.values()), ids=list(REFUSED))
+def test_refusal_writes_no_record(root: Path, args: list[str]) -> None:
+    result = run_deploy(*args, root=root)
+    assert result.returncode == 2
+    assert compose_entries(root) == []
