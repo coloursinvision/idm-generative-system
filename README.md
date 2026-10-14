@@ -248,7 +248,7 @@ CI (`ci.yml`) runs on pushes to `develop`, `main` and `hotfix/**` and on pull re
 Production runs as a Docker Compose stack (`idm-api` + `mlflow` containers) on a single host behind an nginx reverse proxy.
 
 - **Git Flow:** feature branches -> `develop` (integration) -> `main` (release). Production deploys **only** from `main`.
-- **CI/CD:** a push to `main` runs `ci.yml`, which builds the image and pushes it to GHCR tagged with the full commit SHA. When that run succeeds, `deploy.yml` deploys that exact commit: it pulls the image by its SHA tag, waits for the container healthcheck, checks `/health` and confirms that the running image carries the expected revision.
+- **CI/CD:** a push to `main` runs `ci.yml`, which builds the image and pushes it to GHCR tagged with the full commit SHA. When that run succeeds, `deploy.yml` deploys that exact commit: it pulls the image by its SHA tag, waits for the container healthcheck, checks `/health` and confirms that the running image carries the expected revision. It then records that commit on the host, so a restart of the host starts the same image.
 - **Rollback:** every release image stays in GHCR under its commit SHA, so an earlier release can be redeployed by that SHA.
 - **MLflow:** the tracking and registry server runs on the same host and is not publicly accessible; artifacts are stored in DigitalOcean Spaces.
 
