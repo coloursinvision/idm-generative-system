@@ -25,6 +25,12 @@ cid=$(docker compose ps -q idm-api)
 running=$(docker inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' "$cid")
 echo "expected $sha, running $running"
 test "$running" = "$sha"
+# A boot runs compose here without IDM_API_TAG, so compose reads it from .env. The
+# record is written beside it, flushed and renamed over it, which replaces it atomically.
+record=$(mktemp .env.XXXXXX)
+printf 'IDM_API_TAG=%s\n' "$sha" > "$record"
+sync -- "$record"
+mv -f -- "$record" .env
 # Unused images of this repository only; a rollback pulls its image again.
 docker image prune -af --filter "label=org.opencontainers.image.source=https://github.com/coloursinvision/idm-generative-system"
 echo "=== Deploy complete ==="
