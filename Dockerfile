@@ -46,8 +46,11 @@ RUN apt-get update && \
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Install deps first (cache layer - only rebuilds when deps change).
-COPY pyproject.toml README.md ./
+# Install deps first (cache layer - rebuilds only when pyproject.toml changes). The build
+# backend needs the readme file that pyproject.toml names, not its text, so an empty one
+# keeps documentation edits out of this layer.
+COPY pyproject.toml ./
+RUN touch README.md
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
     pip install --no-cache-dir ".[ml,monitoring]"
 
