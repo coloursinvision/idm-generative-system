@@ -220,13 +220,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      - name: Cache Docker layers
-        uses: actions/cache@v6
-        with:
-          path: /tmp/.buildx-cache
-          key: buildx-${{ github.sha }}
-          restore-keys: buildx-
-
       - name: Log in to GHCR
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         uses: docker/login-action@v4
@@ -256,19 +249,16 @@ jobs:
           push: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+          # Only pushes save the cache: a pull request's entry serves only its own re-runs.
+          # A failed export must not fail the job: on main the image is already pushed, and
+          # a red run stops the deploy.
+          cache-from: type=gha
+          cache-to: ${{ github.event_name == 'push' && 'type=gha,mode=max,ignore-error=true' || '' }}
         env:
           # Since v6 the action adds a build summary and uploads the build record
           # as an artifact by default; both stay off, as they were on v5.
           DOCKER_BUILD_SUMMARY: "false"
           DOCKER_BUILD_RECORD_UPLOAD: "false"
-
-      # Rotate cache to prevent unbounded growth.
-      - name: Rotate cache
-        run: |
-          rm -rf /tmp/.buildx-cache
-          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
   secret-scan:
     name: "Secret Scan"
