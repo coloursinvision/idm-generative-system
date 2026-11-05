@@ -366,6 +366,6 @@ AGPL-3.0-or-later
 
 ---
 
-## Author
+## Maintainer
 
 **Tom Boro** - [github.com/coloursinvision](https://github.com/coloursinvision)
