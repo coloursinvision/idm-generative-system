@@ -49,8 +49,8 @@ def app() -> FastAPI:
 
 
 @pytest.fixture(scope="module")
-def client(app: FastAPI) -> Any:
-    """Module-scoped TestClient - lifespan runs once per file."""
+def client(app: FastAPI, tuning_registry: Any) -> Any:
+    """Module-scoped TestClient - lifespan runs once per file, on the test registry."""
     with TestClient(app) as c:
         yield c
 
@@ -233,3 +233,11 @@ class TestResponseShape:
             "region",
             "sub_region",
         }
+
+
+class TestServedModel:
+    """The lifespan of this module loads the model of the test registry too."""
+
+    def test_loads_the_test_registry_model(self, client: Any, tuning_registry: Any) -> None:
+        """A tracking URI that reached another registry would load another run."""
+        assert client.app.state.tuning_model_metadata["model_version"] == tuning_registry.run_id
