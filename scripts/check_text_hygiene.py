@@ -12,9 +12,11 @@ files and in the configuration formats: Dockerfiles, ignore files,
 requirements files, .env.example, .git-blame-ignore-revs and .dvc/config.
 Commit messages are held to T1 and to T0, the
 trailers and footers that credit a tool; the namespace rule does not apply to
-them, since their Refs trailers cite the vault by design. With --no-references
-a file is held to T1 alone: the vault's own documents carry the identifiers
-the namespace rule rejects.
+them, since their Refs trailers cite the vault by design. By default a message
+is read as git records an edited one, without its comment lines and anything
+below the scissors line; with --verbatim it is read whole, as history stores it.
+With --no-references a file is held to T1 alone: the vault's own documents
+carry the identifiers the namespace rule rejects.
 
 Usage:
     python scripts/check_text_hygiene.py --staged           # lines the next commit adds
@@ -22,6 +24,7 @@ Usage:
     python scripts/check_text_hygiene.py --files PATH [...] # whole files
     python scripts/check_text_hygiene.py --all              # every tracked file
     python scripts/check_text_hygiene.py --commit-msg PATH  # a commit message file
+    python scripts/check_text_hygiene.py --commit-msg PATH --verbatim   # a stored message
     python scripts/check_text_hygiene.py --fix --files PATH [...]
     python scripts/check_text_hygiene.py --no-references --all   # T1 alone, for the vault
 
@@ -727,7 +730,7 @@ def check_diff(ref: str, report: Report, *, references: bool) -> None:
         report.file(new, [f for f in result.findings if f.whole_file or f.line in added])
 
 
-def check_commit_message(path: str, report: Report) -> None:
+def check_commit_message(path: str, report: Report, *, verbatim: bool = False) -> None:
     if not os.path.isfile(path):
         raise AbortError(f"no such file: {path}")
     try:
@@ -736,7 +739,8 @@ def check_commit_message(path: str, report: Report) -> None:
         report.file(path, undecodable(exc).findings)
         return
     lines = split_lines(text)
-    report.file(path, findings_in(lines, message_spans(lines), namespaces=False, credits=True))
+    spans = whole_lines(lines) if verbatim else message_spans(lines)
+    report.file(path, findings_in(lines, spans, namespaces=False, credits=True))
 
 
 def parse_args(argv: list[str] | None) -> argparse.Namespace:
@@ -764,11 +768,18 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
         action="store_true",
         help="typography alone, for the vault's own identifiers; not with --commit-msg",
     )
+    parser.add_argument(
+        "--verbatim",
+        action="store_true",
+        help="every line of a stored message, comment lines included; with --commit-msg",
+    )
     args = parser.parse_args(argv)
     if args.fix and (args.staged or args.diff is not None or args.commit_msg is not None):
         parser.error("--fix works only with --files or --all")
     if args.no_references and args.commit_msg is not None:
         parser.error("--no-references works only with --staged, --diff, --files or --all")
+    if args.verbatim and args.commit_msg is None:
+        parser.error("--verbatim works only with --commit-msg")
     return args
 
 
@@ -787,7 +798,7 @@ def main(argv: list[str] | None = None) -> int:
         elif args.all_files:
             check_all(fix=args.fix, references=references, report=report)
         elif args.commit_msg is not None:
-            check_commit_message(args.commit_msg, report)
+            check_commit_message(args.commit_msg, report, verbatim=args.verbatim)
         else:
             check_files(args.files, fix=args.fix, references=references, report=report)
     except (AbortError, OSError) as exc:
