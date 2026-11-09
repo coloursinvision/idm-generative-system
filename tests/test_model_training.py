@@ -290,6 +290,38 @@ class TestTrain:
         assert "metrics.rmse_mean" in latest_run.index
         assert "metrics.r2_mean" in latest_run.index
 
+    def test_train_logs_a_skops_model_that_loads(self) -> None:
+        """The registered model is in the skops format with the XGBoost types trusted.
+
+        MLflow 3.14 made skops the default sklearn format, and skops loads only the types it
+        is told to trust: without the XGBoost types the save fails, and a format left to the
+        default differs between MLflow versions.
+        """
+        import mlflow
+        from mlflow.tracking import MlflowClient
+
+        df = _make_training_df(100)
+        feature_cols, target_cols = extract_feature_target_columns(df)
+        X, y = prepare_data(df, feature_cols, target_cols)
+        config = TrainingConfig(
+            experiment_name="test-skops",
+            registry_name="TestSkopsModel",
+            xgboost_params={"n_estimators": 10, "max_depth": 3},
+        )
+
+        train(X.iloc[:80], y.iloc[:80], X.iloc[80:], y.iloc[80:], config)
+
+        (version,) = MlflowClient().search_model_versions("name='TestSkopsModel'")
+        uri = f"models:/TestSkopsModel/{version.version}"
+        flavor = mlflow.models.get_model_info(uri).flavors["sklearn"]
+        assert flavor["serialization_format"] == "skops"
+        assert flavor["skops_trusted_types"] == [
+            "xgboost.core.Booster",
+            "xgboost.sklearn.XGBRegressor",
+        ]
+        predictions = mlflow.pyfunc.load_model(uri).predict(X.iloc[80:])
+        assert predictions.shape == (20, len(target_cols))
+
 
 # Optuna HPO smoke test
 

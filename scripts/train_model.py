@@ -29,6 +29,7 @@ import yaml  # type: ignore[import-untyped]
 
 from engine.ml.dataset_schema import DATASET_SCHEMA
 from engine.ml.model_training import (
+    SKOPS_TRUSTED_TYPES,
     OptunaConfig,
     TrainingConfig,
     extract_feature_target_columns,
@@ -223,7 +224,12 @@ def main() -> None:
     # recreates the directory.
     if _MODEL_DIR.exists():
         shutil.rmtree(_MODEL_DIR)
-    mlflow.sklearn.save_model(best_pipeline, str(_MODEL_DIR))
+    mlflow.sklearn.save_model(
+        best_pipeline,
+        str(_MODEL_DIR),
+        serialization_format=mlflow.sklearn.SERIALIZATION_FORMAT_SKOPS,
+        skops_trusted_types=SKOPS_TRUSTED_TYPES,
+    )
     logger.info("Model artifact saved to %s", _MODEL_DIR)
 
     # --- Export metrics (DVC metric) ---

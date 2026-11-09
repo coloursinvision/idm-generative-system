@@ -74,6 +74,10 @@ _NUMERIC_FEATURES: list[str] = [
 # Columns excluded from features (metadata, targets, or identifiers).
 _EXCLUDE_COLUMNS: set[str] = {"spec_id", "is_perturbed", "perturbation_idx"}
 
+# skops, the sklearn format MLflow defaults to since 3.14, loads only the types it is told
+# to trust; the regressor of the pipeline is XGBoost's, so its two types are named here.
+SKOPS_TRUSTED_TYPES: list[str] = ["xgboost.core.Booster", "xgboost.sklearn.XGBRegressor"]
+
 
 # Configuration
 
@@ -519,6 +523,8 @@ def train(
         mlflow.sklearn.log_model(
             pipeline,
             artifact_path="model",
+            serialization_format=mlflow.sklearn.SERIALIZATION_FORMAT_SKOPS,
+            skops_trusted_types=SKOPS_TRUSTED_TYPES,
         )
         model_uri = f"runs:/{run.info.run_id}/model"
         model_version = mlflow.register_model(
