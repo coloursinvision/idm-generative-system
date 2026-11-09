@@ -82,6 +82,24 @@ def _make_training_df(n_rows: int = 100) -> pd.DataFrame:
     )
 
 
+@pytest.fixture
+def tracking_store(tmp_path: Any, monkeypatch: pytest.MonkeyPatch) -> str:
+    """Point MLflow at a SQLite store in tmp_path for one test.
+
+    MLflow 3 refuses the file store. The URI goes through the environment, which
+    monkeypatch restores, rather than mlflow.set_tracking_uri, which would outlive the
+    test; artifacts default to ./mlruns, so the working directory moves to tmp_path.
+    """
+    import mlflow
+
+    uri = f"sqlite:///{tmp_path}/mlflow.db"
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("MLFLOW_TRACKING_URI", uri)
+    monkeypatch.delenv("MLFLOW_REGISTRY_URI", raising=False)
+    assert mlflow.get_tracking_uri() == uri, "a tracking URI was set before this test"
+    return uri
+
+
 # Pipeline construction
 
 
@@ -203,15 +221,12 @@ class TestPrepareData:
 # Training smoke test
 
 
+@pytest.mark.usefixtures("tracking_store")
 class TestTrain:
     """Training pipeline runs end-to-end on synthetic data."""
 
-    def test_train_smoke(self, tmp_path: Any) -> None:
-        """Full training run with MLflow tracking to temp directory."""
-        import mlflow
-
-        mlflow.set_tracking_uri(f"file://{tmp_path}/mlruns")
-
+    def test_train_smoke(self) -> None:
+        """Full training run with MLflow tracking to a temporary SQLite store."""
         df = _make_training_df(200)
         feature_cols, target_cols = extract_feature_target_columns(df)
         X, y = prepare_data(df, feature_cols, target_cols)
@@ -240,12 +255,9 @@ class TestTrain:
         assert "r2_mean" in metrics
         assert metrics["rmse_mean"] >= 0.0
 
-    def test_train_produces_mlflow_artifacts(self, tmp_path: Any) -> None:
+    def test_train_produces_mlflow_artifacts(self) -> None:
         """MLflow run contains logged model artifact."""
         import mlflow
-
-        tracking_uri = f"file://{tmp_path}/mlruns"
-        mlflow.set_tracking_uri(tracking_uri)
 
         df = _make_training_df(100)
         feature_cols, target_cols = extract_feature_target_columns(df)
@@ -282,15 +294,12 @@ class TestTrain:
 # Optuna HPO smoke test
 
 
+@pytest.mark.usefixtures("tracking_store")
 class TestOptunaStudy:
     """Optuna hyperparameter optimisation smoke test."""
 
-    def test_optuna_smoke(self, tmp_path: Any) -> None:
+    def test_optuna_smoke(self) -> None:
         """Run 3 Optuna trials and verify best pipeline is returned."""
-        import mlflow
-
-        mlflow.set_tracking_uri(f"file://{tmp_path}/mlruns")
-
         df = _make_training_df(200)
         feature_cols, target_cols = extract_feature_target_columns(df)
         X, y = prepare_data(df, feature_cols, target_cols)
