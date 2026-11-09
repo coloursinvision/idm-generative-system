@@ -6,7 +6,8 @@ Note:            these tests require the [ml] extras (lazy mlflow imports).
 
 Architectural conventions:
     - F.1: module-scoped TestClient fixture - lifespan + model load runs
-      once per file (real Langfuse + real MLflow Registry connection).
+      once per file, from the test registry of the tuning_registry fixture
+      (tests/conftest.py); Langfuse stays real.
     - F.2: synchronous TestClient (match V1 test convention).
     - F.3: fail-soft 503 paths exercised via monkeypatch on
       app.state.tuning_model / app.state.tuning_model_metadata, with
@@ -17,9 +18,10 @@ Test environment requirements:
     - [monitoring] extras installed (langfuse) - fail-open in handler means
       tests still pass without it, but Langfuse-specific tests are skipped
     - LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY / LANGFUSE_HOST env vars
-    - MLFLOW_TRACKING_URI + AWS credentials for model registry access
     - OPENAI_API_KEY (any value - only used by V1 RAGPipeline at import)
-    - Active Production version of TuningEstimator in MLflow Registry
+    - no MLflow server: the lifespan loads the model that tuning_registry
+      trains and promotes to Production in a SQLite store under a
+      temporary directory
 """
 
 from __future__ import annotations
@@ -55,7 +57,7 @@ def app() -> FastAPI:
     """Import the FastAPI app once per test module.
 
     Importing api.main triggers the conditional mlflow / langfuse import
-    blocks. The actual lifespan (model download from MLflow Registry) runs
+    blocks. The actual lifespan (model load from the test registry) runs
     later when TestClient is instantiated.
     """
     from api.main import app as fastapi_app
@@ -64,13 +66,13 @@ def app() -> FastAPI:
 
 
 @pytest.fixture(scope="module")
-def client(app: FastAPI) -> Any:
+def client(app: FastAPI, tuning_registry: Any) -> Any:
     """Module-scoped TestClient - lifespan runs once per file.
 
-    Yields the active TestClient. On context exit (after all tests in this
-    file), lifespan shutdown runs and Langfuse flush is called. This
-    minimises the ~3-5 second MLflow model download cost to a single
-    occurrence per pytest run.
+    Yields the active TestClient. The lifespan loads the model from the test
+    registry that tuning_registry points MLflow at for this module. On context
+    exit (after all tests in this file), lifespan shutdown runs and Langfuse
+    flush is called.
     """
     with TestClient(app) as c:
         yield c
@@ -339,6 +341,23 @@ class TestLatencyAndMetadata:
             body["dataset_dvc_hash"] in ({"unknown"} | {expected_version})
             or len(body["dataset_dvc_hash"]) > 0
         )
+
+
+# Served model: the lifespan loads the model of the test registry
+
+
+class TestServedModel:
+    """The lifespan loads the model of the test registry, never another one."""
+
+    def test_serves_the_test_registry_model(self, client: Any, tuning_registry: Any) -> None:
+        """model_version is the run that tuning_registry trained and promoted.
+
+        A tracking URI that reached another registry would serve another run
+        and fail here instead of passing.
+        """
+        r = client.post("/tuning", json=_valid_payload())
+        assert r.status_code == 200
+        assert r.json()["model_version"] == tuning_registry.run_id
 
 
 # Langfuse fail-open: trace breaks -> request still succeeds
