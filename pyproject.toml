@@ -58,7 +58,9 @@ dependencies = [
 dev = [
     # Upper bounds throughout. Floors alone let CI resolve to whatever shipped
     # that morning, which reddened the pipeline on files no branch had touched.
-    "pytest>=8.0.0,<10",
+    # pytest 9.2.0 deletes, when monkeypatch undoes a setattr, attributes kept
+    # outside the instance __dict__, such as Starlette's State (pytest-dev/pytest#15099).
+    "pytest>=8.0.0,<9.2",
     "httpx>=0.27.0,<1",
     "pytest-asyncio>=0.23.0,<2",
     "pytest-cov>=5.0.0,<7",
