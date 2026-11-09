@@ -86,9 +86,23 @@ jobs:
         run: mypy engine/ api/ knowledge/ --config-file pyproject.toml
 
   test:
-    name: "Test Suite"
+    # One job definition for two dependency sets: the development extra the README
+    # documents, and the ML extra as well, which the image installs and the ML test
+    # modules need.
+    name: ${{ matrix.name }}
     runs-on: ubuntu-24.04
     needs: lint
+    strategy:
+      # The default cancels the other set when one fails, which would hide its result.
+      fail-fast: false
+      matrix:
+        include:
+          - name: "Test Suite"
+            extras: "dev"
+            cache: "pip-test"
+          - name: "ML Test Suite"
+            extras: "dev,ml"
+            cache: "pip-ml"
     steps:
       - uses: actions/checkout@v7
 
@@ -100,16 +114,29 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ~/.cache/pip
-          key: pip-test-${{ hashFiles('pyproject.toml') }}
-          restore-keys: pip-test-
+          key: ${{ matrix.cache }}-${{ hashFiles('pyproject.toml') }}
+          restore-keys: ${{ matrix.cache }}-
 
       - name: Install system deps
         run: sudo apt-get update && sudo apt-get install -y libsndfile1
 
       - name: Install dependencies
+        env:
+          EXTRAS: ${{ matrix.extras }}
         run: |
           pip install --upgrade pip
-          pip install ".[dev]"
+          pip install ".[${EXTRAS}]"
+
+      - name: Check the ML extra
+        if: matrix.extras == 'dev,ml'
+        # Without these imports the ML test modules skip and the set passes having run none
+        # of them; the versions record what this run resolved.
+        run: |
+          python - <<'EOF'
+          import mlflow, optuna, pandas, pandera, sklearn, xgboost
+          for module in (mlflow, optuna, pandas, pandera, sklearn, xgboost):
+              print(module.__name__, module.__version__)
+          EOF
 
       - name: Run tests
         env:
@@ -126,8 +153,13 @@ jobs:
             --cov-report=term-missing \
             --cov-report=xml:coverage.xml
 
+      - name: Check that no MLflow store was left behind
+        # Both are git-ignored, so git status would not show a store that a test left here.
+        run: test ! -e mlflow.db && test ! -e mlruns
+
       - name: Upload coverage
-        if: github.ref == 'refs/heads/develop'
+        # Artifacts are immutable, so only one set uploads the report.
+        if: github.ref == 'refs/heads/develop' && matrix.name == 'Test Suite'
         uses: actions/upload-artifact@v7
         with:
           name: coverage-report

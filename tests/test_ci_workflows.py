@@ -5,6 +5,10 @@ exists to re-run. On main it must build, push and deploy like a push. Anywhere e
 not publish, and nothing a pull request or a fork starts may reach the registry or the
 droplet.
 
+The test job runs the suite with the development extra and again with the ML extra as well,
+which the ML test modules need. Its two sets, their conditions and the step that fails on an
+MLflow store left in the checkout are pinned here too.
+
 The conditions are read from the workflow files and evaluated over truth tables, so the
 tests judge what GitHub would decide rather than how a condition is spelled. The evaluator
 covers the part of the expression syntax these conditions use: contexts, string literals,
@@ -43,15 +47,16 @@ OPERATORS = {"&&": "and", "||": "or", "==": "==", "(": "(", ")": ")"}
 Context = dict[str, Any]
 
 
-def evaluate(expression: str, github: Context) -> Any:
+def evaluate(expression: str, github: Context, matrix: Context | None = None) -> Any:
     """The value GitHub would give a condition, with its short-circuit semantics."""
     text = expression.strip().removeprefix("${{").removesuffix("}}").strip()
+    contexts = {"github": github, "matrix": matrix}
 
     def context(path: str) -> Any:
         head, *rest = path.split(".")
-        if head != "github":
+        value: Any = contexts.get(head)
+        if value is None:
             raise KeyError(path)
-        value: Any = github
         for key in rest:
             value = value[key]
         return value
@@ -107,6 +112,10 @@ DEPLOY_JOB = DEPLOY["jobs"]["deploy"]
 
 LOGIN = step(DOCKER, "Log in to GHCR")["if"]
 PUSH = BUILD["with"]["push"]
+
+TEST_JOB = CI["jobs"]["test"]
+DEV_SET = {"name": "Test Suite", "extras": "dev", "cache": "pip-test"}
+ML_SET = {"name": "ML Test Suite", "extras": "dev,ml", "cache": "pip-ml"}
 
 PUBLISHING = [
     ("push", DEVELOP, False),
@@ -214,6 +223,91 @@ class TestDeployJob:
         assert bool(evaluate(DEPLOY_JOB["if"], context)) is expected
 
 
+class TestDependencySets:
+    """The suite runs with the development extra, then again with the ML extra as well."""
+
+    def test_runs_two_dependency_sets(self) -> None:
+        """Test Suite keeps its name as a required context, and ML Test Suite joins it."""
+        assert TEST_JOB["name"] == "${{ matrix.name }}"
+        assert TEST_JOB["strategy"]["matrix"] == {"include": [DEV_SET, ML_SET]}
+
+    def test_one_set_failing_does_not_cancel_the_other(self) -> None:
+        """GitHub cancels the rest of a matrix on a failure unless fail-fast is off."""
+        assert TEST_JOB["strategy"]["fail-fast"] is False
+
+    def test_installs_the_extras_of_its_set(self) -> None:
+        install = step(TEST_JOB, "Install dependencies")
+        assert install["env"] == {"EXTRAS": "${{ matrix.extras }}"}
+        assert 'pip install ".[${EXTRAS}]"' in install["run"]
+
+    def test_each_set_keeps_its_own_pip_cache(self) -> None:
+        """A shared key would restore the development wheels and never save the ML ones."""
+        cache = step(TEST_JOB, "Cache pip")["with"]
+        assert cache["key"] == "${{ matrix.cache }}-${{ hashFiles('pyproject.toml') }}"
+        assert cache["restore-keys"] == "${{ matrix.cache }}-"
+
+    def test_checks_the_ml_extra_before_the_tests(self) -> None:
+        """Without the extra the four ML modules skip, and the set would pass having run none."""
+        names = [item.get("name") for item in TEST_JOB["steps"]]
+        assert names.index("Check the ML extra") < names.index("Run tests")
+        check = step(TEST_JOB, "Check the ML extra")
+        assert "import mlflow, optuna, pandas, pandera, sklearn, xgboost" in check["run"]
+        assert evaluate(check["if"], {}, ML_SET) is True
+        assert evaluate(check["if"], {}, DEV_SET) is False
+
+    def test_runs_the_tests_as_before(self) -> None:
+        """Both sets run the command and the stub keys the job had before the matrix."""
+        tests = step(TEST_JOB, "Run tests")
+        assert tests["env"] == {
+            "OPENAI_API_KEY": "sk-test-000000000000000000000000000000000000000000000000",
+            "QDRANT_URL": "http://localhost:6333",
+            "QDRANT_API_KEY": "test-key",
+        }
+        command = (
+            "pytest --tb=short --strict-markers -q --cov=engine --cov=api --cov=knowledge"
+            " --cov-report=term-missing --cov-report=xml:coverage.xml"
+        )
+        assert tests["run"].replace("\\", " ").split() == command.split()
+
+    @pytest.mark.parametrize(
+        ("ref", "test_set", "expected"),
+        [
+            (DEVELOP, DEV_SET, True),
+            (DEVELOP, ML_SET, False),
+            (MAIN, DEV_SET, False),
+        ],
+        ids=["develop-dev", "develop-ml", "main-dev"],
+    )
+    def test_uploads_coverage_from_one_set(
+        self, ref: str, test_set: Context, expected: bool
+    ) -> None:
+        """Artifacts are immutable, so the two sets cannot both upload coverage-report."""
+        upload = step(TEST_JOB, "Upload coverage")
+        assert bool(evaluate(upload["if"], ci("push", ref), test_set)) is expected
+
+    @pytest.mark.parametrize(
+        ("left", "fails"),
+        [(None, False), ("mlflow.db", True), ("mlruns", True)],
+        ids=["clean", "database", "artifacts"],
+    )
+    def test_fails_when_an_mlflow_store_is_left(
+        self, tmp_path: Path, left: str | None, fails: bool
+    ) -> None:
+        """Both are git-ignored, so only this step sees them; run as GitHub runs a step."""
+        if left == "mlflow.db":
+            (tmp_path / left).write_text("", encoding="utf-8")
+        elif left == "mlruns":
+            (tmp_path / left).mkdir()
+        script = step(TEST_JOB, "Check that no MLflow store was left behind")["run"]
+        result = subprocess.run(  # noqa: S603
+            [BASH, "-e", "-c", script], cwd=tmp_path, capture_output=True, text=True, check=False
+        )
+        assert (result.returncode != 0) is fails, result.stderr
+
+    def test_docker_waits_for_both_sets(self) -> None:
+        assert "test" in DOCKER["needs"]
+
+
 def isolated_env(cwd: Path, **extra: str) -> dict[str, str]:
     """The caller's environment, scrubbed so git cannot reach a real repository."""
     env = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
@@ -300,3 +394,7 @@ class TestEvaluator:
     def test_refuses_an_unknown_context(self) -> None:
         with pytest.raises(KeyError):
             evaluate("github.actor == 'someone'", {"ref": MAIN})
+
+    def test_refuses_the_matrix_context_without_a_matrix(self) -> None:
+        with pytest.raises(KeyError):
+            evaluate("matrix.extras == 'dev'", {"ref": MAIN})
