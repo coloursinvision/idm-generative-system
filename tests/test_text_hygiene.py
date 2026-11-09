@@ -1814,3 +1814,151 @@ class TestContractNoReferences:
         assert result.returncode == 2, result.stdout
         assert "usage" in result.stderr.lower(), result.stderr
         assert "--no-references works only with" in result.stderr, result.stderr
+
+
+# --verbatim: a stored commit message read whole. git keeps a line that opens with a hash
+# sign when it opens no editor for the message, and git log returns that line, so CI judges
+# every line of what history records. The commit-msg hook reads the proposed message with
+# git's comment block and keeps skipping it.
+STORED_MESSAGE = "fix(engine): clamp the resonance seed\n\n#3 %EMDASH% the seed left the band\n"
+WORKFLOW = REPO_ROOT / ".github" / "workflows" / "ci.yml"
+PRE_COMMIT = REPO_ROOT / ".pre-commit-config.yaml"
+
+
+def check_stored(root: Path, message: str) -> Result:
+    """Write a stored message fixture and run --commit-msg on it with --verbatim."""
+    write(root, "msg", message)
+    return run_checker("--commit-msg", "msg", "--verbatim", cwd=root)
+
+
+def checker_calls(path: Path) -> list[str]:
+    """The lines of a configuration file that run the checker on a commit message."""
+    text = path.read_text(encoding="utf-8")
+    return [
+        line.strip()
+        for line in text.splitlines()
+        if "check_text_hygiene.py" in line and "--commit-msg" in line
+    ]
+
+
+class TestNegativeVerbatim:
+    """--verbatim: clean hash lines pass, and without the flag the hook shape is unchanged."""
+
+    def test_clean_hash_line_passes(self, tmp_path: Path) -> None:
+        """A line that opens with an issue number is text in a stored message."""
+        result = check_stored(tmp_path, "fix(ml): split by spec\n\n#3 is addressed here.\n")
+        assert_clean(result, "msg")
+
+    def test_vault_identifiers_pass(self, tmp_path: Path) -> None:
+        """The namespace rule stays off for messages, on a hash line as on any other."""
+        message = dedent(
+            """\
+            fix(engine): clamp the resonance seed
+
+            # See D-SKILL-99 and INF-ZZ.
+
+            Refs: 06-MLOps/INFRA_DEBT_REGISTRY.md#INF-ZZ
+            """
+        )
+        assert_clean(check_stored(tmp_path, message), "msg")
+
+    def test_hash_line_is_read_only_with_the_flag(self, tmp_path: Path) -> None:
+        """The same text passes without the flag, so the failure cannot come from elsewhere."""
+        write(tmp_path, "msg", STORED_MESSAGE)
+        assert_clean(run_checker("--commit-msg", "msg", cwd=tmp_path), "msg")
+        result = run_checker("--commit-msg", "msg", "--verbatim", cwd=tmp_path)
+        assert result.returncode == 1, result.stdout
+        assert_reported(result, "FAIL", "msg", 3, label("EMDASH"))
+
+
+class TestPositiveVerbatim:
+    """--verbatim: every line of the message is judged at its own line number."""
+
+    def test_typography_on_a_hash_line_fails(self, tmp_path: Path) -> None:
+        result = check_stored(
+            tmp_path, "docs(readme): describe the chain\n\n# Pipeline %RARR% model\n"
+        )
+        assert result.returncode == 1, result.stdout
+        assert_reported(result, "FAIL", "msg", 3, label("RARR"))
+
+    def test_attribution_footer_on_a_hash_line_fails(self, tmp_path: Path) -> None:
+        """T0 holds on a hash line: the footer rule allows a leading non-alphanumeric prefix."""
+        result = check_stored(tmp_path, "chore: bump ruff\n\n# Generated with Claude Code\n")
+        assert result.returncode == 1, result.stdout
+        assert_reported(result, "FAIL", "msg", 3, "T0")
+
+    def test_title_opening_with_a_hash_fails(self, tmp_path: Path) -> None:
+        """A pull-request title is stored as written."""
+        result = check_stored(tmp_path, "#12 Tempo %RARR% swing\n")
+        assert result.returncode == 1, result.stdout
+        assert_reported(result, "FAIL", "msg", 1, label("RARR"))
+
+    def test_lines_below_a_scissors_line_are_read(self, tmp_path: Path) -> None:
+        """git truncates at the scissors line only when the message is edited; history keeps it."""
+        message = dedent(
+            """\
+            docs(readme): replace arrows
+
+            # ------------------------ >8 ------------------------
+            Pipeline %RARR% model
+            """
+        )
+        result = check_stored(tmp_path, message)
+        assert result.returncode == 1, result.stdout
+        assert_reported(result, "FAIL", "msg", 4, label("RARR"))
+
+    def test_a_stored_message_keeps_its_hash_lines(self, repo: Path) -> None:
+        """git commit -F opens no editor, so its cleanup keeps the line, and git log returns it."""
+        write(repo, "docs/GUIDE.md", "Clean line.\n")
+        write(repo, "MESSAGE", STORED_MESSAGE)
+        git(repo, "add", "docs/GUIDE.md")
+        git(repo, "commit", "-q", "-F", "MESSAGE")
+        stored = subprocess.run(  # noqa: S603
+            [GIT, "log", "-1", "--format=%B"],
+            cwd=repo,
+            env=isolated_env(repo),
+            capture_output=True,
+            check=True,
+        ).stdout
+        write_raw(repo, "msg", stored)
+        result = run_checker("--commit-msg", "msg", "--verbatim", cwd=repo)
+        assert result.returncode == 1, result.stdout
+        assert_reported(result, "FAIL", "msg", 3, label("EMDASH"))
+
+
+class TestContractVerbatim:
+    """--verbatim is named in --help, refused where it has no effect, and used by CI."""
+
+    def test_help_names_the_flag(self, tmp_path: Path) -> None:
+        result = run_checker("--help", cwd=tmp_path)
+        assert result.returncode == 0, result.stderr
+        assert "--verbatim" in result.stdout, result.stdout
+
+    @pytest.mark.parametrize(
+        "args",
+        [["--staged"], ["--diff", "HEAD"], ["--files", "docs/NOTES.md"], ["--all"]],
+        ids=["staged", "diff", "files", "all"],
+    )
+    def test_flag_outside_commit_msg_is_rejected(self, repo: Path, args: list[str]) -> None:
+        """A flag without effect would pass having changed nothing, so the file modes refuse it."""
+        write(repo, "docs/NOTES.md", "Clean line.\n")
+        commit(repo, "chore: baseline")
+        result = run_checker("--verbatim", *args, cwd=repo)
+        assert result.returncode == 2, result.stdout
+        assert "--verbatim works only with --commit-msg" in result.stderr, result.stderr
+
+    def test_flag_without_a_mode_is_a_usage_error(self, tmp_path: Path) -> None:
+        result = run_checker("--verbatim", cwd=tmp_path)
+        assert result.returncode == 2, result.stdout
+        assert "usage" in result.stderr.lower(), result.stderr
+
+    def test_ci_reads_stored_messages_verbatim(self) -> None:
+        """CI checks what history records: each commit message and the pull-request title."""
+        calls = checker_calls(WORKFLOW)
+        assert len(calls) == 2, calls
+        assert all("--verbatim" in call for call in calls), calls
+
+    def test_commit_msg_hook_keeps_the_comment_handling(self) -> None:
+        """The hook reads the proposed message with git's comment block."""
+        calls = checker_calls(PRE_COMMIT)
+        assert calls == ["entry: python scripts/check_text_hygiene.py --commit-msg"], calls
