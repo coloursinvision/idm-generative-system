@@ -31,9 +31,9 @@ Japan Tokyo/Osaka split:
     Osaka profile spoke exists; the split is parameter-level.
 
 Path resolution:
-    Honours the ``IDM_VAULT_PATH`` environment variable. Falls back to
-    assuming the Obsidian vault sits at ``../IDM_Obsidian`` relative to
-    the repo root. Tests may override by passing ``profiles_dir=`` directly.
+    Reads the ``IDM_VAULT_PATH`` environment variable and raises
+    ``RuntimeError`` when it is unset or empty; no location is guessed.
+    Tests may override by passing ``profiles_dir=`` directly.
 """
 
 from __future__ import annotations
@@ -112,21 +112,21 @@ class SpokeParseError(Exception):
 
 
 def _default_profiles_dir() -> Path:
-    """Resolve the spoke directory via env var or filesystem convention.
-
-    Honours the ``IDM_VAULT_PATH`` environment variable. Falls back to
-    assuming the Obsidian vault is a sibling directory ``IDM_Obsidian``
-    adjacent to the repo root.
+    """Resolve the spoke directory from the ``IDM_VAULT_PATH`` environment variable.
 
     Returns:
         Absolute path to ``<vault>/02-Knowledge/supporting/profiles``.
+
+    Raises:
+        RuntimeError: If ``IDM_VAULT_PATH`` is unset or empty. No other
+            location is assumed.
     """
     env = os.environ.get("IDM_VAULT_PATH")
-    if env:
-        return Path(env) / "02-Knowledge" / "supporting" / "profiles"
-    # /<repo>/engine/ml/regional_profiles.py -> repo root at parent[2]
-    repo_root = Path(__file__).resolve().parent.parent.parent
-    return repo_root.parent / "IDM_Obsidian" / "02-Knowledge" / "supporting" / "profiles"
+    if not env:
+        raise RuntimeError(
+            "IDM_VAULT_PATH not set. Export it as the vault root, or pass profiles_dir."
+        )
+    return Path(env) / "02-Knowledge" / "supporting" / "profiles"
 
 
 # Pydantic validation layer (internal)
@@ -577,6 +577,8 @@ def load_profile(
             schema validation.
         ValueError: If ``sub_region`` is supplied for a region that does
             not support sub-region discrimination.
+        RuntimeError: If ``profiles_dir`` is not given and
+            ``IDM_VAULT_PATH`` is unset or empty.
     """
     if sub_region is not None and region != "JAPAN_IDM":
         raise ValueError(

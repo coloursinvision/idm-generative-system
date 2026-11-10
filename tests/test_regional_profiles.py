@@ -35,6 +35,7 @@ from engine.ml.regional_profiles import (
     SaturationSpec,
     SpokeParseError,
     SwingSpec,
+    _default_profiles_dir,
     all_profiles,
     load_profile,
 )
@@ -553,33 +554,52 @@ class TestCaching:
         assert p1 == p2
 
 
+# Path resolution - the vault comes from IDM_VAULT_PATH alone
+
+
+class TestDefaultProfilesDir:
+    """The spoke directory is read from the environment, never guessed."""
+
+    def test_variable_names_the_vault(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        monkeypatch.setenv("IDM_VAULT_PATH", str(tmp_path))
+        assert _default_profiles_dir() == tmp_path / "02-Knowledge" / "supporting" / "profiles"
+
+    @pytest.mark.parametrize("value", [None, ""], ids=["unset", "empty"])
+    def test_missing_variable_raises(
+        self, monkeypatch: pytest.MonkeyPatch, value: str | None
+    ) -> None:
+        """No sibling directory or other location stands in for the variable."""
+        if value is None:
+            monkeypatch.delenv("IDM_VAULT_PATH", raising=False)
+        else:
+            monkeypatch.setenv("IDM_VAULT_PATH", value)
+        with pytest.raises(RuntimeError, match=r"IDM_VAULT_PATH not set.*profiles_dir"):
+            _default_profiles_dir()
+
+
 # Integration - real vault (skipped when unreachable)
 
 
 def _real_vault_profiles_dir() -> Path | None:
     """Locate the real vault profile dir if accessible.
 
-    Honours ``IDM_VAULT_PATH``; otherwise tries the default
-    ``../IDM_Obsidian`` sibling directory. Returns ``None`` when neither
-    resolves to an existing directory - the integration test skips in
-    that case.
+    Reads ``IDM_VAULT_PATH`` alone, as the loader does. Returns ``None`` when
+    it is unset or does not name an existing profile directory - the
+    integration test skips in that case.
     """
     env = os.environ.get("IDM_VAULT_PATH")
-    if env:
-        candidate = Path(env) / "02-Knowledge" / "supporting" / "profiles"
-        return candidate if candidate.is_dir() else None
-    # Fallback matching engine/ml/regional_profiles.py::_default_profiles_dir
-    here = Path(__file__).resolve()
-    candidate = (
-        here.parent.parent.parent / "IDM_Obsidian" / "02-Knowledge" / "supporting" / "profiles"
-    )
+    if not env:
+        return None
+    candidate = Path(env) / "02-Knowledge" / "supporting" / "profiles"
     return candidate if candidate.is_dir() else None
 
 
 @pytest.mark.integration
 @pytest.mark.skipif(
     _real_vault_profiles_dir() is None,
-    reason="Obsidian vault not reachable; set IDM_VAULT_PATH or place vault as ../IDM_Obsidian",
+    reason="Obsidian vault not reachable; set IDM_VAULT_PATH",
 )
 class TestRealVaultIntegration:
     """Smoke test against the real on-disk spokes. Skipped in CI by default."""
