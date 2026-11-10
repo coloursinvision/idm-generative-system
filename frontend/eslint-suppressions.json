@@ -28,10 +28,5 @@
     "react-hooks/immutability": {
       "count": 1
     }
-  },
-  "src/hooks/useSequencer.ts": {
-    "react-hooks/immutability": {
-      "count": 1
-    }
   }
 }
