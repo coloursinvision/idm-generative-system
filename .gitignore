@@ -15,7 +15,6 @@ build/
 *.ipynb_checkpoints
 
 # Conda / virtualenv
-.env
 .venv
 env/
 venv/
@@ -65,7 +64,6 @@ logs/
 
 # Obsidian vault settings
 .obsidian/
-.env
 frontend/node_modules/
 
 # Playwright
