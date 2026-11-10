@@ -275,24 +275,6 @@ export function useSequencer({ numSteps, defaultBpm = 120 }: UseSequencerOptions
     }
   }, []);
 
-  const scheduler = useCallback(() => {
-    const ctx = audioCtxRef.current;
-    if (!ctx) return;
-
-    const secondsPerStep = 60.0 / bpmRef.current / 4; // 16th-note base grid
-    const lookahead = 0.1; // seconds
-
-    while (nextNoteTimeRef.current < ctx.currentTime + lookahead) {
-      scheduleNote(stepRef.current, nextNoteTimeRef.current);
-      setCurrentStep(stepRef.current);
-
-      nextNoteTimeRef.current += secondsPerStep;
-      stepRef.current = (stepRef.current + 1) % numSteps;
-    }
-
-    timerRef.current = setTimeout(scheduler, SCHEDULER_INTERVAL_MS);
-  }, [numSteps, scheduleNote]);
-
   /**
    * Starts playback. Async because the AudioContext may need to be resumed
    * before the first note is scheduled (Safari requirement).
@@ -302,8 +284,8 @@ export function useSequencer({ numSteps, defaultBpm = 120 }: UseSequencerOptions
    * with a single console warning rather than producing silent playback.
    *
    * Consumers MUST attach a `.catch(...)` at the call site. Returns once the
-   * scheduler is armed; the scheduler then runs via `requestAnimationFrame`
-   * independently.
+   * scheduler is armed; the scheduler then re-arms itself through
+   * `setTimeout` on every pass.
    */
   const play = useCallback(async (): Promise<void> => {
     const hasBuffers = tracksRef.current.some((t) => t.buffer !== null);
@@ -328,8 +310,26 @@ export function useSequencer({ numSteps, defaultBpm = 120 }: UseSequencerOptions
     setIsPlaying(true);
     setCurrentStep(0);
 
+    const scheduler = () => {
+      const audioCtx = audioCtxRef.current;
+      if (!audioCtx) return;
+
+      const secondsPerStep = 60.0 / bpmRef.current / 4; // 16th-note base grid
+      const lookahead = 0.1; // seconds
+
+      while (nextNoteTimeRef.current < audioCtx.currentTime + lookahead) {
+        scheduleNote(stepRef.current, nextNoteTimeRef.current);
+        setCurrentStep(stepRef.current);
+
+        nextNoteTimeRef.current += secondsPerStep;
+        stepRef.current = (stepRef.current + 1) % numSteps;
+      }
+
+      timerRef.current = setTimeout(scheduler, SCHEDULER_INTERVAL_MS);
+    };
+
     timerRef.current = setTimeout(scheduler, SCHEDULER_INTERVAL_MS);
-  }, [getAudioContext, scheduler]);
+  }, [getAudioContext, numSteps, scheduleNote]);
 
   const stop = useCallback(() => {
     if (timerRef.current) {
