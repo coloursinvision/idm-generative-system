@@ -21,7 +21,7 @@ If a value appears in a spoke and also as a literal in Python code, the Python l
 
 ### Path resolution
 
-The profile spoke directory is resolved via the `IDM_VAULT_PATH` environment variable. If unset, the loader assumes the vault is a sibling directory `IDM_Obsidian` adjacent to the repo root. Tests override this by passing `profiles_dir=` directly.
+The profile spoke directory is resolved via the `IDM_VAULT_PATH` environment variable; when it is unset or empty, the loader raises `RuntimeError` rather than guess a location. Tests override this by passing `profiles_dir=` directly.
 
 ## Public API
 
