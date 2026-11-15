@@ -214,7 +214,7 @@ If you develop a new program, and you want it to be of the greatest possible use
 To do so, attach the following notices to the program. It is safest to attach them to the start of each source file to most effectively state the exclusion of warranty; and each file should have at least the "copyright" line and a pointer to where the full notice is found.
 
 > **IDM Generative System App**  
-> Copyright (C) **2026** **Tom Boro**
+> Copyright (C) **2026** **Tom Borowiecki**
 >
 > This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 >
