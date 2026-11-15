@@ -376,14 +376,15 @@ jobs:
           # Through the environment only: a title from a fork is untrusted input.
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          # Commits reachable from the epoch predate this check and cannot be rewritten.
-          epoch=9644496865043d28b2bd5d6e6d9aa5f63ce7dea6
+          # A range that does not resolve stops the step here; a loop over the output of a
+          # failed listing would run no pass and exit 0.
+          git rev-list "$RANGE" > "$RUNNER_TEMP/commits"
           status=0
           # Stored text keeps a line that opens with #, so messages and the title are read whole.
-          for commit in $(git rev-list "$RANGE" "^$epoch"); do
+          while read -r commit; do
             git log -1 --format=%B "$commit" > "$RUNNER_TEMP/msg-$commit"
             python scripts/check_text_hygiene.py --commit-msg "$RUNNER_TEMP/msg-$commit" --verbatim || status=1
-          done
+          done < "$RUNNER_TEMP/commits"
           if [ -n "$PR_TITLE" ]; then
             printf '%s\n' "$PR_TITLE" > "$RUNNER_TEMP/pr-title"
             python scripts/check_text_hygiene.py --commit-msg "$RUNNER_TEMP/pr-title" --verbatim || status=1
