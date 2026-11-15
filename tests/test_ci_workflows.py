@@ -21,6 +21,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -377,6 +378,66 @@ class TestTextHygieneOnAManualStart:
         commit(repository, "second.md")
         resolved = resolve_base(repository, tmp_path / "output")
         assert resolved == {"sha": main, "range": f"{main}..HEAD"}
+
+
+CREDIT = "Co-Authored-By: Some Assistant <assistant@example.invalid>"
+
+
+def check_messages(
+    repo: Path, runner: Path, rev_range: str, title: str = ""
+) -> subprocess.CompletedProcess[str]:
+    """Run the step as a workflow does: a bash -e shell in the checkout, the checker beside it."""
+    (repo / "scripts").mkdir(exist_ok=True)
+    shutil.copy(REPO_ROOT / "scripts" / "check_text_hygiene.py", repo / "scripts")
+    runner.mkdir(exist_ok=True)
+    script = step(CI["jobs"]["text-hygiene"], "Check commit messages")["run"]
+    env = isolated_env(
+        repo,
+        RANGE=rev_range,
+        PR_TITLE=title,
+        RUNNER_TEMP=str(runner),
+        PATH=str(Path(sys.executable).parent) + os.pathsep + os.environ.get("PATH", ""),
+    )
+    return subprocess.run(  # noqa: S603
+        [BASH, "-e", "-c", script], cwd=repo, env=env, capture_output=True, text=True, check=False
+    )
+
+
+class TestCommitMessagesStep:
+    """The step judges the messages a change adds to history; one that reads none passes."""
+
+    def test_reads_every_commit_of_the_range(self, repository: Path, tmp_path: Path) -> None:
+        base = git(repository, "rev-parse", "HEAD")
+        commit(repository, "second.md")
+        commit(repository, "third.md")
+        result = check_messages(repository, tmp_path / "runner", f"{base}..HEAD")
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert result.stdout.count("summary: pass=1") == 2, result.stdout
+
+    def test_a_trailer_that_credits_a_tool_fails(self, repository: Path, tmp_path: Path) -> None:
+        base = git(repository, "rev-parse", "HEAD")
+        (repository / "second.md").write_text("Clean line.\n", encoding="utf-8")
+        git(repository, "add", "-A")
+        git(repository, "commit", "-q", "-m", "chore: add second.md", "-m", CREDIT)
+        result = check_messages(repository, tmp_path / "runner", f"{base}..HEAD")
+        assert result.returncode == 1, result.stdout + result.stderr
+        assert "T0 trailer credits a tool" in result.stdout, result.stdout
+
+    def test_a_range_that_does_not_resolve_fails(self, repository: Path, tmp_path: Path) -> None:
+        """A loop over the output of a failed listing runs no pass and would exit 0."""
+        missing = "0123456789abcdef0123456789abcdef01234567"
+        result = check_messages(repository, tmp_path / "runner", f"{missing}..HEAD")
+        assert result.returncode != 0, result.stdout
+
+    def test_no_commit_is_exempt(self) -> None:
+        script = step(CI["jobs"]["text-hygiene"], "Check commit messages")["run"]
+        assert re.search(r"[0-9a-f]{40}", script) is None, script
+
+    def test_a_title_that_credits_a_tool_fails(self, repository: Path, tmp_path: Path) -> None:
+        head = git(repository, "rev-parse", "HEAD")
+        result = check_messages(repository, tmp_path / "runner", f"{head}..HEAD", title=CREDIT)
+        assert result.returncode == 1, result.stdout + result.stderr
+        assert "T0 trailer credits a tool" in result.stdout, result.stdout
 
 
 class TestEvaluator:

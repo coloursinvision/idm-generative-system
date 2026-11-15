@@ -214,7 +214,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Pending - Production Deployment
 
-The fix is committed on `develop` (commit `65bf69b`). It has **not yet been deployed to production** (`https://idm.coloursinvision.ai`). Deployment requires:
+The fix is committed on `develop` (commit `8eade5e`). It has **not yet been deployed to production** (`https://idm.coloursinvision.ai`). Deployment requires:
 1. `develop` -> `main` PR merge
 2. CI build -> GHCR push (automatic on `main`)
 3. Droplet: `cd /opt/idm && docker compose pull && docker compose up -d`
