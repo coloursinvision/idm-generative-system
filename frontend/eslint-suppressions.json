@@ -23,10 +23,5 @@
     "react-hooks/refs": {
       "count": 2
     }
-  },
-  "src/hooks/useEP133Sequencer.ts": {
-    "react-hooks/immutability": {
-      "count": 1
-    }
   }
 }

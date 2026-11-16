@@ -358,23 +358,6 @@ export function useEP133Sequencer<G extends string>({
     }
   }, []);
 
-  const scheduler = useCallback(() => {
-    const ctx = audioCtxRef.current;
-    if (!ctx) return;
-
-    const secondsPerTick = 60.0 / bpmRef.current / 8; // 1/32 master grid
-    const lookahead = 0.1; // seconds
-
-    while (nextNoteTimeRef.current < ctx.currentTime + lookahead) {
-      scheduleTick(masterStepRef.current, nextNoteTimeRef.current);
-      nextNoteTimeRef.current += secondsPerTick;
-      masterStepRef.current = (masterStepRef.current + 1) % MASTER_TICKS_PER_BAR;
-    }
-
-    setCurrentStepByGroup({ ...currentStepRef.current });
-    timerRef.current = setTimeout(scheduler, SCHEDULER_INTERVAL_MS);
-  }, [scheduleTick]);
-
   /* ---- Transport ---- */
 
   const play = useCallback(async (): Promise<void> => {
@@ -405,8 +388,26 @@ export function useEP133Sequencer<G extends string>({
 
     setIsPlaying(true);
     setCurrentStepByGroup({ ...currentStepRef.current });
+
+    const scheduler = () => {
+      const audioCtx = audioCtxRef.current;
+      if (!audioCtx) return;
+
+      const secondsPerTick = 60.0 / bpmRef.current / 8; // 1/32 master grid
+      const lookahead = 0.1; // seconds
+
+      while (nextNoteTimeRef.current < audioCtx.currentTime + lookahead) {
+        scheduleTick(masterStepRef.current, nextNoteTimeRef.current);
+        nextNoteTimeRef.current += secondsPerTick;
+        masterStepRef.current = (masterStepRef.current + 1) % MASTER_TICKS_PER_BAR;
+      }
+
+      setCurrentStepByGroup({ ...currentStepRef.current });
+      timerRef.current = setTimeout(scheduler, SCHEDULER_INTERVAL_MS);
+    };
+
     timerRef.current = setTimeout(scheduler, SCHEDULER_INTERVAL_MS);
-  }, [getAudioContext, scheduler]);
+  }, [getAudioContext, scheduleTick]);
 
   const stop = useCallback(() => {
     if (timerRef.current) {
