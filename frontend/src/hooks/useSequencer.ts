@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { postGenerate } from "../api/client";
+import { useAudioContext } from "./useAudioContext";
 
 /**
  * Scheduler pump interval (ms) for the setTimeout-based lookahead clock.
@@ -28,17 +29,6 @@ interface UseSequencerOptions {
 }
 
 /**
- * WebKit-specific `AudioContext` state - present on Safari (desktop + iOS)
- * but absent from the standard lib.dom.d.ts `AudioContextState` union.
- * Narrowed via a string-level predicate below so callers do not need to cast.
- */
-type NonRunningState = "suspended" | "interrupted";
-
-function isNonRunningState(state: string): state is NonRunningState {
-  return state === "suspended" || state === "interrupted";
-}
-
-/**
  * Web Audio step sequencer hook - shared between PO-33 and EP-133 guides.
  *
  * IMPORTANT (WebKit / Safari):
@@ -61,7 +51,8 @@ export function useSequencer({ numSteps, defaultBpm = 120 }: UseSequencerOptions
   const [tracks, setTracks] = useState<SequencerTrack[]>([]);
   const [loadingAll, setLoadingAll] = useState(false);
 
-  const audioCtxRef = useRef<AudioContext | null>(null);
+  const { audioCtxRef, getAudioContext, unlockAudioContext } =
+    useAudioContext("[useSequencer]");
   const timerRef = useRef<number | null>(null);
   const stepRef = useRef(0);
   const nextNoteTimeRef = useRef(0);
@@ -80,75 +71,8 @@ export function useSequencer({ numSteps, defaultBpm = 120 }: UseSequencerOptions
   useEffect(() => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
-      if (audioCtxRef.current) audioCtxRef.current.close();
     };
   }, []);
-
-  /**
-   * Visibility-change listener - resumes the AudioContext on tab-restore
-   * (including BFCache restore on Safari). The cleanup `useEffect` above only
-   * fires on unmount, so a context left in `"suspended"` or WebKit-specific
-   * `"interrupted"` state after backgrounding would otherwise stay non-running
-   * and produce silent playback on the next PLAY click.
-   */
-  useEffect(() => {
-    const handleVisibilityChange = async () => {
-      const ctx = audioCtxRef.current;
-      if (
-        document.visibilityState === "visible" &&
-        ctx &&
-        ctx.state !== "running" &&
-        ctx.state !== "closed"
-      ) {
-        try {
-          await ctx.resume();
-        } catch (err) {
-          console.warn("[useSequencer] resume on visibility restore failed:", err);
-        }
-      }
-    };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () =>
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, []);
-
-  /**
-   * Lazily creates the AudioContext and ensures it is in the `"running"` state
-   * before returning. Handles WebKit-specific `"interrupted"` state in addition
-   * to the standard `"suspended"`.
-   *
-   * MUST be called from within a user-gesture handler on the first invocation
-   * of the session (Safari requirement). Subsequent calls are safe from any
-   * context.
-   */
-  const getAudioContext = useCallback(async (): Promise<AudioContext> => {
-    if (!audioCtxRef.current || audioCtxRef.current.state === "closed") {
-      audioCtxRef.current = new AudioContext({ sampleRate: 44100 });
-    }
-    if (isNonRunningState(audioCtxRef.current.state)) {
-      await audioCtxRef.current.resume();
-    }
-    return audioCtxRef.current;
-  }, []);
-
-  /**
-   * One-time Safari audio unlock - plays a single-sample silent buffer to
-   * fully release WebKit's audio output gate. Idempotent: once the context is
-   * `"running"` further calls are no-ops aside from a single zero-length
-   * source node that is GC'd immediately.
-   *
-   * Consumers should invoke this on the first interactive button click of the
-   * Guide view (LOAD SAMPLES or PLAY - whichever fires first).
-   */
-  const unlockAudioContext = useCallback(async (): Promise<void> => {
-    const ctx = await getAudioContext();
-    if (ctx.state !== "running") return;
-    const silentBuffer = ctx.createBuffer(1, 1, 22050);
-    const source = ctx.createBufferSource();
-    source.buffer = silentBuffer;
-    source.connect(ctx.destination);
-    source.start(0);
-  }, [getAudioContext]);
 
   /* ---- Init tracks ---- */
   /**
@@ -273,7 +197,7 @@ export function useSequencer({ numSteps, defaultBpm = 120 }: UseSequencerOptions
         source.start(time);
       }
     }
-  }, []);
+  }, [audioCtxRef]);
 
   /**
    * Starts playback. Async because the AudioContext may need to be resumed
@@ -329,7 +253,7 @@ export function useSequencer({ numSteps, defaultBpm = 120 }: UseSequencerOptions
     };
 
     timerRef.current = setTimeout(scheduler, SCHEDULER_INTERVAL_MS);
-  }, [getAudioContext, numSteps, scheduleNote]);
+  }, [audioCtxRef, getAudioContext, numSteps, scheduleNote]);
 
   const stop = useCallback(() => {
     if (timerRef.current) {

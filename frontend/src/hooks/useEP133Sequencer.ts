@@ -10,6 +10,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { postGenerate } from "../api/client";
 import type { SequencerTrack } from "./useSequencer";
 import { SCHEDULER_INTERVAL_MS } from "./useSequencer";
+import { useAudioContext } from "./useAudioContext";
 
 /* Timing model - single source of truth for the EP-133 guide          */
 
@@ -63,20 +64,6 @@ interface UseEP133SequencerOptions<G extends string> {
   defaultBpm?: number;
 }
 
-/*
- * AudioContext lifecycle.
- *
- * The WebKit/Safari AudioContext lifecycle logic below is duplicated from
- * useSequencer.ts on purpose: a shared `useAudioContext` util is deferred to
- * a separate refactor. Keep the two copies in sync until that util lands.
- */
-
-type NonRunningState = "suspended" | "interrupted";
-
-function isNonRunningState(state: string): state is NonRunningState {
-  return state === "suspended" || state === "interrupted";
-}
-
 /* Initial state                                                       */
 
 function makeInitialGroups<G extends string>(
@@ -123,8 +110,29 @@ export function useEP133Sequencer<G extends string>({
     () => groups.reduce((acc, g) => { acc[g] = -1; return acc; }, {} as Record<G, number>)
   );
 
-  const audioCtxRef = useRef<AudioContext | null>(null);
   const masterGainRef = useRef<GainNode | null>(null);
+
+  // Master bus: every group's voices sum here, so route through a gain stage
+  // (headroom for up to 4 simultaneous groups) into a compressor acting as a
+  // limiter, mirroring the EP-133 hardware master compressor (manual §11).
+  // Without this the raw sum clips past 0 dBFS and degrades into distortion.
+  // Built on every new context, so a replacement context gets its own bus.
+  const buildMasterBus = useCallback((ctx: AudioContext) => {
+    const gain = ctx.createGain();
+    gain.gain.value = 0.35;
+    const comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -10;
+    comp.knee.value = 6;
+    comp.ratio.value = 12;
+    comp.attack.value = 0.003;
+    comp.release.value = 0.25;
+    gain.connect(comp);
+    comp.connect(ctx.destination);
+    masterGainRef.current = gain;
+  }, []);
+
+  const { audioCtxRef, getAudioContext, unlockAudioContext } =
+    useAudioContext("[useEP133Sequencer]", buildMasterBus);
   const timerRef = useRef<number | null>(null);
   const masterStepRef = useRef(0);
   const nextNoteTimeRef = useRef(0);
@@ -140,72 +148,8 @@ export function useEP133Sequencer<G extends string>({
   useEffect(() => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
-      if (audioCtxRef.current) audioCtxRef.current.close();
     };
   }, []);
-
-  /** Resume the AudioContext on tab-restore (incl. Safari BFCache). */
-  useEffect(() => {
-    const handleVisibilityChange = async () => {
-      const ctx = audioCtxRef.current;
-      if (
-        document.visibilityState === "visible" &&
-        ctx &&
-        ctx.state !== "running" &&
-        ctx.state !== "closed"
-      ) {
-        try {
-          await ctx.resume();
-        } catch (err) {
-          console.warn("[useEP133Sequencer] resume on visibility restore failed:", err);
-        }
-      }
-    };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () =>
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, []);
-
-  const getAudioContext = useCallback(async (): Promise<AudioContext> => {
-    if (!audioCtxRef.current || audioCtxRef.current.state === "closed") {
-      audioCtxRef.current = new AudioContext({ sampleRate: 44100 });
-      masterGainRef.current = null; // rebuild the master bus for the new context
-    }
-    const ctx = audioCtxRef.current;
-
-    // Master bus: every group's voices sum here, so route through a gain stage
-    // (headroom for up to 4 simultaneous groups) into a compressor acting as a
-    // limiter, mirroring the EP-133 hardware master compressor (manual §11).
-    // Without this the raw sum clips past 0 dBFS and degrades into distortion.
-    if (!masterGainRef.current) {
-      const gain = ctx.createGain();
-      gain.gain.value = 0.35;
-      const comp = ctx.createDynamicsCompressor();
-      comp.threshold.value = -10;
-      comp.knee.value = 6;
-      comp.ratio.value = 12;
-      comp.attack.value = 0.003;
-      comp.release.value = 0.25;
-      gain.connect(comp);
-      comp.connect(ctx.destination);
-      masterGainRef.current = gain;
-    }
-
-    if (isNonRunningState(ctx.state)) {
-      await ctx.resume();
-    }
-    return ctx;
-  }, []);
-
-  const unlockAudioContext = useCallback(async (): Promise<void> => {
-    const ctx = await getAudioContext();
-    if (ctx.state !== "running") return;
-    const silentBuffer = ctx.createBuffer(1, 1, 22050);
-    const source = ctx.createBufferSource();
-    source.buffer = silentBuffer;
-    source.connect(ctx.destination);
-    source.start(0);
-  }, [getAudioContext]);
 
   /* ---- Group mutation helper ---- */
 
@@ -356,7 +300,7 @@ export function useEP133Sequencer<G extends string>({
         }
       }
     }
-  }, []);
+  }, [audioCtxRef]);
 
   /* ---- Transport ---- */
 
@@ -407,7 +351,7 @@ export function useEP133Sequencer<G extends string>({
     };
 
     timerRef.current = setTimeout(scheduler, SCHEDULER_INTERVAL_MS);
-  }, [getAudioContext, scheduleTick]);
+  }, [audioCtxRef, getAudioContext, scheduleTick]);
 
   const stop = useCallback(() => {
     if (timerRef.current) {
