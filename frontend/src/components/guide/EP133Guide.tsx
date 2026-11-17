@@ -346,7 +346,7 @@ export function EP133Guide() {
       </div>
 
       <div className="panel">
-        <div className="panel-header">EP-133 Effects</div>
+        <div className="panel-header">EP-133 Effects reference</div>
         <div className="grid grid-cols-6 gap-0">
           {EP133_FX.map((fx) => (
             <div
@@ -357,6 +357,11 @@ export function EP133Guide() {
             </div>
           ))}
         </div>
+        <p className="text-[10px] text-text-muted mt-2">
+          Press FX during playback, choose an effect with -/+ and set its
+          amount for the current group with the fader. Each group sends to
+          one master FX.
+        </p>
       </div>
 
       <div className="panel">
