@@ -205,12 +205,12 @@ module = [
     "matplotlib.*",
     "sklearn.*",
     "xgboost",
-    "optuna",
+    "optuna.*",
     "mlflow",
     "mlflow.*",
     "pandera",
     "pandera.*",
-    "langfuse",
+    "langfuse.*",
 ]
 ignore_missing_imports = true
 
