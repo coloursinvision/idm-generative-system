@@ -135,6 +135,7 @@ select = [
     "PIE",    # flake8-pie
     "RSE",    # flake8-raise
     "RET",    # flake8-return
+    "PLE2502", # pylint bidirectional-unicode
 ]
 ignore = [
     "S101",    # assert used in tests - intentional
